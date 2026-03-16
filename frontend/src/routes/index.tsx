@@ -1,9 +1,19 @@
 import { createBrowserRouter } from 'react-router-dom'
+import Landing from '../pages/public/Landing'
+import Gallery from '../pages/public/Gallery'
+import AdminPortfolio from '../pages/admin/Portfolio'
+import { AdminRoute } from '../components/auth/AdminRoute'
 
-// Routes are populated in subsequent plans (Auth, Admin, Client Portal, Portfolio)
 export const router = createBrowserRouter([
+  // Public routes
+  { path: '/', element: <Landing /> },
+  { path: '/portfolio/:slug', element: <Gallery /> },
+
+  // Admin routes
   {
-    path: '/',
-    element: <div className="text-white p-8">weCapture4U — coming soon</div>,
+    element: <AdminRoute />,
+    children: [
+      { path: '/admin/portfolio', element: <AdminPortfolio /> },
+    ],
   },
 ])
