@@ -4,3 +4,4 @@ from models.auth import RefreshToken, WebAuthnCredential  # noqa: F401
 # Plan 3 models
 from models.client import Client  # noqa: F401
 from models.session_type import SessionType  # noqa: F401
+from models.appointment import Appointment  # noqa: F401
