@@ -2,6 +2,7 @@ from models.client import Client
 from models.session_type import SessionType
 from models.appointment import Appointment
 from models.job import JobStage, Job
+from models.invoice import Invoice, InvoiceItem
 
 
 def test_client_tablename():
@@ -69,3 +70,36 @@ def test_job_columns():
 
 def test_job_appointment_id_nullable():
     assert Job.__table__.c["appointment_id"].nullable is True
+
+
+def test_invoice_tablename():
+    assert Invoice.__tablename__ == "invoices"
+
+
+def test_invoice_columns():
+    cols = {c.name for c in Invoice.__table__.columns}
+    assert {
+        "id", "job_id", "client_id", "status", "subtotal", "discount", "tax",
+        "total", "deposit_amount", "balance_due", "requires_review",
+        "due_date", "sent_at", "paid_at", "created_at"
+    }.issubset(cols)
+
+
+def test_invoice_item_tablename():
+    assert InvoiceItem.__tablename__ == "invoice_items"
+
+
+def test_invoice_item_columns():
+    cols = {c.name for c in InvoiceItem.__table__.columns}
+    assert {
+        "id", "invoice_id", "revenue_account_id", "description",
+        "quantity", "unit_price", "amount"
+    }.issubset(cols)
+
+
+def test_invoice_job_id_nullable():
+    assert Invoice.__table__.c["job_id"].nullable is True
+
+
+def test_invoice_item_revenue_account_id_nullable():
+    assert InvoiceItem.__table__.c["revenue_account_id"].nullable is True
