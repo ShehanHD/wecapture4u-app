@@ -5,7 +5,7 @@ from config import settings
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.ENVIRONMENT == "development",
-    connect_args={"statement_cache_size": 0},  # Required for Supabase pgbouncer
+    connect_args={"ssl": "require", "statement_cache_size": 0},
 )
 
 AsyncSessionLocal = async_sessionmaker(
