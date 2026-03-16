@@ -3,6 +3,8 @@ from schemas.clients import ClientCreate, ClientOut
 from schemas.settings import AppSettingsOut, SessionTypeCreate, SessionTypeOut
 from schemas.appointments import AppointmentCreate, AppointmentOut
 from schemas.jobs import JobCreate, JobStageOut, StagePositionReorder
+from schemas.invoices import InvoiceCreate, InvoiceItemCreate, InvoiceOut
+from schemas.notifications import NotificationOut
 
 
 def test_client_create_requires_name_and_email():
@@ -88,3 +90,41 @@ def test_stage_position_reorder_valid():
     ]
     r = StagePositionReorder(stages=items)
     assert len(r.stages) == 2
+
+
+def test_invoice_create_requires_client_id():
+    from pydantic import ValidationError
+    import pytest
+    with pytest.raises(ValidationError):
+        InvoiceCreate()
+
+
+def test_invoice_create_valid():
+    from decimal import Decimal
+    inv = InvoiceCreate(client_id=uuid.uuid4())
+    assert inv.status == "draft"
+    assert inv.discount == Decimal("0")
+
+
+def test_invoice_item_create_valid():
+    from decimal import Decimal
+    item = InvoiceItemCreate(
+        description="Session fee", quantity=Decimal("1"), unit_price=Decimal("500")
+    )
+    assert item.quantity == Decimal("1")
+
+
+def test_notification_out_from_dict():
+    import datetime
+    n = NotificationOut.model_validate({
+        "id": uuid.uuid4(),
+        "user_id": uuid.uuid4(),
+        "type": "appointment_reminder",
+        "title": "Reminder",
+        "body": "You have an appointment tomorrow",
+        "read": False,
+        "sent_email": True,
+        "created_at": datetime.datetime.now(datetime.timezone.utc),
+    })
+    assert n.type == "appointment_reminder"
+    assert n.read is False
