@@ -7,3 +7,5 @@ from models.session_type import SessionType  # noqa: F401
 from models.appointment import Appointment  # noqa: F401
 from models.job import JobStage, Job  # noqa: F401
 from models.invoice import Invoice, InvoiceItem  # noqa: F401
+from models.notification import Notification  # noqa: F401
+from models.admin import AppSettings  # noqa: F401 (also contains portfolio/SEO columns)

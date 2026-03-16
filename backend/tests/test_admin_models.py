@@ -3,6 +3,8 @@ from models.session_type import SessionType
 from models.appointment import Appointment
 from models.job import JobStage, Job
 from models.invoice import Invoice, InvoiceItem
+from models.notification import Notification
+from models.admin import AppSettings
 
 
 def test_client_tablename():
@@ -103,3 +105,21 @@ def test_invoice_job_id_nullable():
 
 def test_invoice_item_revenue_account_id_nullable():
     assert InvoiceItem.__table__.c["revenue_account_id"].nullable is True
+
+
+def test_notification_tablename():
+    assert Notification.__tablename__ == "notifications"
+
+
+def test_notification_columns():
+    cols = {c.name for c in Notification.__table__.columns}
+    assert {"id", "user_id", "type", "title", "body", "read", "sent_email", "created_at"}.issubset(cols)
+
+
+def test_app_settings_tablename():
+    assert AppSettings.__tablename__ == "app_settings"
+
+
+def test_app_settings_columns():
+    cols = {c.name for c in AppSettings.__table__.columns}
+    assert {"id", "tax_enabled", "tax_rate", "pdf_invoices_enabled", "updated_at"}.issubset(cols)
