@@ -19,6 +19,7 @@ it('renders nav links', () => {
   expect(screen.getByText('Appointments')).toBeInTheDocument()
   expect(screen.getByText('Jobs')).toBeInTheDocument()
   expect(screen.getByText('Clients')).toBeInTheDocument()
+  expect(screen.getByText('Portfolio')).toBeInTheDocument()
   expect(screen.getByText('Accounting')).toBeInTheDocument()
   expect(screen.getByText('Settings')).toBeInTheDocument()
 })
