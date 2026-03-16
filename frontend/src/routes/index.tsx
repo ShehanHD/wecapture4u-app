@@ -1,3 +1,4 @@
+import React from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import Landing from '@/pages/public/Landing'
 import Gallery from '@/pages/public/Gallery'

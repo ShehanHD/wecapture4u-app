@@ -1,3 +1,4 @@
+import React from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Bell, ChevronDown, LogOut, User } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
