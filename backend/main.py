@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from routers import health, auth
+from routers.portfolio import router as portfolio_router
+from routers.settings import router as settings_router
 
 
 @asynccontextmanager
@@ -27,3 +29,5 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(portfolio_router)
+app.include_router(settings_router)
