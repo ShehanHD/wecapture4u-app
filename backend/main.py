@@ -1,9 +1,21 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from routers import health
 
-app = FastAPI(title="weCapture4U API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if settings.ENVIRONMENT == "production" and not settings.ALLOWED_ORIGINS:
+        raise RuntimeError(
+            "ALLOWED_ORIGINS must be set in production — "
+            "refusing to start with open CORS policy."
+        )
+    yield
+
+
+app = FastAPI(title="weCapture4U API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,12 +26,3 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
-
-
-@app.on_event("startup")
-async def startup_validation() -> None:
-    if settings.ENVIRONMENT == "production" and not settings.ALLOWED_ORIGINS:
-        raise RuntimeError(
-            "ALLOWED_ORIGINS must be set in production — "
-            "refusing to start with open CORS policy."
-        )
