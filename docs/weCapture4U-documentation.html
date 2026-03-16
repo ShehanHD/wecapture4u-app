@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@page {
+  size: A4;
+  margin: 0;
+}
+@page :first {
+  margin: 0;
+}
+@page body-page {
+  margin: 22mm 20mm 22mm 20mm;
+  @bottom-center {
+    content: "weCapture4U — Confidential Documentation";
+    font-size: 8pt;
+    color: #9ca3af;
+  }
+  @bottom-right {
+    content: "Page " counter(page);
+    font-size: 8pt;
+    color: #9ca3af;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 10pt;
+  color: #1f2937;
+  line-height: 1.6;
+}
+
+/* ── COVER PAGE ── */
+.cover {
+  page: cover;
+  width: 210mm;
+  height: 297mm;
+  background: #0c0c0c;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  page-break-after: always;
+  position: relative;
+  overflow: hidden;
+}
+.cover-accent {
+  position: absolute;
+  top: 0; left: 0;
+  width: 8mm; height: 100%;
+  background: #f59e0b;
+}
+.cover-bottom-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2mm;
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+.cover-content {
+  margin-left: 20mm;
+  margin-top: 60mm;
+  flex: 1;
+}
+.cover-tag {
+  font-size: 9pt;
+  color: #f59e0b;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 6mm;
+}
+.cover-title {
+  font-size: 36pt;
+  font-weight: 800;
+  color: #fafafa;
+  line-height: 1.1;
+  margin-bottom: 4mm;
+}
+.cover-subtitle {
+  font-size: 14pt;
+  color: #9ca3af;
+  margin-bottom: 16mm;
+}
+.cover-meta {
+  font-size: 9pt;
+  color: #6b7280;
+  line-height: 2;
+}
+.cover-meta strong { color: #d1d5db; }
+
+/* ── BODY PAGES ── */
+.body-pages {
+  page: body-page;
+  padding: 0;
+}
+
+/* ── TOC PAGE ── */
+.toc-page {
+  page-break-after: always;
+  padding: 18mm 20mm 18mm 20mm;
+  background: #0c0c0c;
+  min-height: 297mm;
+}
+.toc-title {
+  font-size: 18pt;
+  font-weight: 800;
+  color: #fafafa;
+  margin-bottom: 10mm;
+  padding-bottom: 4mm;
+  border-bottom: 2px solid #f59e0b;
+}
+.toc-section {
+  margin-bottom: 6mm;
+}
+.toc-chapter {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2mm 0;
+  font-size: 11pt;
+  font-weight: 700;
+  color: #fafafa;
+}
+.toc-chapter span { color: #f59e0b; }
+.toc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 1mm 0 1mm 6mm;
+  font-size: 9pt;
+  color: #9ca3af;
+  border-bottom: 1px dotted #2d2d2d;
+}
+.toc-item span { color: #6b7280; }
+
+/* ── CHAPTER PAGES ── */
+.chapter {
+  page-break-before: always;
+  padding: 18mm 20mm 12mm 20mm;
+  background: #0c0c0c;
+  min-height: 297mm;
+}
+.chapter-header {
+  margin-bottom: 10mm;
+  padding-bottom: 4mm;
+  border-bottom: 2px solid #f59e0b;
+}
+.chapter-num {
+  font-size: 9pt;
+  font-weight: 700;
+  color: #f59e0b;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 2mm;
+}
+.chapter-title {
+  font-size: 22pt;
+  font-weight: 800;
+  color: #fafafa;
+  line-height: 1.1;
+}
+
+/* ── SECTION HEADINGS ── */
+h2 {
+  font-size: 13pt;
+  font-weight: 700;
+  color: #fafafa;
+  margin-top: 8mm;
+  margin-bottom: 3mm;
+  padding-bottom: 2mm;
+  border-bottom: 1px solid #2d2d2d;
+}
+h3 {
+  font-size: 11pt;
+  font-weight: 700;
+  color: #f59e0b;
+  margin-top: 5mm;
+  margin-bottom: 2mm;
+}
+h4 {
+  font-size: 10pt;
+  font-weight: 700;
+  color: #d1d5db;
+  margin-top: 4mm;
+  margin-bottom: 2mm;
+}
+
+/* ── BODY TEXT ── */
+p {
+  color: #d1d5db;
+  font-size: 10pt;
+  margin-bottom: 3mm;
+}
+ul, ol {
+  color: #d1d5db;
+  font-size: 10pt;
+  padding-left: 5mm;
+  margin-bottom: 3mm;
+}
+li { margin-bottom: 1mm; }
+li strong { color: #fafafa; }
+
+/* ── TABLES ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 5mm;
+  font-size: 9pt;
+}
+thead tr {
+  background: #1a1a1a;
+}
+thead th {
+  text-align: left;
+  padding: 2mm 3mm;
+  color: #f59e0b;
+  font-weight: 700;
+  border-bottom: 1px solid #2d2d2d;
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+tbody tr {
+  border-bottom: 1px solid #1f1f1f;
+}
+tbody tr:nth-child(even) {
+  background: #111111;
+}
+tbody td {
+  padding: 2mm 3mm;
+  color: #d1d5db;
+  vertical-align: top;
+}
+tbody td:first-child {
+  color: #fde68a;
+  font-family: 'Courier New', monospace;
+  font-size: 8.5pt;
+  white-space: nowrap;
+}
+tbody td strong { color: #fafafa; }
+tbody td code {
+  background: #1f1f1f;
+  color: #86efac;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-size: 8pt;
+}
+
+/* ── CODE / MONOSPACE ── */
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 8.5pt;
+  background: #1a1a1a;
+  color: #86efac;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+pre {
+  background: #111111;
+  border: 1px solid #2d2d2d;
+  border-radius: 4px;
+  padding: 3mm 4mm;
+  margin-bottom: 4mm;
+  overflow: hidden;
+}
+pre code {
+  background: none;
+  color: #d1fae5;
+  font-size: 8pt;
+  line-height: 1.5;
+  padding: 0;
+  white-space: pre-wrap;
+}
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 4px;
+  padding: 3mm 4mm;
+  margin-bottom: 4mm;
+  border-left: 3px solid;
+}
+.callout-amber {
+  background: rgba(245,158,11,0.07);
+  border-color: #f59e0b;
+}
+.callout-amber p, .callout-amber li { color: #fde68a; font-size: 9pt; }
+.callout-emerald {
+  background: rgba(16,185,129,0.07);
+  border-color: #10b981;
+}
+.callout-emerald p, .callout-emerald li { color: #6ee7b7; font-size: 9pt; }
+.callout-blue {
+  background: rgba(96,165,250,0.07);
+  border-color: #60a5fa;
+}
+.callout-blue p, .callout-blue li { color: #bfdbfe; font-size: 9pt; }
+.callout-red {
+  background: rgba(248,113,113,0.07);
+  border-color: #f87171;
+}
+.callout-red p, .callout-red li { color: #fca5a5; font-size: 9pt; }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 7.5pt;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.badge-amber { background: rgba(245,158,11,0.2); color: #f59e0b; }
+.badge-emerald { background: rgba(16,185,129,0.2); color: #10b981; }
+.badge-blue { background: rgba(96,165,250,0.2); color: #60a5fa; }
+.badge-gray { background: rgba(107,114,128,0.2); color: #9ca3af; }
+
+/* ── STACK GRID ── */
+.stack-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm;
+  margin-bottom: 5mm;
+}
+.stack-card {
+  background: #111111;
+  border: 1px solid #2d2d2d;
+  border-radius: 4px;
+  padding: 3mm 4mm;
+}
+.stack-card-label {
+  font-size: 7.5pt;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin-bottom: 1mm;
+}
+.stack-card-value {
+  font-size: 9pt;
+  color: #fafafa;
+  font-weight: 600;
+}
+.stack-card-note {
+  font-size: 8pt;
+  color: #6b7280;
+  margin-top: 0.5mm;
+}
+
+/* ── ACCOUNT TABLE COLORS ── */
+.acct-asset td:first-child { color: #60a5fa !important; }
+.acct-liability td:first-child { color: #f87171 !important; }
+.acct-equity td:first-child { color: #a78bfa !important; }
+.acct-revenue td:first-child { color: #34d399 !important; }
+.acct-expense td:first-child { color: #fb923c !important; }
+
+/* ── PAGE BREAK HELPERS ── */
+.no-break { page-break-inside: avoid; }
+.break-before { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     COVER PAGE
+══════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-accent"></div>
+  <div class="cover-content">
+    <div class="cover-tag">Technical Specification</div>
+    <div class="cover-title">weCapture4U</div>
+    <div class="cover-subtitle">Photography Business Management System</div>
+    <div class="cover-meta">
+      <div><strong>Version</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3.0</div>
+      <div><strong>Date</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026-03-15</div>
+      <div><strong>Status</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Approved — Ready for Implementation</div>
+      <div style="margin-top:6mm; color: #4b5563;">Includes: Admin Module · Client Portal · Accounting Module</div>
+      <div style="color: #4b5563;">WebAuthn/FIDO2 · Double-Entry Bookkeeping · JWT Refresh Tokens</div>
+    </div>
+  </div>
+  <div class="cover-bottom-bar"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TABLE OF CONTENTS
+══════════════════════════════════════════════ -->
+<div class="toc-page">
+  <div class="toc-title">Table of Contents</div>
+
+  <div class="toc-section">
+    <div class="toc-chapter">1 &nbsp;&nbsp; Overview <span>3</span></div>
+    <div class="toc-item">Purpose &amp; Scope <span>3</span></div>
+    <div class="toc-item">Key Features <span>3</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-chapter">2 &nbsp;&nbsp; Tech Stack <span>4</span></div>
+    <div class="toc-item">Frontend <span>4</span></div>
+    <div class="toc-item">Backend <span>4</span></div>
+    <div class="toc-item">Infrastructure <span>4</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-chapter">3 &nbsp;&nbsp; Architecture <span>5</span></div>
+    <div class="toc-item">Route Structure <span>5</span></div>
+    <div class="toc-item">Auth Strategy — Password + JWT Refresh <span>5</span></div>
+    <div class="toc-item">Auth Strategy — Biometric (WebAuthn / FIDO2) <span>5</span></div>
+    <div class="toc-item">Password Reset Flow <span>6</span></div>
+    <div class="toc-item">Email &amp; Scheduled Jobs <span>6</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-chapter">4 &nbsp;&nbsp; Data Model <span>7</span></div>
+    <div class="toc-item">Auth: users · password_reset_tokens · webauthn_credentials <span>7</span></div>
+    <div class="toc-item">Core: clients · session_types · appointments · job_stages · jobs <span>8</span></div>
+    <div class="toc-item">Invoicing: invoices · invoice_items <span>9</span></div>
+    <div class="toc-item">Accounting: accounts · journal_entries · journal_lines · invoice_payments · expenses <span>10</span></div>
+    <div class="toc-item">Portal: booking_requests <span>12</span></div>
+    <div class="toc-item">System: app_settings · notifications <span>12</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-chapter">5 &nbsp;&nbsp; Admin Module <span>13</span></div>
+    <div class="toc-item">Visual Design &amp; Layout <span>13</span></div>
+    <div class="toc-item">Dashboard · Appointments · Jobs · Clients <span>13</span></div>
+    <div class="toc-item">Profile · Settings · Notifications <span>14</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-chapter">6 &nbsp;&nbsp; Accounting Module <span>15</span></div>
+    <div class="toc-item">Chart of Accounts (19 seeded accounts) <span>15</span></div>
+    <div class="toc-item">Automation Rules &amp; Journal Entry Review Flow <span>16</span></div>
+    <div class="toc-item">Six-Tab UI: Overview · Journal · Accounts · Invoices · Expenses · Reports <span>17</span></div>
+    <div class="toc-item">FastAPI Endpoints <span>18</span></div>
+    <div class="toc-item">Data Integrity &amp; Error Handling <span>18</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-chapter">7 &nbsp;&nbsp; Client Portal <span>19</span></div>
+    <div class="toc-item">Auth · Password Reset · Biometric <span>19</span></div>
+    <div class="toc-item">Dashboard · My Jobs · Bookings · Profile <span>19</span></div>
+    <div class="toc-item">Client-Facing Emails <span>20</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-chapter">8 &nbsp;&nbsp; Testing Strategy <span>21</span></div>
+    <div class="toc-chapter">9 &nbsp;&nbsp; Out of Scope <span>21</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-chapter">10 &nbsp;&nbsp; Deployment <span>22</span></div>
+    <div class="toc-item">Hosting Architecture <span>22</span></div>
+    <div class="toc-item">Environment Variables <span>22</span></div>
+    <div class="toc-item">CORS Configuration <span>22</span></div>
+    <div class="toc-item">Frontend Build &amp; Deploy (Hostinger) <span>23</span></div>
+    <div class="toc-item">Backend Deploy (Fly.io) <span>23</span></div>
+    <div class="toc-item">Pre-Launch Checklist <span>23</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHAPTER 1 — OVERVIEW
+══════════════════════════════════════════════ -->
+<div class="body-pages">
+<div class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 1</div>
+    <div class="chapter-title">Overview</div>
+  </div>
+
+  <h2>Purpose &amp; Scope</h2>
+  <p>weCapture4U is a full-stack photography business management system built for a solo photographer (owner). It covers appointment scheduling, job lifecycle tracking, client management, client-facing portal, and a complete double-entry accounting system — all in a single application.</p>
+  <p>The frontend is a single React 18 + TypeScript SPA serving two role-based modules at separate route trees: the <strong>Admin module</strong> (photographer dashboard) and the <strong>Client Portal</strong> (client self-service). Both share the same FastAPI backend, PostgreSQL database, and JWT auth system.</p>
+
+  <div class="callout callout-amber">
+    <p><strong>Out of scope for this iteration:</strong> image upload pipeline (AWS S3), subscriptions/billing, multi-user admin, recurring appointments, mobile app, online payment collection, calendar sync, data import, contract/document generation.</p>
+  </div>
+
+  <h2>Key Features</h2>
+  <div class="stack-grid">
+    <div class="stack-card">
+      <div class="stack-card-label">Appointments</div>
+      <div class="stack-card-value">Calendar + booking requests</div>
+      <div class="stack-card-note">Monthly/weekly view, deposit tracking, client portal booking flow</div>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-label">Jobs</div>
+      <div class="stack-card-value">Kanban workflow</div>
+      <div class="stack-card-note">Drag-and-drop stage management, delivery URL, client progress view</div>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-label">Clients</div>
+      <div class="stack-card-value">CRM + portal accounts</div>
+      <div class="stack-card-note">Tags, history, total spent, birthday alerts, account deactivation</div>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-label">Accounting</div>
+      <div class="stack-card-value">Double-entry bookkeeping</div>
+      <div class="stack-card-note">Auto-draft journal entries, chart of accounts, 6 financial reports</div>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-label">Auth</div>
+      <div class="stack-card-value">JWT + WebAuthn / FIDO2</div>
+      <div class="stack-card-note">Password login, biometric login, refresh tokens, password reset</div>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-label">Client Portal</div>
+      <div class="stack-card-value">Mobile-first self-service</div>
+      <div class="stack-card-note">Job tracking, gallery link, booking requests, profile management</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHAPTER 2 — TECH STACK
+══════════════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 2</div>
+    <div class="chapter-title">Tech Stack</div>
+  </div>
+
+  <h2>Frontend</h2>
+  <table>
+    <thead><tr><th>Concern</th><th>Technology</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Framework</td><td>React 18 + TypeScript (Vite)</td><td>Single SPA — admin and client portal share the same project</td></tr>
+      <tr><td>Routing</td><td>React Router v6</td><td>Separate route trees: <code>/admin/*</code> and <code>/client/*</code></td></tr>
+      <tr><td>UI Components</td><td>shadcn/ui + Tailwind CSS</td><td></td></tr>
+      <tr><td>Data Fetching</td><td>React Query (TanStack Query)</td><td>Calls FastAPI endpoints; cache invalidation on mutations</td></tr>
+      <tr><td>Forms</td><td>react-hook-form</td><td></td></tr>
+      <tr><td>Validation</td><td>Zod</td><td>Client-side validation + API response parsing at boundary</td></tr>
+      <tr><td>Calendar</td><td>react-big-calendar</td><td>Admin appointments page (monthly/weekly)</td></tr>
+      <tr><td>Drag-and-Drop</td><td>@dnd-kit/core</td><td>Kanban board column reordering</td></tr>
+      <tr><td>Charts</td><td>Recharts</td><td>Dashboard revenue chart, accounting overview chart</td></tr>
+      <tr><td>Biometric Auth</td><td>@simplewebauthn/browser</td><td>WebAuthn API wrapper; biometric data never leaves the device</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Backend</h2>
+  <table>
+    <thead><tr><th>Concern</th><th>Technology</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>API Framework</td><td>FastAPI (Python)</td><td></td></tr>
+      <tr><td>ORM / DB Access</td><td>SQLAlchemy (async) + asyncpg</td><td></td></tr>
+      <tr><td>Data Validation</td><td>Pydantic v2</td><td>All request bodies and response models</td></tr>
+      <tr><td>Auth</td><td>JWT (python-jose) + bcrypt (passlib)</td><td>FastAPI issues tokens; no Supabase Auth</td></tr>
+      <tr><td>Biometric Auth</td><td>py_webauthn</td><td>Server-side WebAuthn registration and verification</td></tr>
+      <tr><td>Scheduled Jobs</td><td>APScheduler</td><td>Runs within FastAPI process; daily job at 08:00 UTC</td></tr>
+      <tr><td>Email</td><td>Resend</td><td>Called directly from FastAPI. Env vars: <code>RESEND_API_KEY</code>, <code>RESEND_FROM_EMAIL</code></td></tr>
+      <tr><td>Image Processing</td><td>Pillow</td><td>Avatar resize to 256×256, convert to WebP, compress before upload</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Infrastructure</h2>
+  <table>
+    <thead><tr><th>Concern</th><th>Technology</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Database</td><td>Supabase (PostgreSQL)</td><td>No Supabase Auth, no RLS, no Edge Functions — raw SQL only</td></tr>
+      <tr><td>File Storage</td><td>Supabase Storage</td><td>Avatar bucket: <code>avatars/{user_id}.webp</code>. Accessed via <code>supabase-py</code> from FastAPI</td></tr>
+      <tr><td>HTTPS</td><td>Required in production</td><td>WebAuthn only works on HTTPS origins (plus <code>localhost</code> for development)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHAPTER 3 — ARCHITECTURE
+══════════════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 3</div>
+    <div class="chapter-title">Architecture</div>
+  </div>
+
+  <h2>Route Structure</h2>
+  <pre><code>src/
+  routes/
+    index.tsx               ← React Router root (admin + client routes)
+  pages/
+    auth/
+      AdminLogin.tsx         ← /login
+      ForgotPassword.tsx     ← /forgot-password
+      ResetPassword.tsx      ← /reset-password?token=...
+      BiometricSetup.tsx     ← /admin/biometric/setup (post-login prompt)
+      ClientLogin.tsx        ← /client/login
+      ClientForgotPassword.tsx  ← /client/forgot-password
+      ClientResetPassword.tsx   ← /client/reset-password?token=...
+      ClientBiometricSetup.tsx  ← /client/biometric/setup
+    admin/
+      Dashboard.tsx          ← /admin
+      Appointments.tsx       ← /admin/appointments
+      Jobs.tsx               ← /admin/jobs
+      JobDetail.tsx          ← /admin/jobs/:id
+      Clients.tsx            ← /admin/clients
+      ClientDetail.tsx       ← /admin/clients/:id
+      Accounting.tsx         ← /admin/accounting
+      Notifications.tsx      ← /admin/notifications
+      Settings.tsx           ← /admin/settings
+      Profile.tsx            ← /admin/profile
+    client/
+      Dashboard.tsx          ← /client
+      JobList.tsx            ← /client/jobs
+      JobDetail.tsx          ← /client/jobs/:id
+      Bookings.tsx           ← /client/bookings
+      NewBooking.tsx         ← /client/bookings/new
+      Profile.tsx            ← /client/profile
+  components/
+    layout/
+      AdminShell.tsx         ← Top nav + outlet wrapper
+      ClientShell.tsx        ← Top bar + bottom nav + outlet wrapper
+    auth/
+      AdminRoute.tsx         ← Protected route guard (role: admin)
+      ClientRoute.tsx        ← Protected route guard (role: client)</code></pre>
+
+  <h2>Auth Strategy — Password + JWT Refresh</h2>
+  <p>FastAPI owns all authentication — no Supabase Auth, no RLS. Credentials are stored in the <code>users</code> table with bcrypt-hashed passwords.</p>
+  <ul>
+    <li><strong>Login:</strong> <code>POST /api/auth/login</code> → FastAPI verifies credentials → returns <code>access_token</code> (JWT, 15 min expiry) + <code>refresh_token</code> (opaque, 7 days). Both stored in <code>localStorage</code>.</li>
+    <li><strong>Token transport:</strong> <code>Authorization: Bearer &lt;access_token&gt;</code> via shared Axios interceptor on every request.</li>
+    <li><strong>Silent refresh:</strong> On 401 response, the Axios interceptor automatically calls <code>POST /api/auth/refresh</code> → receives new access token → retries original request. If refresh fails, clears both tokens and redirects to login.</li>
+    <li><strong>Route guards:</strong> <code>&lt;AdminRoute&gt;</code> and <code>&lt;ClientRoute&gt;</code> decode the token, check role, and redirect to login if missing or wrong role.</li>
+    <li><strong>Deactivated accounts:</strong> <code>users.is_active = false</code> → <code>403</code> at login — "Your account has been deactivated."</li>
+  </ul>
+
+  <h2>Auth Strategy — Biometric (WebAuthn / FIDO2)</h2>
+  <p>Biometric login is an optional second method layered on top of the existing JWT flow. The W3C WebAuthn standard is used — the device biometric (Face ID, Touch ID, fingerprint) never leaves the device. The server stores only a public key.</p>
+  <h4>Registration</h4>
+  <ol>
+    <li>User logs in with password for the first time.</li>
+    <li>Prompted on the biometric setup page: "Enable Face ID / fingerprint for faster login?"</li>
+    <li>Browser calls <code>navigator.credentials.create()</code> → device generates key pair in secure enclave → public key + credential ID sent to server → stored in <code>webauthn_credentials</code>.</li>
+  </ol>
+  <h4>Login</h4>
+  <ol>
+    <li>User enters email on login page.</li>
+    <li><code>GET /api/auth/webauthn/device-check?email=...</code> → returns <code>has_credential: bool</code>.</li>
+    <li>If true, "Use Face ID / Fingerprint" button appears alongside the password form.</li>
+    <li>Server sends random challenge → <code>navigator.credentials.get()</code> → device signs challenge via biometric → signature sent to server → FastAPI verifies with stored public key → JWT issued.</li>
+  </ol>
+  <div class="callout callout-blue">
+    <p>The <code>webauthn_credentials</code> table and all WebAuthn endpoints are shared between admin and client users. Role is determined from the JWT issued after successful verification.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Auth Required</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>GET</td><td>/api/auth/webauthn/device-check</td><td>No</td><td>Returns whether a credential exists for email + device</td></tr>
+      <tr><td>POST</td><td>/api/auth/webauthn/register/options</td><td>Yes (JWT)</td><td>Generates registration challenge</td></tr>
+      <tr><td>POST</td><td>/api/auth/webauthn/register/verify</td><td>Yes (JWT)</td><td>Verifies credential and stores public key</td></tr>
+      <tr><td>POST</td><td>/api/auth/webauthn/authenticate/options</td><td>No</td><td>Generates login challenge for a given email</td></tr>
+      <tr><td>POST</td><td>/api/auth/webauthn/authenticate/verify</td><td>No</td><td>Verifies signature → returns JWT</td></tr>
+      <tr><td>GET</td><td>/api/auth/webauthn/credentials</td><td>Yes (JWT)</td><td>List registered devices for the authenticated user</td></tr>
+      <tr><td>DELETE</td><td>/api/auth/webauthn/credentials/{id}</td><td>Yes (JWT)</td><td>Remove a registered device (own credentials only)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Password Reset Flow</h2>
+  <p>Shared endpoints for both admin and client roles. The role is determined by the token's associated user.</p>
+  <ol>
+    <li>"Forgot password?" link on login page → enter email → <code>POST /api/auth/forgot-password</code></li>
+    <li>FastAPI generates a secure random token, stores SHA-256 hash in <code>password_reset_tokens</code> (expires 1 hour), sends reset email via Resend with link to <code>/reset-password?token=&lt;raw_token&gt;</code></li>
+    <li>User submits new password → <code>POST /api/auth/reset-password</code> → FastAPI validates token (not expired, not used), hashes new password, marks token used</li>
+    <li>Redirected to login. Expired/used token → <code>422</code> — "This reset link is invalid or has expired."</li>
+  </ol>
+
+  <h2>Email &amp; Scheduled Jobs</h2>
+  <p>APScheduler runs within the FastAPI process. A daily job fires at <strong>08:00 UTC</strong> and:</p>
+  <ul>
+    <li>Queries appointments starting within 24h → inserts notification rows + sends reminder email</li>
+    <li>Queries clients with birthday matching today → birthday alert</li>
+    <li>Queries invoices past due date → overdue alert</li>
+  </ul>
+  <p>Missed runs (e.g., server downtime) are not recovered — accepted behavior for this iteration. Emails sent via Resend. Email send failures do not crash the app — logged server-side, graceful degradation.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHAPTER 4 — DATA MODEL
+══════════════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 4</div>
+    <div class="chapter-title">Data Model</div>
+  </div>
+
+  <p>18 tables total. FastAPI manages all data — no Supabase Auth or RLS involved.</p>
+
+  <h2>Auth Domain</h2>
+
+  <h3>users</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>email</td><td>text</td><td>UNIQUE</td></tr>
+      <tr><td>hashed_password</td><td>text</td><td>bcrypt via passlib</td></tr>
+      <tr><td>role</td><td>enum</td><td><code>admin</code> / <code>client</code></td></tr>
+      <tr><td>full_name</td><td>text</td><td></td></tr>
+      <tr><td>avatar_url</td><td>text</td><td>nullable — public URL of profile photo in Supabase Storage (<code>avatars/{user_id}.webp</code>)</td></tr>
+      <tr><td>is_active</td><td>boolean</td><td>default true. Inactive users receive 403 at login.</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h3>password_reset_tokens</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>user_id</td><td>uuid (FK → users)</td><td></td></tr>
+      <tr><td>token_hash</td><td>text</td><td>UNIQUE — SHA-256 hash of the raw token. Raw token never stored.</td></tr>
+      <tr><td>expires_at</td><td>timestamptz</td><td>1 hour from creation</td></tr>
+      <tr><td>used_at</td><td>timestamptz</td><td>nullable — set when token is consumed. Used tokens are rejected even if not expired.</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h3>webauthn_credentials</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>user_id</td><td>uuid (FK → users)</td><td>One user can register multiple devices</td></tr>
+      <tr><td>credential_id</td><td>text</td><td>UNIQUE — opaque identifier generated by the device</td></tr>
+      <tr><td>public_key</td><td>bytea</td><td>COSE-encoded public key stored at registration</td></tr>
+      <tr><td>sign_count</td><td>integer</td><td>Monotonically increasing counter — detects cloned authenticators</td></tr>
+      <tr><td>device_name</td><td>text</td><td>nullable — parsed from browser user-agent (e.g. "MacBook Pro · Chrome")</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Core Domain</h2>
+
+  <h3>clients</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>user_id</td><td>uuid (FK → users)</td><td>nullable — set when client has a portal account</td></tr>
+      <tr><td>name</td><td>text</td><td></td></tr>
+      <tr><td>email</td><td>text</td><td>UNIQUE</td></tr>
+      <tr><td>phone</td><td>text</td><td>nullable</td></tr>
+      <tr><td>address</td><td>text</td><td>nullable</td></tr>
+      <tr><td>tags</td><td>text[]</td><td>e.g. ['wedding', 'corporate']</td></tr>
+      <tr><td>birthday</td><td>date</td><td>nullable</td></tr>
+      <tr><td>notes</td><td>text</td><td>nullable</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h3>session_types</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>name</td><td>text</td><td>UNIQUE — e.g. "Wedding", "Portrait". Admin-managed in Settings. Deletion blocked if referenced by appointments or booking requests.</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h3>appointments</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>client_id</td><td>uuid (FK → clients)</td><td></td></tr>
+      <tr><td>session_type_id</td><td>uuid (FK → session_types)</td><td>nullable</td></tr>
+      <tr><td>title</td><td>text</td><td></td></tr>
+      <tr><td>starts_at</td><td>timestamptz</td><td>Timezone-aware; single field replaces date + time</td></tr>
+      <tr><td>ends_at</td><td>timestamptz</td><td>nullable; defaults to starts_at + 1h in UI when null</td></tr>
+      <tr><td>location</td><td>text</td><td>nullable</td></tr>
+      <tr><td>status</td><td>enum</td><td><code>pending</code> / <code>confirmed</code> / <code>cancelled</code></td></tr>
+      <tr><td>addons</td><td>text[]</td><td>Fixed list: <code>album</code>, <code>thank_you_card</code>, <code>enlarged_photos</code></td></tr>
+      <tr><td>deposit_paid</td><td>boolean</td><td>default false</td></tr>
+      <tr><td>deposit_amount</td><td>numeric(10,2)</td><td>default 0 — deposit received/expected. Triggers auto-draft journal entry when deposit_paid → true. Must be ≤ linked invoice total.</td></tr>
+      <tr><td>deposit_account_id</td><td>uuid (FK → accounts)</td><td>nullable — bank/cash account that received the deposit. Defaults to Business Bank Account (1010) when null.</td></tr>
+      <tr><td>contract_signed</td><td>boolean</td><td>default false</td></tr>
+      <tr><td>notes</td><td>text</td><td>nullable</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h3>job_stages</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>name</td><td>text</td><td>e.g. "Booked", "Shooting"</td></tr>
+      <tr><td>color</td><td>text</td><td>Hex color for Kanban column header</td></tr>
+      <tr><td>position</td><td>integer</td><td>Display order; lower = leftmost</td></tr>
+      <tr><td>is_terminal</td><td>boolean</td><td>default false — terminal stages excluded from client "active jobs" view. Seeded: Delivered and Archived are terminal.</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+  <div class="callout callout-amber">
+    <p>Default seeded stages: Booked (1), Shooting (2), Editing (3), Delivered (4, terminal), Archived (5, terminal). Deletion blocked if any jobs are assigned to the stage.</p>
+  </div>
+
+  <h3>jobs</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>client_id</td><td>uuid (FK → clients)</td><td></td></tr>
+      <tr><td>appointment_id</td><td>uuid (FK → appointments)</td><td>nullable</td></tr>
+      <tr><td>title</td><td>text</td><td></td></tr>
+      <tr><td>stage_id</td><td>uuid (FK → job_stages)</td><td>Current stage; replaces former status enum</td></tr>
+      <tr><td>shoot_date</td><td>date</td><td>nullable</td></tr>
+      <tr><td>delivery_deadline</td><td>date</td><td>nullable</td></tr>
+      <tr><td>delivery_url</td><td>text</td><td>nullable — external gallery link (Google Drive, Dropbox, etc.) When set, client portal shows "View Your Photos →" button. Setting this triggers "photos ready" email to client.</td></tr>
+      <tr><td>notes</td><td>text</td><td>nullable</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Invoicing</h2>
+
+  <h3>invoices</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>job_id</td><td>uuid (FK → jobs)</td><td>nullable</td></tr>
+      <tr><td>client_id</td><td>uuid (FK → clients)</td><td></td></tr>
+      <tr><td>status</td><td>enum</td><td><code>draft</code> / <code>sent</code> / <code>partially_paid</code> / <code>paid</code></td></tr>
+      <tr><td>subtotal</td><td>numeric(10,2)</td><td>SUM of invoice_items.amount. Recalculated on every item change.</td></tr>
+      <tr><td>discount</td><td>numeric(10,2)</td><td>default 0</td></tr>
+      <tr><td>tax</td><td>numeric(10,2)</td><td>default 0; hidden until tax enabled in settings</td></tr>
+      <tr><td>total</td><td>numeric(10,2)</td><td>subtotal − discount + tax. Recalculated on every change.</td></tr>
+      <tr><td>deposit_amount</td><td>numeric(10,2)</td><td>default 0 — display-only reference. Does NOT drive balance calculations.</td></tr>
+      <tr><td>balance_due</td><td>numeric(10,2)</td><td><code>total − SUM(invoice_payments.amount)</code>. Recalculated on every payment record/delete.</td></tr>
+      <tr><td>requires_review</td><td>boolean</td><td>default false — set when a posted payment journal entry is voided. Cleared on new payment post or manual dismiss.</td></tr>
+      <tr><td>due_date</td><td>date</td><td>nullable</td></tr>
+      <tr><td>sent_at</td><td>timestamptz</td><td>nullable</td></tr>
+      <tr><td>paid_at</td><td>timestamptz</td><td>nullable</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h3>invoice_items</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>invoice_id</td><td>uuid (FK → invoices)</td><td></td></tr>
+      <tr><td>revenue_account_id</td><td>uuid (FK → accounts)</td><td>nullable — revenue account credited on invoice-sent journal entry. Defaults to Session Fees (4000) when null.</td></tr>
+      <tr><td>description</td><td>text</td><td>e.g. "Session fee", "Print package"</td></tr>
+      <tr><td>quantity</td><td>numeric(10,2)</td><td>default 1</td></tr>
+      <tr><td>unit_price</td><td>numeric(10,2)</td><td></td></tr>
+      <tr><td>amount</td><td>numeric(10,2)</td><td>quantity × unit_price. Recalculated and persisted on every change.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Accounting Domain</h2>
+
+  <h3>accounts — Chart of Accounts</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>code</td><td>text</td><td>UNIQUE — sortable account number (e.g. 1010). Admin-assigned.</td></tr>
+      <tr><td>name</td><td>text</td><td>e.g. "Business Bank Account"</td></tr>
+      <tr><td>type</td><td>enum</td><td><code>asset</code> / <code>liability</code> / <code>equity</code> / <code>revenue</code> / <code>expense</code></td></tr>
+      <tr><td>normal_balance</td><td>enum</td><td><code>debit</code> / <code>credit</code> — system-set at creation. Assets/Expenses = debit; Liabilities/Equity/Revenue = credit. Exception: Owner's Drawings = debit (contra-equity).</td></tr>
+      <tr><td>is_system</td><td>boolean</td><td>System accounts can be renamed but not deleted or archived.</td></tr>
+      <tr><td>archived</td><td>boolean</td><td>default false. Archived accounts hidden from entry forms but preserved in historical lines.</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h3>journal_entries — Entry Header</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>date</td><td>date</td><td>Accounting date (can differ from created_at — admin may backdate)</td></tr>
+      <tr><td>description</td><td>text</td><td></td></tr>
+      <tr><td>reference_type</td><td>text</td><td>nullable — <code>invoice</code> / <code>invoice_payment</code> / <code>expense</code> / <code>appointment</code> / <code>manual</code></td></tr>
+      <tr><td>reference_id</td><td>uuid</td><td>nullable — ID of the originating record</td></tr>
+      <tr><td>status</td><td>enum</td><td><code>draft</code> / <code>posted</code> / <code>voided</code></td></tr>
+      <tr><td>created_by</td><td>enum</td><td><code>system</code> (auto-generated) / <code>manual</code> (admin-created)</td></tr>
+      <tr><td>void_of</td><td>uuid (FK → journal_entries)</td><td>nullable — set on reversing entry when voiding</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+  <div class="callout callout-amber">
+    <p><strong>Idempotency:</strong> Partial unique index on <code>(reference_type, reference_id)</code> WHERE <code>status != 'voided'</code> AND <code>created_by = 'system'</code> — ensures only one non-voided system entry per event.</p>
+  </div>
+
+  <h3>journal_lines — Debit/Credit Lines</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>entry_id</td><td>uuid (FK → journal_entries)</td><td></td></tr>
+      <tr><td>account_id</td><td>uuid (FK → accounts)</td><td></td></tr>
+      <tr><td>debit</td><td>numeric(10,2)</td><td>default 0. CHECK: debit >= 0</td></tr>
+      <tr><td>credit</td><td>numeric(10,2)</td><td>default 0. CHECK: credit >= 0</td></tr>
+      <tr><td>description</td><td>text</td><td>nullable — line-level note</td></tr>
+    </tbody>
+  </table>
+  <div class="callout callout-red">
+    <p><strong>DB constraints:</strong> CHECK (debit >= 0 AND credit >= 0) · CHECK (debit = 0 OR credit = 0) — exactly one non-zero per line · CHECK (debit > 0 OR credit > 0) — no all-zero lines.<br><br><strong>Balance invariant:</strong> FastAPI enforces SUM(debits) = SUM(credits) on every POST /journal-entries/{id}/post call. PostgreSQL trigger on UPDATE status='posted' as a second safeguard.</p>
+  </div>
+
+  <h3>invoice_payments</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>invoice_id</td><td>uuid (FK → invoices)</td><td></td></tr>
+      <tr><td>amount</td><td>numeric(10,2)</td><td>Amount received in this payment</td></tr>
+      <tr><td>payment_date</td><td>date</td><td></td></tr>
+      <tr><td>account_id</td><td>uuid (FK → accounts, asset type)</td><td>Which bank/cash account received the money</td></tr>
+      <tr><td>notes</td><td>text</td><td>nullable</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h3>expenses</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>date</td><td>date</td><td></td></tr>
+      <tr><td>description</td><td>text</td><td></td></tr>
+      <tr><td>expense_account_id</td><td>uuid (FK → accounts, expense type)</td><td>Which expense category (Equipment, Software, etc.)</td></tr>
+      <tr><td>amount</td><td>numeric(10,2)</td><td></td></tr>
+      <tr><td>payment_status</td><td>enum</td><td><code>paid</code> — cash/bank credited immediately · <code>payable</code> — creates Accounts Payable liability</td></tr>
+      <tr><td>payment_account_id</td><td>uuid (FK → accounts, asset type)</td><td>nullable — required when payment_status = paid</td></tr>
+      <tr><td>receipt_url</td><td>text</td><td>nullable</td></tr>
+      <tr><td>notes</td><td>text</td><td>nullable</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Client Portal Domain</h2>
+
+  <h3>booking_requests</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>client_id</td><td>uuid (FK → clients)</td><td></td></tr>
+      <tr><td>preferred_date</td><td>date</td><td>Client's preferred shoot date</td></tr>
+      <tr><td>time_slot</td><td>enum</td><td><code>morning</code> / <code>afternoon</code> / <code>evening</code> / <code>all_day</code></td></tr>
+      <tr><td>session_type_id</td><td>uuid (FK → session_types)</td><td>Chosen by client from admin-managed list</td></tr>
+      <tr><td>addons</td><td>text[]</td><td>Fixed list: album, thank_you_card, enlarged_photos. Empty array if none selected.</td></tr>
+      <tr><td>message</td><td>text</td><td>nullable</td></tr>
+      <tr><td>status</td><td>enum</td><td><code>pending</code> / <code>confirmed</code> / <code>rejected</code></td></tr>
+      <tr><td>admin_notes</td><td>text</td><td>nullable — confirmation details or rejection reason</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+      <tr><td>updated_at</td><td>timestamptz</td><td>Updated on every status change</td></tr>
+    </tbody>
+  </table>
+
+  <h2>System Tables</h2>
+
+  <h3>app_settings</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>integer</td><td>PK, always 1 — single-row config table</td></tr>
+      <tr><td>tax_enabled</td><td>boolean</td><td>default false</td></tr>
+      <tr><td>tax_rate</td><td>numeric(5,2)</td><td>default 0; percentage applied when tax enabled</td></tr>
+      <tr><td>pdf_invoices_enabled</td><td>boolean</td><td>default false</td></tr>
+      <tr><td>updated_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h3>notifications</h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>uuid</td><td>PK</td></tr>
+      <tr><td>user_id</td><td>uuid (FK → users)</td><td></td></tr>
+      <tr><td>type</td><td>text</td><td>appointment_reminder, birthday, invoice_overdue, booking_request_received, etc.</td></tr>
+      <tr><td>title</td><td>text</td><td></td></tr>
+      <tr><td>body</td><td>text</td><td></td></tr>
+      <tr><td>read</td><td>boolean</td><td>default false</td></tr>
+      <tr><td>sent_email</td><td>boolean</td><td>default false</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHAPTER 5 — ADMIN MODULE
+══════════════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 5</div>
+    <div class="chapter-title">Admin Module</div>
+  </div>
+
+  <h2>Visual Design</h2>
+  <p>Dark mode only. Desktop-first (primary use case). Complex views (Kanban, calendar, accounting tabs) optimized for desktop; mobile gets a usable but simplified fallback.</p>
+  <ul>
+    <li><strong>Base:</strong> Pure black (<code>#0c0c0c</code>) backgrounds, dark cards (<code>#1a1a1a</code>)</li>
+    <li><strong>Primary:</strong> Amber (<code>#f59e0b</code>) — buttons, active states, primary charts</li>
+    <li><strong>Accent:</strong> Emerald (<code>#10b981</code>) — positive metrics, success states</li>
+    <li><strong>Secondary accent:</strong> Orange (<code>#f97316</code>) — warnings, secondary highlights</li>
+    <li><strong>Typography:</strong> White (<code>#fafafa</code>) primary, muted gray (<code>#9ca3af</code>) secondary</li>
+  </ul>
+
+  <h2>Layout</h2>
+  <p><strong>Top nav:</strong> Logo left · nav links center (Dashboard, Appointments, Jobs, Clients, Accounting, Settings) · notification bell + profile avatar right.</p>
+  <p>Notification bell renders a popover dropdown (latest 5 + "View all" link). "View all" navigates to <code>/admin/notifications</code>. Clicking the profile avatar opens a dropdown with links to Profile and a logout action.</p>
+
+  <h2>Dashboard (<code>/admin</code>)</h2>
+  <ul>
+    <li>Revenue chart: monthly bars, filterable by year (Recharts)</li>
+    <li>Upcoming appointments: next 5 with client name, date, status badge</li>
+    <li>Stat cards: revenue this month, active jobs, total clients, unpaid invoices total</li>
+    <li>Job status donut chart: breakdown by stage</li>
+  </ul>
+
+  <h2>Appointments (<code>/admin/appointments</code>)</h2>
+  <ul>
+    <li>Calendar view (monthly/weekly toggle via <code>react-big-calendar</code>) + list view toggle</li>
+    <li>Create/edit modal: client, title, session type, starts_at, ends_at, location, status, add-ons, deposit paid + amount + account, contract signed, notes</li>
+    <li>Quick filters: by status, by type, by date range</li>
+    <li><strong>Requests tab:</strong> Booking requests from clients — table filtered by status (default: pending). Confirm action: opens pre-filled create-appointment modal. Reject action: modal with optional admin notes → triggers client email.</li>
+  </ul>
+
+  <h2>Jobs (<code>/admin/jobs</code>)</h2>
+  <ul>
+    <li>Kanban board: one column per job stage, ordered by position; column header color from job_stages.color</li>
+    <li>Drag-and-drop cards between columns via @dnd-kit/core</li>
+    <li>Job detail page: linked appointment summary, client info, stage timeline, notes, linked invoice, delivery URL field</li>
+    <li>Create job from appointment (one click) or standalone</li>
+    <li><strong>Delivery URL:</strong> Paste external gallery link when photos are ready → client portal immediately shows "View Your Photos →" button → triggers "photos ready" email to client</li>
+  </ul>
+
+  <h2>Clients (<code>/admin/clients</code>)</h2>
+  <ul>
+    <li>Searchable table: filter by tag, name</li>
+    <li>Client detail: contact info, tags, job history, total spent (sum of posted journal lines on revenue accounts for this client), birthday, notes</li>
+    <li>Inline tag management</li>
+    <li><strong>Portal account creation:</strong> Create-client form includes "Portal Access" section. On submit, FastAPI creates <code>users</code> and <code>clients</code> rows atomically; client receives email with login credentials.</li>
+    <li><strong>Account deactivation:</strong> "Deactivate portal access" toggle on client detail (shown only when <code>clients.user_id</code> is set). Sets <code>users.is_active = false</code> — client immediately blocked (403). Confirmation dialog shown before deactivating. Admin can reactivate at any time.</li>
+  </ul>
+
+  <h2>Profile (<code>/admin/profile</code>)</h2>
+  <p>Accessible via the top-nav avatar dropdown.</p>
+  <ul>
+    <li><strong>Avatar upload:</strong> File picker → FastAPI receives file → Pillow resizes to 256×256, converts to WebP → uploaded to Supabase Storage (<code>avatars/{user_id}.webp</code>, overwrites) → <code>users.avatar_url</code> updated → React Query cache invalidated → avatar refreshes everywhere</li>
+    <li><strong>Edit info:</strong> Full name (required), email (requires current password confirmation)</li>
+    <li><strong>Change password:</strong> Current password + new + confirm. Current password validated server-side before update.</li>
+    <li><strong>Biometric devices:</strong> List of registered devices (name + date) with "Remove" per device and "Add this device" button for current device</li>
+  </ul>
+
+  <h2>Settings (<code>/admin/settings</code>)</h2>
+  <ul>
+    <li><strong>Work Stages:</strong> Add, rename, recolor, drag-and-drop reorder, toggle <code>is_terminal</code>, delete (blocked if jobs assigned)</li>
+    <li><strong>Session Types:</strong> Add, rename, delete (blocked if referenced by appointments or booking requests)</li>
+    <li><strong>Tax:</strong> Toggle enable/disable. When enabled: set default tax rate (%). When disabled: tax field hidden on forms, Tax Summary report hidden.</li>
+    <li><strong>PDF Invoices:</strong> Toggle enable/disable. When enabled: "Download PDF" button appears on invoice detail view.</li>
+    <li><strong>Chart of Accounts:</strong> Add new accounts, manage existing (see Accounting chapter)</li>
+  </ul>
+
+  <h2>Notifications (<code>/admin/notifications</code>)</h2>
+  <ul>
+    <li>Bell icon with unread count badge. Popover dropdown: latest 5 + "View all" link.</li>
+    <li>Full page: all history, mark as read, filter by type</li>
+    <li><strong>Scheduled (APScheduler, daily 08:00 UTC):</strong> appointment reminders (24h before starts_at), birthday alerts (day-of), invoice overdue (1 day after due_date)</li>
+    <li><strong>Event-driven (synchronous, FastAPI handlers):</strong> booking_request_received — when client submits a booking request</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHAPTER 6 — ACCOUNTING MODULE
+══════════════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 6</div>
+    <div class="chapter-title">Accounting Module</div>
+  </div>
+
+  <p>Hybrid double-entry bookkeeping system. Business events auto-generate draft journal entries for admin review. Nothing posts silently. Manual journal entry form covers edge cases. All reports generated from posted entries only.</p>
+
+  <h2>Chart of Accounts — Pre-seeded (19 Accounts)</h2>
+  <p>Seeded on first run. Admin can rename any account and add new ones. System accounts (<code>is_system = true</code>) cannot be deleted or archived.</p>
+
+  <h4>Assets — Normal balance: Debit</h4>
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>System</th></tr></thead>
+    <tbody class="acct-asset">
+      <tr><td>1000</td><td>Cash on Hand</td><td>✓</td></tr>
+      <tr><td>1010</td><td>Business Bank Account</td><td>✓</td></tr>
+      <tr><td>1020</td><td>Investment Account</td><td>✓</td></tr>
+      <tr><td>1100</td><td>Accounts Receivable</td><td>✓</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Liabilities — Normal balance: Credit</h4>
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>System</th></tr></thead>
+    <tbody class="acct-liability">
+      <tr><td>2000</td><td>Accounts Payable</td><td>✓</td></tr>
+      <tr><td>2100</td><td>Loan Payable</td><td>✓</td></tr>
+      <tr><td>2200</td><td>Deferred Revenue</td><td>✓</td></tr>
+      <tr><td>2300</td><td>Tax Payable</td><td>✓ — seeded always; hidden in UI when tax_enabled = false</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Equity — Normal balance: Credit (except Owner's Drawings)</h4>
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>System</th><th>Normal Balance</th></tr></thead>
+    <tbody class="acct-equity">
+      <tr><td>3000</td><td>Owner's Capital</td><td>✓</td><td>Credit</td></tr>
+      <tr><td>3100</td><td>Owner's Drawings</td><td>✓</td><td>Debit (contra-equity)</td></tr>
+      <tr><td>3200</td><td>Retained Earnings</td><td>✓</td><td>Credit</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Revenue — Normal balance: Credit</h4>
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>System</th></tr></thead>
+    <tbody class="acct-revenue">
+      <tr><td>4000</td><td>Session Fees</td><td>✓ — default revenue account for invoice items</td></tr>
+      <tr><td>4100</td><td>Print Sales</td><td>—</td></tr>
+      <tr><td>4200</td><td>Album Sales</td><td>—</td></tr>
+      <tr><td>4300</td><td>Other Income</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Expenses — Normal balance: Debit</h4>
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>System</th></tr></thead>
+    <tbody class="acct-expense">
+      <tr><td>5000</td><td>Equipment</td><td>—</td></tr>
+      <tr><td>5100</td><td>Software &amp; Subscriptions</td><td>—</td></tr>
+      <tr><td>5200</td><td>Travel &amp; Transport</td><td>—</td></tr>
+      <tr><td>5300</td><td>Print &amp; Production</td><td>—</td></tr>
+      <tr><td>5400</td><td>Marketing &amp; Advertising</td><td>—</td></tr>
+      <tr><td>5500</td><td>Interest Expense</td><td>✓</td></tr>
+      <tr><td>5600</td><td>Other Expenses</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Automation Rules</h2>
+  <p>Every business event generates a <strong>draft</strong> journal entry. The admin must explicitly post each entry. Nothing posts silently.</p>
+  <table>
+    <thead><tr><th>Trigger</th><th>Auto-generated Draft Entry</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Invoice status → sent</td>
+        <td>Dr Accounts Receivable (total) · Cr [revenue account per invoice_items, defaults to Session Fees] (subtotal − discount) · Cr Tax Payable (tax). Tax Payable line omitted when tax = 0.</td>
+      </tr>
+      <tr>
+        <td>Payment recorded (invoice_payments created)</td>
+        <td>Dr [payment.account_id] (amount) · Cr Accounts Receivable (amount). Fires for every payment: partial, full, or deposit catch-up.</td>
+      </tr>
+      <tr>
+        <td>Deposit received (appointments.deposit_paid → true)</td>
+        <td>Dr [deposit_account_id, defaults to 1010] (deposit_amount) · Cr Deferred Revenue (deposit_amount). Only fires if deposit_amount > 0.</td>
+      </tr>
+      <tr>
+        <td>Invoice created from appointment with posted deposit</td>
+        <td>Dr Deferred Revenue (deposit_amount) · Cr Accounts Receivable (deposit_amount). Also creates invoice_payments record (amount = deposit_amount, notes = "Deposit applied") to keep balance_due in sync.</td>
+      </tr>
+      <tr>
+        <td>Expense created (payment_status = paid)</td>
+        <td>Dr [expense_account_id] (amount) · Cr [payment_account_id] (amount)</td>
+      </tr>
+      <tr>
+        <td>Expense created (payment_status = payable)</td>
+        <td>Dr [expense_account_id] (amount) · Cr Accounts Payable (amount)</td>
+      </tr>
+      <tr>
+        <td>Expense paid (payable → paid)</td>
+        <td>Dr Accounts Payable (amount) · Cr [admin selects: Business Bank Account / Cash on Hand] (amount)</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout callout-blue">
+    <p><strong>Manual entry only (no automation):</strong> Loan repayments · Owner drawings · Owner capital injections · Investment account movements · Depreciation · End-of-year retained earnings transfer · Corrections and adjustments</p>
+  </div>
+
+  <h2>Journal Entry Review Flow</h2>
+  <ol>
+    <li>Admin triggers a business event → a <strong>slide-over panel</strong> opens showing the auto-generated draft</li>
+    <li>Panel shows: date (editable, admin can backdate), description (editable), reference link, debit/credit lines table, balance indicator (<code>Debits: €X · Credits: €Y · Difference: €0.00</code> — red if non-zero)</li>
+    <li>Admin can edit any line, add new lines, remove non-mandatory lines</li>
+    <li><strong>"Post Entry"</strong> — validates balance, saves as posted, affects all reports immediately</li>
+    <li><strong>"Save as Draft"</strong> — saves without posting; remains visible in Journal tab and Overview banner</li>
+    <li><strong>"Discard"</strong> — cancels; originating event (expense, invoice status) is still committed. Admin can create entry manually later.</li>
+    <li><strong>Voiding a posted entry:</strong> confirmation → reversing entry created (all amounts swapped, dated today, void_of = original_id) → new corrected draft opens. If voided entry was a payment entry, linked invoice gets requires_review flag.</li>
+  </ol>
+
+  <h2>Six-Tab UI</h2>
+
+  <h3>Tab 1 — Overview</h3>
+  <p>Key metric cards: Total Revenue · Total Expenses · Net Profit · Cash Position (Bank + Cash on Hand) · Outstanding AR · Loan Balance. Revenue vs Expenses bar chart (Recharts, filterable by year). Recent posted entries (last 5). Draft entries alert banner when drafts exist.</p>
+
+  <h3>Tab 2 — Journal</h3>
+  <p>Paginated list of all journal entries (posted + draft + voided), ordered by date desc. Columns: date, description, reference badge, status badge, total debit, created by. Click any row to expand and see all debit/credit lines. Filters: status, date range, reference type, account. "New Journal Entry" button → blank manual entry slide-over. Void button on posted entries.</p>
+
+  <h3>Tab 3 — Accounts</h3>
+  <p>Chart of accounts grouped by type (Assets → Liabilities → Equity → Revenue → Expenses). Each row: code, name, current balance (from posted lines), normal balance indicator. Add account (code, name, type). Rename inline. Archive for non-system accounts. Click any account → Account Ledger: all posted lines ordered by date, opening/running/closing balances.</p>
+
+  <h3>Tab 4 — Invoices</h3>
+  <p>Existing invoice list. Marking an invoice as paid opens payment recording form (amount, date, account) → triggers auto-draft journal entry. Invoices with requires_review flag show warning badge with tooltip.</p>
+
+  <h3>Tab 5 — Expenses</h3>
+  <p>List of all expenses ordered by date desc. Columns: date, description, expense account, amount, payment status badge. Filters: expense account, payment status, date range. "Add Expense" form. "Mark as Paid" on payable expenses → triggers AP settlement draft. Click expense → detail + linked journal entry.</p>
+
+  <h3>Tab 6 — Reports</h3>
+  <p>All reports use <strong>posted entries only</strong>. Each has screen view + "Export CSV" button.</p>
+  <table>
+    <thead><tr><th>Report</th><th>Params</th><th>Output</th></tr></thead>
+    <tbody>
+      <tr><td>P&amp;L Statement</td><td>start_date, end_date</td><td>Revenue accounts minus Expense accounts; gross revenue, total expenses, net profit</td></tr>
+      <tr><td>Balance Sheet</td><td>as_of_date</td><td>Assets, Liabilities, Equity by account. Must satisfy: Assets = Liabilities + Equity</td></tr>
+      <tr><td>Trial Balance</td><td>as_of_date</td><td>All accounts with debit/credit/net columns. Total debits = total credits at bottom.</td></tr>
+      <tr><td>Cash Flow</td><td>start_date, end_date</td><td>Direct method: inflows/outflows in Cash on Hand + Business Bank Account. No operating/investing/financing split (flat, this iteration).</td></tr>
+      <tr><td>Tax Summary</td><td>start_date, end_date</td><td>Total income, deductible expenses, net profit. Returns 404 if tax_enabled = false.</td></tr>
+      <tr><td>AR Aging</td><td>as_of_date</td><td>Outstanding balances grouped by 0–30 / 31–60 / 61–90 / 90+ days overdue. Per-client breakdown. Invoices with null due_date → 0–30 bucket.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>FastAPI Endpoints</h2>
+
+  <h4>Accounts</h4>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>GET</td><td>/api/accounts</td><td>List accounts. Params: type, archived</td></tr>
+      <tr><td>POST</td><td>/api/accounts</td><td>Create new account</td></tr>
+      <tr><td>GET</td><td>/api/accounts/{id}</td><td>Get single account</td></tr>
+      <tr><td>PATCH</td><td>/api/accounts/{id}</td><td>Rename or archive</td></tr>
+      <tr><td>DELETE</td><td>/api/accounts/{id}</td><td>Delete (blocked if referenced in journal lines → 409)</td></tr>
+      <tr><td>GET</td><td>/api/accounts/{id}/ledger</td><td>Account ledger with running balance. Params: start_date, end_date</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Journal Entries</h4>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>GET</td><td>/api/journal-entries</td><td>List (paginated). Params: status, start_date, end_date, reference_type, account_id</td></tr>
+      <tr><td>GET</td><td>/api/journal-entries/{id}</td><td>Single entry with all lines embedded</td></tr>
+      <tr><td>POST</td><td>/api/journal-entries</td><td>Create manual draft entry (with lines)</td></tr>
+      <tr><td>POST</td><td>/api/journal-entries/preview</td><td>Generate auto-draft preview (unsaved) for review panel</td></tr>
+      <tr><td>PATCH</td><td>/api/journal-entries/{id}</td><td>Update draft entry. Blocked if status ≠ draft → 409</td></tr>
+      <tr><td>POST</td><td>/api/journal-entries/{id}/post</td><td>Post a draft (validates balance → 422 if unbalanced)</td></tr>
+      <tr><td>POST</td><td>/api/journal-entries/{id}/void</td><td>Void a posted entry. Creates reversing entry. → 409 if not posted</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Expenses &amp; Payments</h4>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>GET/POST</td><td>/api/expenses</td><td>List / create expense</td></tr>
+      <tr><td>GET/PATCH/DELETE</td><td>/api/expenses/{id}</td><td>Get / update / delete. PATCH and DELETE blocked if posted journal entry linked → 409</td></tr>
+      <tr><td>POST</td><td>/api/expenses/{id}/pay</td><td>Mark payable expense as paid → auto-draft AP settlement</td></tr>
+      <tr><td>GET</td><td>/api/invoices/{id}/payments</td><td>List all payments for an invoice</td></tr>
+      <tr><td>POST</td><td>/api/invoices/{id}/payments</td><td>Record payment → auto-draft journal entry preview</td></tr>
+      <tr><td>DELETE</td><td>/api/invoices/{id}/payments/{pid}</td><td>Delete payment. Blocked if posted journal entry linked → 409</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Error Handling</h2>
+  <table>
+    <thead><tr><th>Condition</th><th>Response</th></tr></thead>
+    <tbody>
+      <tr><td>Post unbalanced entry</td><td>422 — "Entry does not balance: debits €X, credits €Y"</td></tr>
+      <tr><td>Edit/delete posted entry</td><td>409 — "Cannot modify a posted entry. Void it first."</td></tr>
+      <tr><td>Void non-posted entry</td><td>409 — "Only posted entries can be voided."</td></tr>
+      <tr><td>Void a reversing entry (void_of IS NOT NULL)</td><td>409 — "Reversing entries cannot be voided. Create a manual correction entry instead."</td></tr>
+      <tr><td>Archive system account</td><td>403</td></tr>
+      <tr><td>Delete account with journal lines</td><td>409 — "Account is referenced in N journal lines."</td></tr>
+      <tr><td>Delete expense with posted entry</td><td>409 — "Cannot delete an expense with a posted journal entry. Void the entry first."</td></tr>
+      <tr><td>Delete payment with posted entry</td><td>409 — "Cannot delete a payment with a posted journal entry. Void the journal entry first."</td></tr>
+      <tr><td>Duplicate system auto-draft</td><td>200 — returns existing draft: "An existing draft was found for this event."</td></tr>
+      <tr><td>Deposit amount > invoice total</td><td>422 — "Deposit amount cannot exceed invoice total."</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHAPTER 7 — CLIENT PORTAL
+══════════════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 7</div>
+    <div class="chapter-title">Client Portal</div>
+  </div>
+
+  <p>The client portal is the private dashboard used by photography clients to track job progress, access delivered photos, and submit booking requests. Mobile-first; shares the FastAPI backend, PostgreSQL database, and JWT auth with the admin module.</p>
+
+  <div class="callout callout-amber">
+    <p><strong>Role enforcement:</strong> All client endpoints check <code>role == 'client'</code>. Clients can only read their own data — all queries filtered by <code>client_id</code> derived from the authenticated user. Attempts to access another client's resource return 403.</p>
+  </div>
+
+  <h2>Visual Style</h2>
+  <p>Dark base (<code>#0c0c0c</code>) with amber-tinted cards (<code>rgba(245,158,11,0.08)</code> background, <code>rgba(245,158,11,0.2)</code> border). Mobile-first responsive — base styles target <code>&lt; 768px</code>; tablet/desktop via <code>min-width</code> breakpoints.</p>
+  <p><strong>Layout:</strong> Top bar (logo left, client avatar right) + bottom navigation on mobile (Home · My Jobs · Bookings · Profile). Desktop: top nav with same links inline.</p>
+
+  <h2>Auth</h2>
+  <ul>
+    <li>Client accounts created by admin (not self-registration). Admin creates <code>users</code> and <code>clients</code> rows atomically; client receives email with login credentials.</li>
+    <li>Same JWT refresh flow as admin — <code>access_token</code> (15 min) + <code>refresh_token</code> (7 days). Axios interceptor handles silent refresh on 401. If refresh fails → redirected to <code>/client/login</code>.</li>
+    <li>Same password reset flow (shared endpoints). Link goes to <code>/client/reset-password?token=...</code>.</li>
+    <li>Same WebAuthn biometric flow — registration prompt after first password login via <code>/client/biometric/setup</code>. <code>GET /api/auth/webauthn/device-check</code> determines whether to show "Use Face ID / Fingerprint" button.</li>
+    <li>Deactivated account (<code>users.is_active = false</code>) → <code>403</code> — "Your account has been deactivated. Contact your photographer."</li>
+  </ul>
+
+  <h2>Dashboard (<code>/client</code>)</h2>
+  <ul>
+    <li><strong>Active job card:</strong> Most recent job where stage is not terminal. Shows job title, current stage + amber dot, progress bar. "You have X active jobs" link if more than one.</li>
+    <li><strong>Deposit status card:</strong> <code>appointments.deposit_paid</code> from linked appointment. Hidden if no linked appointment.</li>
+    <li><strong>Next appointment:</strong> Nearest future appointment — date, time slot, location.</li>
+    <li><strong>Book a New Session CTA:</strong> Amber button → <code>/client/bookings/new</code></li>
+  </ul>
+
+  <h2>My Jobs (<code>/client/jobs</code>)</h2>
+  <p>List of all jobs for the authenticated client, ordered by created_at desc. Each row: job title, session type, current stage badge, delivery link indicator. Tap → Job Detail.</p>
+
+  <h2>Job Detail (<code>/client/jobs/:id</code>)</h2>
+  <ul>
+    <li><strong>Progress timeline:</strong> All job stages ordered by position. Completed (position &lt; current) → emerald checkmark. Current → amber dot. Future → dimmed. Terminal stages labeled. Position-based (not history-based) — intentionally simplest approach.</li>
+    <li><strong>Gallery section:</strong> If <code>delivery_url</code> is set → "View Your Photos →" button (opens new tab). Else → "Your photos will appear here once delivered" placeholder.</li>
+    <li><strong>Deposit status:</strong> From linked appointment's deposit_paid. Hidden if no appointment linked.</li>
+  </ul>
+
+  <h2>Bookings (<code>/client/bookings</code>)</h2>
+  <p>List of all booking requests ordered by created_at desc. Columns: preferred date, time slot, session type, status badge. Pending → "Your request is being reviewed." Confirmed/rejected → shows admin_notes if present. "New Booking" button.</p>
+
+  <h2>New Booking (<code>/client/bookings/new</code>)</h2>
+  <ul>
+    <li>Session type: dropdown from <code>GET /api/session-types</code></li>
+    <li>Preferred date: date picker (future dates only)</li>
+    <li>Time slot: 2×2 tap grid — Morning / Afternoon / Evening / All Day</li>
+    <li>Add-ons: multi-select — Album / Thank You Card / Enlarged Photos (all optional)</li>
+    <li>Message: optional textarea</li>
+    <li>Submit → <code>POST /api/booking-requests</code> → status: pending → admin in-app notification + client confirmation email</li>
+  </ul>
+
+  <h2>Profile (<code>/client/profile</code>)</h2>
+  <ul>
+    <li><strong>Avatar upload:</strong> Same Pillow → WebP → Supabase Storage flow as admin. React Query cache invalidated → updates everywhere.</li>
+    <li><strong>Personal info form:</strong> Full name (required), phone, address, birthday, notes. Email and role are read-only.</li>
+    <li><strong>Biometric devices:</strong> List of registered devices (name + date) with "Remove" per device. "Add this device" button to register current device.</li>
+  </ul>
+
+  <h2>Client-Facing Emails</h2>
+  <p>All sent via Resend. Email send failures are logged server-side and do not crash the app.</p>
+  <table>
+    <thead><tr><th>Trigger</th><th>Recipient</th><th>Content</th></tr></thead>
+    <tbody>
+      <tr><td>Booking request submitted</td><td>Client</td><td>Confirmation that request was received + summary of request details</td></tr>
+      <tr><td>Booking confirmed</td><td>Client</td><td>Confirmation, preferred date, time slot, admin_notes if set, link to portal</td></tr>
+      <tr><td>Booking rejected</td><td>Client</td><td>Rejection notice, admin_notes (reason) if set, invitation to submit a new request</td></tr>
+      <tr><td>Job stage updated</td><td>Client</td><td>"Your [job title] has moved to [stage name]" + link to portal. If new stage is terminal and delivery_url is set, gallery link included.</td></tr>
+      <tr><td>Gallery link added (delivery_url set)</td><td>Client</td><td>"Your photos are ready" + gallery link. Sent when delivery_url changes from null to non-null, regardless of stage.</td></tr>
+      <tr><td>Account created by admin</td><td>Client</td><td>"Your account is ready" + login credentials + link to portal</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-blue" style="margin-top:6mm;">
+    <p><strong>Out of scope for client portal:</strong> Image upload pipeline (S3) — gallery is external link only · Client cancelling confirmed appointments · In-app notifications for clients (email only) · Payment/invoice management beyond deposit status · Client-to-admin messaging · Multiple simultaneous active jobs on dashboard (most recent shown; full list in My Jobs)</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHAPTER 8 — TESTING + CHAPTER 9 — OUT OF SCOPE
+══════════════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 8</div>
+    <div class="chapter-title">Testing Strategy</div>
+  </div>
+
+  <h2>Backend Unit Tests</h2>
+  <ul>
+    <li>Pydantic schema validation for all request/response models</li>
+    <li>Business logic helpers: invoice total computation, balance_due recalculation, computed fields</li>
+    <li>Accounting: balance invariant enforcement, auto-draft generation correctness per event type, report calculations (P&L totals, Balance Sheet Assets = Liabilities + Equity, Trial Balance sum check), revenue account mapping</li>
+  </ul>
+
+  <h2>Backend Integration Tests</h2>
+  <p>All run via <code>pytest</code> + <code>httpx</code> against a test PostgreSQL database — no DB mocks.</p>
+  <ul>
+    <li>FastAPI endpoints: auth (admin + client roles), appointments, jobs, clients, invoices, accounting</li>
+    <li>Auth middleware tested from authorized and unauthorized contexts</li>
+    <li>WebAuthn registration and authentication flows tested with <code>py_webauthn</code>'s test helpers (simulated authenticator)</li>
+    <li>Notification pipeline: APScheduler job logic tested with manually set starts_at values in the near past</li>
+    <li>Authorization: client must not access other clients' data or admin endpoints</li>
+    <li>Accounting full lifecycle: create draft → edit → post → void → re-draft → post</li>
+    <li>Each automation rule tested end-to-end. Idempotency: trigger same event twice → verify only one non-voided entry</li>
+    <li>Report integrity: Balance Sheet (Assets = Liabilities + Equity), Trial Balance (total debits = total credits)</li>
+  </ul>
+
+  <h2>Frontend Tests</h2>
+  <ul>
+    <li>Unit: Zod schema validation, data transformation helpers, debit/credit running total in review panel</li>
+    <li>Component: Key UI components with React Testing Library. Journal entry review panel (line editing, balance indicator update).</li>
+    <li>E2E (future): Login flow, create appointment, create job, booking request flow, job progress view, gallery link display</li>
+  </ul>
+
+  <div class="chapter-header" style="margin-top: 14mm;">
+    <div class="chapter-num">Chapter 9</div>
+    <div class="chapter-title">Out of Scope</div>
+  </div>
+
+  <p>The following are explicitly out of scope for this iteration. They may be revisited in future iterations.</p>
+
+  <h2>Application Features</h2>
+  <ul>
+    <li><strong>Image upload pipeline (AWS S3)</strong> — Job gallery is an external link only; avatar upload via Supabase Storage is in scope</li>
+    <li><strong>Subscriptions / billing</strong> — No payment processing for the photographer's own subscription</li>
+    <li><strong>Multi-user admin</strong> — Only one admin account for now</li>
+    <li><strong>Recurring appointments</strong> — Accepted YAGNI for a solo photographer's workflow</li>
+    <li><strong>Mobile app</strong> — Web only (client portal is mobile-first web)</li>
+    <li><strong>Online payment collection</strong> — No Stripe/PayPal; payments recorded manually by admin</li>
+    <li><strong>Calendar sync</strong> — No Google Calendar or iCal integration</li>
+    <li><strong>Data import</strong> — No CSV or third-party migration tool</li>
+    <li><strong>Contract / document generation</strong> — <code>contract_signed</code> is a boolean checkbox only; no PDF contracts or e-signatures</li>
+    <li><strong>Client cancelling appointments</strong> — Must contact admin directly</li>
+    <li><strong>In-app notifications for clients</strong> — Email only; no in-app bell for clients</li>
+    <li><strong>Client-to-admin messaging</strong></li>
+    <li><strong>Payment / invoice management for clients</strong> — Deposit status only; full invoice management is admin-only</li>
+  </ul>
+
+  <h2>Accounting</h2>
+  <ul>
+    <li><strong>Multi-currency support</strong></li>
+    <li><strong>Bank feed / reconciliation</strong> — No automatic import of bank transactions</li>
+    <li><strong>Depreciation schedules</strong> — Handled via manual journal entries</li>
+    <li><strong>Payroll</strong></li>
+    <li><strong>VAT / GST return filing</strong> — Tax Summary is a reference report only, not a filing tool</li>
+    <li><strong>Cash Flow activity classification</strong> — Flat inflows/outflows only; no operating/investing/financing split</li>
+    <li><strong>Budgeting and forecasting</strong></li>
+    <li><strong>Bulk draft dismissal</strong></li>
+    <li><strong>Audit log</strong> — Beyond void/reverse trail</li>
+  </ul>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHAPTER 10 — DEPLOYMENT
+══════════════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 10</div>
+    <div class="chapter-title">Deployment</div>
+  </div>
+
+  <h2>Hosting Architecture</h2>
+  <div class="stack-grid">
+    <div class="stack-card">
+      <div class="stack-card-label">Frontend</div>
+      <div class="stack-card-value">Hostinger</div>
+      <div class="stack-card-note">Static HTML/JS/CSS — React Vite production build uploaded via FTP or File Manager</div>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-label">Backend</div>
+      <div class="stack-card-value">TBD — see requirements below</div>
+      <div class="stack-card-note">FastAPI Python app. Provider not yet chosen — must meet all requirements listed below.</div>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-label">Database</div>
+      <div class="stack-card-value">Supabase</div>
+      <div class="stack-card-note">PostgreSQL + Storage — already chosen</div>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-label">Email</div>
+      <div class="stack-card-value">Resend</div>
+      <div class="stack-card-note">Transactional email for password reset and booking notifications</div>
+    </div>
+  </div>
+
+  <h3>Backend Provider Requirements</h3>
+  <p>The backend provider is not yet decided. Any provider chosen must satisfy all of the following:</p>
+  <table>
+    <thead><tr><th>Requirement</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Python / FastAPI support</td><td>Backend is FastAPI (Python 3.11)</td></tr>
+      <tr><td><strong>Always-on / no sleep</strong></td><td>APScheduler runs inside the FastAPI process. If the server sleeps, all scheduled jobs stop firing silently — no reminders, no alerts.</td></tr>
+      <tr><td><strong>HTTPS</strong></td><td>Required for WebAuthn biometric login. Plain HTTP will cause biometric registration and login to fail entirely.</td></tr>
+      <tr><td>Persistent process (not serverless)</td><td>APScheduler is not a cron job — it lives inside the app process. AWS Lambda, Cloudflare Workers, and Vercel do not work.</td></tr>
+      <tr><td>Environment variable / secrets management</td><td>11 backend env vars including JWT secret and API keys</td></tr>
+      <tr><td>Outbound HTTP</td><td>FastAPI calls Resend (email) and Supabase (storage) — outbound HTTP must not be blocked</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Candidate Providers (free tier)</h3>
+  <table>
+    <thead><tr><th>Provider</th><th>Always-on</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Fly.io</td><td>✓ (with config)</td><td>Best free option. CLI-based deploy. Requires <code>auto_stop_machines = false</code> in fly.toml.</td></tr>
+      <tr><td>Koyeb</td><td>✓</td><td>Simpler setup. 0.1 vCPU (very limited), 512MB RAM. 1 service on free tier.</td></tr>
+      <tr><td>Railway</td><td>✓</td><td>$5 free credit/month then pay-as-you-go. Simplest deploy experience.</td></tr>
+      <tr><td>Render</td><td>✗</td><td>Free tier sleeps after 15 min — APScheduler stops. Paid plan ($7/mo) adds always-on.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Environment Variables</h2>
+
+  <h3>Frontend (.env.production)</h3>
+  <table class="no-break">
+    <thead>
+      <tr><th>Variable</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>VITE_API_URL</td><td>Full URL of the FastAPI backend (e.g. <code>https://wecapture4u.fly.dev</code>)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Backend (.env / Fly.io secrets)</h3>
+  <table>
+    <thead>
+      <tr><th>Variable</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>DATABASE_URL</td><td>Supabase PostgreSQL connection string (pooled, port 6543)</td></tr>
+      <tr><td>JWT_SECRET_KEY</td><td>Min 32-char random secret for signing JWTs. Generate: <code>python -c "import secrets; print(secrets.token_hex(32))"</code></td></tr>
+      <tr><td>JWT_ALGORITHM</td><td><code>HS256</code></td></tr>
+      <tr><td>ACCESS_TOKEN_EXPIRE_MINUTES</td><td><code>15</code></td></tr>
+      <tr><td>REFRESH_TOKEN_EXPIRE_DAYS</td><td><code>7</code></td></tr>
+      <tr><td>RESEND_API_KEY</td><td>Resend API key</td></tr>
+      <tr><td>RESEND_FROM_EMAIL</td><td>Verified sender address (e.g. <code>noreply@yourdomain.com</code>)</td></tr>
+      <tr><td>SUPABASE_URL</td><td>Supabase project URL (for Storage access via supabase-py)</td></tr>
+      <tr><td>SUPABASE_SERVICE_KEY</td><td>Supabase service role key — not the anon key. Required for Storage uploads bypassing RLS</td></tr>
+      <tr><td>ALLOWED_ORIGINS</td><td>Comma-separated CORS origins (e.g. <code>https://www.yourdomain.com,https://yourdomain.com,http://localhost:5173</code>)</td></tr>
+      <tr><td>ENVIRONMENT</td><td><code>production</code> or <code>development</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>CORS Configuration</h2>
+  <p>FastAPI CORS middleware. Origins loaded from <code>ALLOWED_ORIGINS</code> env var (split on comma). In development, also allow <code>http://localhost:5173</code>.</p>
+  <ul>
+    <li><strong>allow_origins:</strong> list parsed from env var</li>
+    <li><strong>allow_credentials:</strong> <code>True</code> — required for Authorization header</li>
+    <li><strong>allow_methods:</strong> <code>["*"]</code></li>
+    <li><strong>allow_headers:</strong> <code>["*"]</code></li>
+  </ul>
+  <div class="callout callout-red">
+    <p><strong>Never hardcode origins.</strong> If <code>ALLOWED_ORIGINS</code> is missing in production, FastAPI must raise a startup error — not silently allow all origins. A misconfigured CORS policy is a security vulnerability.</p>
+  </div>
+
+  <h3>Health Check Endpoint</h3>
+  <p>FastAPI must expose <code>GET /api/health</code> → returns <code>{"status": "ok"}</code> with HTTP 200. No auth required. Used by Fly.io health checks to determine if the machine is ready to serve traffic.</p>
+
+  <h2>Frontend Build &amp; Deploy (Hostinger)</h2>
+  <ol>
+    <li>Set <code>VITE_API_URL</code> in <code>.env.production</code> to the Fly.io backend URL.</li>
+    <li>Run <code>npm run build</code> → produces <code>dist/</code> folder.</li>
+    <li>Upload contents of <code>dist/</code> to Hostinger via FTP or File Manager into <code>public_html/</code>.</li>
+    <li>Add <code>.htaccess</code> in <code>public_html/</code> for React Router SPA support:</li>
+  </ol>
+  <pre><code>Options -MultiViews
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.html [QR,L]</code></pre>
+  <div class="callout callout-red">
+    <p><strong>LAUNCH BLOCKER — <code>.htaccess</code> is required.</strong> Without it, Hostinger's Apache server returns a <code>404</code> for any URL that isn't the root. Refreshing <code>/client/jobs/123</code> or navigating directly to <code>/admin/accounting</code> will show a blank error page — the app will appear completely broken to users. This file must be present in <code>public_html/</code> alongside <code>index.html</code> before going live.</p>
+  </div>
+  <p>HTTPS: Hostinger provides free SSL via Let's Encrypt — enable in Hostinger panel under <strong>SSL/TLS</strong>.</p>
+
+  <div class="callout callout-red">
+    <p><strong>WebAuthn requires HTTPS.</strong> Biometric login (WebAuthn / FIDO2) will not function on plain HTTP. Both the frontend (Hostinger) and backend (Fly.io) must be served over HTTPS before testing biometric registration or authentication in production.</p>
+  </div>
+
+  <h2>Backend Deploy (Fly.io)</h2>
+
+  <h3>Initial Setup</h3>
+  <ol>
+    <li>Install Fly CLI: <code>brew install flyctl</code> (macOS)</li>
+    <li>Login: <code>flyctl auth login</code></li>
+    <li>From project root: <code>flyctl launch</code> → select region, name the app (e.g. <code>wecapture4u-api</code>). <strong>Do not</strong> create a Fly Postgres — using Supabase.</li>
+    <li>Set secrets: <code>flyctl secrets set DATABASE_URL="..." JWT_SECRET_KEY="..." RESEND_API_KEY="..." ...</code> (all env vars above)</li>
+    <li>Deploy: <code>flyctl deploy</code></li>
+    <li>Check logs: <code>flyctl logs</code></li>
+  </ol>
+
+  <h4>Dockerfile for FastAPI</h4>
+  <pre><code>FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+
+  <h4>fly.toml Template</h4>
+  <pre><code>app = "wecapture4u-api"
+primary_region = "fra"  # Frankfurt — close to Europe
+
+[build]
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1</code></pre>
+
+  <div class="callout callout-red">
+    <p><strong>LAUNCH BLOCKER — <code>auto_stop_machines = false</code> is required.</strong> Without this, Fly.io puts the machine to sleep after inactivity. APScheduler runs inside the FastAPI process — when the machine sleeps, the scheduler stops entirely. Appointment reminders, birthday alerts, and invoice overdue notifications will silently never fire. Set <code>auto_stop_machines = false</code> and <code>min_machines_running = 1</code> in <code>fly.toml</code> before the first deploy and never change them.</p>
+  </div>
+
+  <h3>Database Migrations</h3>
+  <p>Supabase migrations run manually before deploy:</p>
+  <ol>
+    <li>Write migration SQL files in <code>migrations/</code> folder (numbered: <code>001_initial_schema.sql</code>, <code>002_add_webauthn.sql</code>, etc.)</li>
+    <li>Run against Supabase using the Supabase SQL editor or <code>psql</code> with the connection string.</li>
+    <li>Always run migrations <strong>before</strong> deploying new backend code that depends on schema changes.</li>
+  </ol>
+
+  <h2>Pre-Launch Checklist</h2>
+  <table class="no-break">
+    <thead>
+      <tr><th>Item</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>VITE_API_URL in .env.production</td><td>Must point to the correct Fly.io URL before <code>npm run build</code></td></tr>
+      <tr><td>All Fly.io secrets set</td><td>Run <code>flyctl secrets list</code> to verify keys exist (values are not shown)</td></tr>
+      <tr><td>ALLOWED_ORIGINS includes exact domain</td><td>Include both <code>www</code> and non-<code>www</code> variants if both are in use</td></tr>
+      <tr><td>HTTPS enabled on Hostinger</td><td>Enable Let's Encrypt SSL in Hostinger panel under SSL/TLS</td></tr>
+      <tr><td>fly.toml always-on settings</td><td><code>auto_stop_machines = false</code>, <code>min_machines_running = 1</code></td></tr>
+      <tr><td>Health check passes</td><td><code>curl https://wecapture4u.fly.dev/api/health</code> returns 200</td></tr>
+      <tr><td>Migrations applied</td><td>Run all SQL migrations before deploying backend code</td></tr>
+      <tr><td>Supabase Storage bucket</td><td><code>avatars</code> bucket created with public read access</td></tr>
+      <tr><td>End-to-end auth test</td><td>Test password login, biometric registration, and password reset in production</td></tr>
+      <tr><td>CORS test</td><td>Submit a booking request from client portal to verify CORS is correctly configured</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Out of Scope (Deployment)</h2>
+  <ul>
+    <li><strong>CI/CD pipeline</strong> (GitHub Actions) — manual deploys for now</li>
+    <li><strong>Staging environment</strong> — single production environment for this iteration</li>
+    <li><strong>Custom domain for backend</strong> — Fly.io subdomain (<code>wecapture4u.fly.dev</code>) is sufficient for now</li>
+    <li><strong>Database backups</strong> — relying on Supabase's built-in point-in-time recovery</li>
+    <li><strong>CDN for static assets</strong> — beyond what Hostinger provides out of the box</li>
+  </ul>
+</div>
+</div>
+
+</body>
+</html>
