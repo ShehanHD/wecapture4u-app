@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, Numeric, ForeignKey, Date, DateTime
+from sqlalchemy import Column, String, Boolean, Numeric, ForeignKey, Date, DateTime, Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -13,7 +13,7 @@ class Invoice(Base):
     job_id = Column(UUID(as_uuid=True), ForeignKey("jobs.id", ondelete="RESTRICT"), nullable=True)
     client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id", ondelete="RESTRICT"), nullable=False)
     # status: 'draft' | 'sent' | 'partially_paid' | 'paid' — enforced by migration enum
-    status = Column(String, nullable=False, server_default="draft")
+    status = Column(SAEnum('draft', 'sent', 'partially_paid', 'paid', name='invoice_status', create_type=False), nullable=False, server_default="draft")
     subtotal = Column(Numeric(10, 2), nullable=False, server_default="0")
     discount = Column(Numeric(10, 2), nullable=False, server_default="0")
     tax = Column(Numeric(10, 2), nullable=False, server_default="0")

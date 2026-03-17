@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, Boolean, Numeric, ForeignKey, DateTime
+from sqlalchemy import Column, String, Text, Boolean, Numeric, ForeignKey, DateTime, Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -17,7 +17,7 @@ class Appointment(Base):
     ends_at = Column(DateTime(timezone=True), nullable=True)
     location = Column(String, nullable=True)
     # status: 'pending' | 'confirmed' | 'cancelled' — PostgreSQL enum enforced by migration
-    status = Column(String, nullable=False, server_default="pending")
+    status = Column(SAEnum('pending', 'confirmed', 'cancelled', name='appointment_status', create_type=False), nullable=False, server_default="pending")
     # addons: fixed list ['album', 'thank_you_card', 'enlarged_photos']
     addons = Column(ARRAY(Text), nullable=False, server_default="{}")
     deposit_paid = Column(Boolean, nullable=False, server_default="false")

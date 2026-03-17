@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Annotated
+import uuid
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -9,6 +10,11 @@ from database import get_db
 from dependencies.auth import require_admin
 from models.admin import AppSettings
 from schemas.portfolio import AboutSettingsOut, AboutSettingsUpdate
+from schemas.settings import (
+    AppSettingsOut, AppSettingsUpdate,
+    SessionTypeCreate, SessionTypeUpdate, SessionTypeOut,
+)
+from services import settings as settings_svc
 
 router = APIRouter(prefix="/api", tags=["settings"])
 DbDep = Annotated[AsyncSession, Depends(get_db)]
@@ -40,5 +46,45 @@ async def update_about_settings(db: DbDep, admin: AdminDep, data: AboutSettingsU
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(settings, field, value)
-    await db.commit()
+    await db.flush()
     return await get_about_settings(db, admin)
+
+
+# --- App Settings (tax, PDF invoices) ---
+
+@router.get("/settings", response_model=AppSettingsOut)
+async def get_settings(db: DbDep, _: AdminDep):
+    return await settings_svc.get_app_settings(db)
+
+
+@router.patch("/settings", response_model=AppSettingsOut)
+async def update_settings(body: AppSettingsUpdate, db: DbDep, _: AdminDep):
+    return await settings_svc.update_app_settings(
+        db,
+        tax_enabled=body.tax_enabled,
+        tax_rate=body.tax_rate,
+        pdf_invoices_enabled=body.pdf_invoices_enabled,
+    )
+
+
+# --- Session Types ---
+
+@router.get("/session-types", response_model=list[SessionTypeOut])
+async def list_session_types(db: DbDep):
+    # Public — no auth required (used by client booking form)
+    return await settings_svc.list_session_types(db)
+
+
+@router.post("/session-types", response_model=SessionTypeOut, status_code=201)
+async def create_session_type(body: SessionTypeCreate, db: DbDep, _: AdminDep):
+    return await settings_svc.create_session_type(db, name=body.name)
+
+
+@router.patch("/session-types/{id}", response_model=SessionTypeOut)
+async def update_session_type(id: uuid.UUID, body: SessionTypeUpdate, db: DbDep, _: AdminDep):
+    return await settings_svc.update_session_type(db, id=id, name=body.name)
+
+
+@router.delete("/session-types/{id}", status_code=204)
+async def delete_session_type(id: uuid.UUID, db: DbDep, _: AdminDep):
+    await settings_svc.delete_session_type(db, id=id)

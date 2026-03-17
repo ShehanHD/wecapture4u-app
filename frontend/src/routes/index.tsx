@@ -12,6 +12,10 @@ import AdminPortfolio from '@/pages/admin/Portfolio'
 import { Dashboard } from '@/pages/admin/Dashboard'
 import { Appointments } from '@/pages/admin/Appointments'
 import { Accounting } from '@/pages/admin/Accounting'
+import { Jobs } from '@/pages/admin/Jobs'
+import { JobDetail } from '@/pages/admin/JobDetail'
+import { Clients } from '@/pages/admin/Clients'
+import { ClientDetail } from '@/pages/admin/ClientDetail'
 
 export const router = createBrowserRouter([
   // Public routes
@@ -33,10 +37,10 @@ export const router = createBrowserRouter([
           { index: true, element: <Dashboard /> },
           { path: 'appointments', element: <Appointments /> },
           { path: 'portfolio', element: <AdminPortfolio /> },
-          { path: 'jobs', element: <div className="text-white">Jobs — Plan 6</div> },
-          { path: 'jobs/:id', element: <div className="text-white">Job Detail — Plan 6</div> },
-          { path: 'clients', element: <div className="text-white">Clients — Plan 6</div> },
-          { path: 'clients/:id', element: <div className="text-white">Client Detail — Plan 6</div> },
+          { path: 'jobs', element: <Jobs /> },
+          { path: 'jobs/:id', element: <JobDetail /> },
+          { path: 'clients', element: <Clients /> },
+          { path: 'clients/:id', element: <ClientDetail /> },
           { path: 'accounting', element: <Accounting /> },
           { path: 'notifications', element: <div className="text-white">Notifications — Plan 7</div> },
           { path: 'settings', element: <div className="text-white">Settings — Plan 7</div> },

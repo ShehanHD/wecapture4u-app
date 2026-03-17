@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -43,7 +43,7 @@ export function Dashboard() {
     queryFn: fetchDashboardStats,
   })
 
-  const now = new Date().toISOString()
+  const now = useMemo(() => new Date().toISOString(), [])
   const { data: appointments = [] } = useAppointments({ start_date: now })
   const upcoming = appointments
     .filter(a => a.status !== 'cancelled')
