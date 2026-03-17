@@ -37,7 +37,6 @@ class InvoiceCreate(BaseModel):
     status: str = "draft"
     discount: Decimal = Decimal("0")
     tax: Decimal = Decimal("0")
-    deposit_amount: Decimal = Decimal("0")
     due_date: Optional[date] = None
 
 
@@ -45,8 +44,25 @@ class InvoiceUpdate(BaseModel):
     status: Optional[str] = None
     discount: Optional[Decimal] = None
     tax: Optional[Decimal] = None
-    deposit_amount: Optional[Decimal] = None
     due_date: Optional[date] = None
+
+
+class PaymentCreate(BaseModel):
+    amount: Decimal
+    paid_at: date
+    method: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class PaymentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    invoice_id: uuid.UUID
+    amount: Decimal
+    paid_at: date
+    method: Optional[str]
+    notes: Optional[str]
+    created_at: datetime
 
 
 class InvoiceOut(BaseModel):
@@ -60,7 +76,6 @@ class InvoiceOut(BaseModel):
     discount: Decimal
     tax: Decimal
     total: Decimal
-    deposit_amount: Decimal
     balance_due: Decimal
     requires_review: bool
     due_date: Optional[date]
@@ -68,3 +83,4 @@ class InvoiceOut(BaseModel):
     paid_at: Optional[datetime]
     created_at: datetime
     items: list[InvoiceItemOut] = []
+    payments: list[PaymentOut] = []

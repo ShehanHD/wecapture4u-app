@@ -9,6 +9,7 @@ from dependencies.auth import require_admin
 from schemas.invoices import (
     InvoiceCreate, InvoiceUpdate, InvoiceOut,
     InvoiceItemCreate, InvoiceItemUpdate, InvoiceItemOut,
+    PaymentCreate, PaymentOut,
 )
 from services import invoices as svc
 
@@ -36,7 +37,6 @@ async def create_invoice(body: InvoiceCreate, db: DB, _: Admin):
         status=body.status,
         discount=body.discount,
         tax=body.tax,
-        deposit_amount=body.deposit_amount,
         due_date=body.due_date,
     )
 
@@ -53,7 +53,6 @@ async def update_invoice(id: uuid.UUID, body: InvoiceUpdate, db: DB, _: Admin):
         status=body.status,
         discount=body.discount,
         tax=body.tax,
-        deposit_amount=body.deposit_amount,
         due_date=body.due_date,
     )
 
@@ -91,3 +90,15 @@ async def update_invoice_item(
 @router.delete("/invoices/{id}/items/{item_id}", status_code=204)
 async def delete_invoice_item(id: uuid.UUID, item_id: uuid.UUID, db: DB, _: Admin):
     await svc.delete_invoice_item(db, invoice_id=id, item_id=item_id)
+
+
+@router.post("/invoices/{id}/payments", response_model=PaymentOut, status_code=201)
+async def add_payment(id: uuid.UUID, body: PaymentCreate, db: DB, _: Admin):
+    return await svc.add_payment(db, invoice_id=id, amount=body.amount, paid_at=body.paid_at, method=body.method, notes=body.notes)
+
+
+@router.delete("/invoices/{id}/payments/{pid}", status_code=204)
+async def delete_payment(id: uuid.UUID, pid: uuid.UUID, db: DB, _: Admin):
+    await svc.delete_payment(db, invoice_id=id, payment_id=pid)
+
+

@@ -7,7 +7,8 @@ from fastapi import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.invoice import Invoice, InvoiceItem
+from datetime import datetime, timezone
+from models.invoice import Invoice, InvoiceItem, InvoicePayment
 
 logger = logging.getLogger(__name__)
 
@@ -29,26 +30,16 @@ def compute_invoice_totals(
 
 
 async def _payments_sum(db: AsyncSession, invoice_id: uuid.UUID) -> Decimal:
-    """Sum all non-voided invoice_payments for this invoice.
-    Returns 0 until Plan 8 adds payment recording."""
-    try:
-        from sqlalchemy import text
-        async with db.begin_nested():
-            result = await db.execute(
-                text(
-                    "SELECT COALESCE(SUM(amount), 0) FROM invoice_payments "
-                    "WHERE invoice_id = :id AND voided_at IS NULL"
-                ),
-                {"id": str(invoice_id)},
-            )
-            return Decimal(str(result.scalar()))
-    except Exception:
-        return Decimal("0")
+    result = await db.execute(
+        select(func.coalesce(func.sum(InvoicePayment.amount), Decimal("0")))
+        .where(InvoicePayment.invoice_id == invoice_id)
+    )
+    return Decimal(str(result.scalar_one())).quantize(Decimal("0.01"))
 
 
 async def _recalculate_and_persist(db: AsyncSession, invoice: Invoice) -> None:
     """Recompute subtotal, total, balance_due from items and persist."""
-    await db.refresh(invoice, ["items"])
+    await db.refresh(invoice, ["items", "payments"])
     payments_sum = await _payments_sum(db, invoice.id)
     subtotal, total, balance_due = compute_invoice_totals(
         items=invoice.items,
@@ -87,7 +78,7 @@ async def get_invoice(db: AsyncSession, *, id: uuid.UUID) -> Invoice:
     invoice = result.scalar_one_or_none()
     if invoice is None:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    await db.refresh(invoice, ["items"])
+    await db.refresh(invoice, ["items", "payments"])
     return invoice
 
 
@@ -99,7 +90,6 @@ async def create_invoice(
     status: str = "draft",
     discount: Decimal = Decimal("0"),
     tax: Decimal = Decimal("0"),
-    deposit_amount: Decimal = Decimal("0"),
     due_date=None,
 ) -> Invoice:
     invoice = Invoice(
@@ -110,13 +100,12 @@ async def create_invoice(
         discount=discount.quantize(Decimal("0.01")) if discount else Decimal("0.00"),
         tax=tax.quantize(Decimal("0.01")) if tax else Decimal("0.00"),
         total=Decimal("0.00"),
-        deposit_amount=deposit_amount.quantize(Decimal("0.01")) if deposit_amount else Decimal("0.00"),
         balance_due=Decimal("0.00"),
         due_date=due_date,
     )
     db.add(invoice)
     await db.flush()
-    await db.refresh(invoice, ["items"])
+    await db.refresh(invoice, ["items", "payments"])
     return invoice
 
 
@@ -127,7 +116,6 @@ async def update_invoice(
     status: Optional[str] = None,
     discount: Optional[Decimal] = None,
     tax: Optional[Decimal] = None,
-    deposit_amount: Optional[Decimal] = None,
     due_date=None,
 ) -> Invoice:
     invoice = await get_invoice(db, id=id)
@@ -137,8 +125,6 @@ async def update_invoice(
         invoice.discount = discount
     if tax is not None:
         invoice.tax = tax
-    if deposit_amount is not None:
-        invoice.deposit_amount = deposit_amount
     if due_date is not None:
         invoice.due_date = due_date
     await _recalculate_and_persist(db, invoice)
@@ -231,3 +217,66 @@ async def delete_invoice_item(
     await db.flush()
     invoice = await get_invoice(db, id=invoice_id)
     await _recalculate_and_persist(db, invoice)
+
+
+# --- Invoice Payments ---
+
+async def _update_payment_status(db: AsyncSession, invoice: Invoice) -> None:
+    total_paid = await _payments_sum(db, invoice.id)
+    invoice.balance_due = max(Decimal("0"), (invoice.total - total_paid)).quantize(Decimal("0.01"))
+    if invoice.balance_due <= Decimal("0"):
+        invoice.status = "paid"
+        if invoice.paid_at is None:
+            invoice.paid_at = datetime.now(timezone.utc)
+    elif total_paid > Decimal("0"):
+        invoice.status = "partially_paid"
+        invoice.paid_at = None
+    else:
+        invoice.status = "sent"
+        invoice.paid_at = None
+    await db.flush()
+
+
+async def add_payment(
+    db: AsyncSession,
+    *,
+    invoice_id: uuid.UUID,
+    amount: Decimal,
+    paid_at,
+    method: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> InvoicePayment:
+    invoice = await get_invoice(db, id=invoice_id)
+    if invoice.status not in ("sent", "partially_paid", "paid"):
+        raise HTTPException(status_code=409, detail="Payments can only be recorded on sent or active invoices.")
+    payment = InvoicePayment(
+        invoice_id=invoice_id,
+        amount=amount.quantize(Decimal("0.01")),
+        paid_at=paid_at,
+        method=method,
+        notes=notes,
+    )
+    db.add(payment)
+    await db.flush()
+    await _update_payment_status(db, invoice)
+    return payment
+
+
+async def delete_payment(
+    db: AsyncSession, *, invoice_id: uuid.UUID, payment_id: uuid.UUID
+) -> None:
+    result = await db.execute(
+        select(InvoicePayment).where(
+            InvoicePayment.id == payment_id,
+            InvoicePayment.invoice_id == invoice_id,
+        )
+    )
+    payment = result.scalar_one_or_none()
+    if payment is None:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    await db.delete(payment)
+    await db.flush()
+    invoice = await get_invoice(db, id=invoice_id)
+    await _update_payment_status(db, invoice)
+
+

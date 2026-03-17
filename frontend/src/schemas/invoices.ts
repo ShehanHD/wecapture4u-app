@@ -1,5 +1,17 @@
 import { z } from 'zod'
 
+export const PaymentSchema = z.object({
+  id: z.string().uuid(),
+  invoice_id: z.string().uuid(),
+  amount: z.string(),
+  paid_at: z.string(),
+  method: z.string().nullable(),
+  notes: z.string().nullable(),
+  created_at: z.string(),
+})
+export type Payment = z.infer<typeof PaymentSchema>
+export const PaymentListSchema = z.array(PaymentSchema)
+
 const InvoiceItemSchema = z.object({
   id: z.string().uuid(),
   invoice_id: z.string().uuid(),
@@ -19,7 +31,6 @@ export const InvoiceSchema = z.object({
   discount: z.string(),
   tax: z.string(),
   total: z.string(),
-  deposit_amount: z.string(),
   balance_due: z.string(),
   requires_review: z.boolean(),
   due_date: z.string().nullable(),
@@ -27,6 +38,7 @@ export const InvoiceSchema = z.object({
   paid_at: z.string().nullable(),
   created_at: z.string(),
   items: z.array(InvoiceItemSchema),
+  payments: z.array(PaymentSchema),
 })
 export type Invoice = z.infer<typeof InvoiceSchema>
 export const InvoiceListSchema = z.array(InvoiceSchema)
