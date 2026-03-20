@@ -40,3 +40,14 @@ async def test_refresh_invalid_token(client: AsyncClient) -> None:
 async def test_logout_requires_auth(client: AsyncClient) -> None:
     response = await client.post("/api/auth/logout", json={"refresh_token": "x"})
     assert response.status_code == 403  # No Authorization header
+
+
+@pytest.mark.asyncio
+async def test_reset_password_short_password_rejected(client: AsyncClient) -> None:
+    response = await client.post("/api/auth/reset-password", json={
+        "token": "any-token",
+        "new_password": "short",
+    })
+    assert response.status_code == 422
+    body = response.json()
+    assert "8 characters" in str(body)
