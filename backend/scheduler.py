@@ -123,24 +123,33 @@ async def run_daily_notifications() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import os
     from config import settings as app_settings
+
     if app_settings.ENVIRONMENT == "production" and not app_settings.ALLOWED_ORIGINS:
         raise RuntimeError(
             "ALLOWED_ORIGINS must be set in production — "
             "refusing to start with open CORS policy."
         )
 
-    scheduler.add_job(
-        run_daily_notifications,
-        trigger="cron",
-        hour=8,
-        minute=0,
-        timezone="UTC",
-        id="daily_notifications",
-        replace_existing=True,
-    )
-    scheduler.start()
-    logger.info("APScheduler started")
+    # Vercel is serverless — no persistent process to run APScheduler.
+    # Scheduling is handled by Vercel Cron Jobs hitting /api/cron/daily-notifications.
+    on_vercel = os.environ.get("VERCEL") == "1"
+    if not on_vercel:
+        scheduler.add_job(
+            run_daily_notifications,
+            trigger="cron",
+            hour=8,
+            minute=0,
+            timezone="UTC",
+            id="daily_notifications",
+            replace_existing=True,
+        )
+        scheduler.start()
+        logger.info("APScheduler started")
+
     yield
-    scheduler.shutdown(wait=False)
-    logger.info("APScheduler stopped")
+
+    if not on_vercel:
+        scheduler.shutdown(wait=False)
+        logger.info("APScheduler stopped")
