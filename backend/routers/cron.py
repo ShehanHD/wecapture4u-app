@@ -10,6 +10,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cron", tags=["cron"])
 
 
+@router.get("")
+async def verify() -> dict:
+    """Public endpoint to verify the cron router is reachable."""
+    return {"status": "ok", "cron": "reachable"}
+
+
 @router.get("/daily-notifications", status_code=status.HTTP_204_NO_CONTENT)
 async def daily_notifications(
     authorization: str = Header(default=""),
