@@ -135,6 +135,11 @@ async def lifespan(app: FastAPI):
     # Vercel is serverless — no persistent process to run APScheduler.
     # Scheduling is handled by Vercel Cron Jobs hitting /api/cron/daily-notifications.
     on_vercel = os.environ.get("VERCEL") == "1"
+    if on_vercel and not app_settings.CRON_SECRET:
+        logger.warning(
+            "CRON_SECRET is not set — all cron requests will be rejected with 401. "
+            "Set CRON_SECRET in the Vercel dashboard environment variables."
+        )
     if not on_vercel:
         scheduler.add_job(
             run_daily_notifications,

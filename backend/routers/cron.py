@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cron", tags=["cron"])
 
 
-@router.post("/daily-notifications", status_code=status.HTTP_204_NO_CONTENT)
+@router.get("/daily-notifications", status_code=status.HTTP_204_NO_CONTENT)
 async def daily_notifications(
     authorization: str = Header(default=""),
 ) -> None:
