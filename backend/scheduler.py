@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
@@ -123,7 +124,6 @@ async def run_daily_notifications() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import os
     from config import settings as app_settings
 
     if app_settings.ENVIRONMENT == "production" and not app_settings.ALLOWED_ORIGINS:
