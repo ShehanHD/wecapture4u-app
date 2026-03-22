@@ -21,7 +21,11 @@ async def daily_notifications(
     """
     expected = f"Bearer {settings.CRON_SECRET}"
     if not settings.CRON_SECRET or authorization != expected:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     logger.info("Cron trigger received — running daily notifications")
     await run_daily_notifications()
