@@ -160,20 +160,31 @@ async def update_appointment(
             logger.exception("[auto-job] FAILED for appointment %s", id)
             raise
     elif new_status and new_status != "confirmed" and previous_status == "confirmed":
-        # Status moved away from confirmed — remove the linked job if safe to do so
+        # Status moved away from confirmed — remove the linked job (and any draft invoices)
         from models.invoice import Invoice
-        from sqlalchemy import func
         linked_job = await db.scalar(select(Job).where(Job.appointment_id == id).limit(1))
         if linked_job:
-            invoice_count = await db.scalar(
-                select(func.count()).select_from(Invoice).where(Invoice.job_id == linked_job.id)
+            invoices = (await db.execute(
+                select(Invoice).where(Invoice.job_id == linked_job.id)
+            )).scalars().all()
+            non_draft = [inv for inv in invoices if inv.status != "draft"]
+            if non_draft:
+                logger.warning(
+                    "[auto-job] cannot remove job %s — non-draft invoice(s) exist: %s",
+                    linked_job.id, [str(inv.id) for inv in non_draft],
+                )
+                raise HTTPException(
+                    status_code=409,
+                    detail="Cannot un-confirm: invoice has already been sent or paid.",
+                )
+            for inv in invoices:
+                await db.delete(inv)
+            await db.delete(linked_job)
+            await db.flush()
+            logger.info(
+                "[auto-job] removed job %s and %d draft invoice(s) (appointment un-confirmed)",
+                linked_job.id, len(invoices),
             )
-            if invoice_count and invoice_count > 0:
-                logger.warning("[auto-job] cannot remove job %s — invoice exists", linked_job.id)
-            else:
-                await db.delete(linked_job)
-                await db.flush()
-                logger.info("[auto-job] removed job %s (appointment un-confirmed)", linked_job.id)
 
     return await _to_out(db, appt)
 

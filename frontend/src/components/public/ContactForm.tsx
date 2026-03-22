@@ -34,7 +34,7 @@ export function ContactForm({ headline }: Props) {
       </h2>
       <div className="max-w-md mx-auto">
         {submitted ? (
-          <p className="text-center text-amber-400 text-lg">Thanks! I'll be in touch soon.</p>
+          <p className="text-center text-brand-solid text-lg">Thanks! I'll be in touch soon.</p>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {submitMutation.isError && (
@@ -45,7 +45,7 @@ export function ContactForm({ headline }: Props) {
             <div>
               <input
                 placeholder="Your name"
-                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-500"
+                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-ring"
                 {...register('name')}
               />
               {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
@@ -54,7 +54,7 @@ export function ContactForm({ headline }: Props) {
               <input
                 type="email"
                 placeholder="Email address"
-                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-500"
+                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-ring"
                 {...register('email')}
               />
               {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
@@ -63,7 +63,7 @@ export function ContactForm({ headline }: Props) {
               <textarea
                 rows={4}
                 placeholder="Your message"
-                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-500 resize-none"
+                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-ring resize-none"
                 {...register('message')}
               />
               {errors.message && (
@@ -73,7 +73,7 @@ export function ContactForm({ headline }: Props) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-semibold py-3 rounded-lg transition-colors"
+              className="w-full bg-brand-solid hover:opacity-80 disabled:opacity-50 text-black font-semibold py-3 rounded-lg transition-colors"
             >
               {isSubmitting ? 'Sending…' : 'Send Message'}
             </button>

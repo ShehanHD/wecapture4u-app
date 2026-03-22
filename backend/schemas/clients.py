@@ -28,6 +28,7 @@ class ClientUpdate(BaseModel):
 
 
 class ClientOut(BaseModel):
+    """Admin-facing client response. Tags are intentionally excluded from any portal-facing schema."""
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -36,7 +37,7 @@ class ClientOut(BaseModel):
     email: str
     phone: Optional[str]
     address: Optional[str]
-    tags: list[str]
+    tags: list[str]  # admin-only — do NOT include in portal-facing schemas
     birthday: Optional[date]
     notes: Optional[str]
     created_at: datetime

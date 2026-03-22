@@ -1,5 +1,6 @@
 import uuid
-from datetime import date, datetime
+from decimal import Decimal
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
@@ -38,22 +39,13 @@ class StagePositionReorder(BaseModel):
 
 class JobCreate(BaseModel):
     client_id: uuid.UUID
-    title: str
     stage_id: uuid.UUID
     appointment_id: Optional[uuid.UUID] = None
-    shoot_date: Optional[date] = None
-    delivery_deadline: Optional[date] = None
-    notes: Optional[str] = None
 
 
 class JobUpdate(BaseModel):
-    title: Optional[str] = None
     stage_id: Optional[uuid.UUID] = None
-    appointment_id: Optional[uuid.UUID] = None
-    shoot_date: Optional[date] = None
-    delivery_deadline: Optional[date] = None
     delivery_url: Optional[str] = None
-    notes: Optional[str] = None
 
 
 class ClientSummary(BaseModel):
@@ -63,12 +55,36 @@ class ClientSummary(BaseModel):
     email: str
 
 
+class SessionTypeSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    name: str
+
+
 class AppointmentSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     title: str
     starts_at: datetime
+    ends_at: Optional[datetime]
     status: str
+    location: Optional[str]
+    session_time: Optional[str]
+    session_type_ids: list[uuid.UUID]
+    session_types: list[SessionTypeSummary] = []
+    addons: list[str]
+    deposit_paid: bool
+    deposit_amount: Decimal
+    contract_signed: bool
+    price: Decimal
+    notes: Optional[str]
+
+
+class StageSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    name: str
+    color: str
 
 
 class JobOut(BaseModel):
@@ -78,15 +94,12 @@ class JobOut(BaseModel):
     client_id: uuid.UUID
     client: Optional[ClientSummary]
     appointment_id: Optional[uuid.UUID]
-    title: str
+    appointment: Optional[AppointmentSummary]
     stage_id: uuid.UUID
-    shoot_date: Optional[date]
-    delivery_deadline: Optional[date]
+    stage: Optional[StageSummary]
     delivery_url: Optional[str]
-    notes: Optional[str]
     created_at: datetime
 
 
-class JobDetailOut(JobOut):
-    """Extended response for job detail view."""
-    appointment: Optional[AppointmentSummary]
+# JobDetailOut is now identical to JobOut — kept as alias for router compatibility
+JobDetailOut = JobOut

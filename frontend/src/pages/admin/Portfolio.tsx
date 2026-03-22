@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Images } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs'
 import { Button } from '../../components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import {
   useHeroPhotos,
   useUploadHeroPhoto,
@@ -27,10 +29,9 @@ function HeroTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-medium text-gray-300">Hero Photos ({photos.length}/20)</h3>
+        <h3 className="text-sm font-medium text-foreground/80">Hero Photos ({photos.length}/20)</h3>
         <Button
           size="sm"
-          className="bg-amber-500 text-black hover:bg-amber-400"
           disabled={photos.length >= 20}
           onClick={() => fileInputRef.current?.click()}
         >
@@ -91,15 +92,15 @@ function CategoriesTab({ onSelectCategory }: { onSelectCategory: (c: Category) =
     <div className="space-y-4">
       <div className="bg-white/5 border border-white/10 rounded-lg p-4 flex gap-3 items-end flex-wrap">
         <div>
-          <label className="text-xs text-gray-400">Name</label>
+          <label className="text-xs text-muted-foreground">Name</label>
           <input
-            className="mt-1 bg-white/10 border border-white/20 rounded px-2 py-1 text-white w-48 block"
+            className="mt-1 bg-input border rounded px-2 py-1 text-foreground w-48 block"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
         </div>
         <div>
-          <label className="text-xs text-gray-400">Cover Photo</label>
+          <label className="text-xs text-muted-foreground">Cover Photo</label>
           <Button
             size="sm"
             variant="outline"
@@ -122,7 +123,6 @@ function CategoriesTab({ onSelectCategory }: { onSelectCategory: (c: Category) =
         </div>
         <Button
           size="sm"
-          className="bg-amber-500 text-black"
           onClick={handleCreate}
           disabled={!newName || !newCover || createMutation.isPending}
         >
@@ -139,15 +139,15 @@ function CategoriesTab({ onSelectCategory }: { onSelectCategory: (c: Category) =
             <div className="flex items-center gap-3">
               <img src={cat.cover_url} alt="" className="w-12 h-8 object-cover rounded" />
               <div>
-                <p className="text-white">{cat.name}</p>
-                <p className="text-xs text-gray-500">/{cat.slug}</p>
+                <p className="text-foreground">{cat.name}</p>
+                <p className="text-xs text-muted-foreground">/{cat.slug}</p>
               </div>
             </div>
             <div className="flex gap-2">
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-amber-400 text-xs"
+                className="text-brand-solid text-xs"
                 onClick={() => onSelectCategory(cat)}
               >
                 Photos
@@ -172,27 +172,31 @@ function CategoriesTab({ onSelectCategory }: { onSelectCategory: (c: Category) =
 
 // ─── Tab 3: Category Photos ───────────────────────────────────────────────────
 
-function CategoryPhotosTab() {
+function CategoryPhotosTab({
+  selectedCatId,
+  setSelectedCatId,
+}: {
+  selectedCatId: string
+  setSelectedCatId: (id: string) => void
+}) {
   const { data: categories = [] } = useCategories()
-  const [selectedCatId, setSelectedCatId] = useState<string>('')
   const selectedCat = categories.find((c) => c.id === selectedCatId)
 
   return (
     <div className="space-y-4">
-      <select
-        className="bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
-        value={selectedCatId}
-        onChange={(e) => setSelectedCatId(e.target.value)}
-      >
-        <option value="">Select category…</option>
-        {categories.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+      <Select value={selectedCatId || '__none__'} onValueChange={(v) => setSelectedCatId(v === '__none__' ? '' : v)}>
+        <SelectTrigger className="w-full bg-input border text-foreground">
+          <SelectValue placeholder="Select category…" />
+        </SelectTrigger>
+        <SelectContent className="bg-popover border text-popover-foreground">
+          <SelectItem value="__none__">Select category…</SelectItem>
+          {categories.map((c) => (
+            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {selectedCat && (
-        <p className="text-gray-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           Photo management for {selectedCat.name} — available when online.
         </p>
       )}
@@ -242,35 +246,35 @@ function AboutSettingsTab() {
         ] as const
       ).map(({ name, label }) => (
         <div key={name}>
-          <label className="text-xs text-gray-400">{label}</label>
+          <label className="text-xs text-muted-foreground">{label}</label>
           <input
-            className="mt-1 w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white block"
+            className="mt-1 w-full bg-input border rounded px-3 py-2 text-foreground block"
             {...register(name)}
           />
         </div>
       ))}
 
       <div>
-        <label className="text-xs text-gray-400">Bio</label>
+        <label className="text-xs text-muted-foreground">Bio</label>
         <textarea
           rows={3}
-          className="mt-1 w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white resize-none block"
+          className="mt-1 w-full bg-input border rounded px-3 py-2 text-foreground resize-none block"
           {...register('bio')}
         />
       </div>
 
       <div>
-        <label className="text-xs text-gray-400">Meta Description (SEO)</label>
+        <label className="text-xs text-muted-foreground">Meta Description (SEO)</label>
         <textarea
           rows={2}
-          className="mt-1 w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white resize-none block"
+          className="mt-1 w-full bg-input border rounded px-3 py-2 text-foreground resize-none block"
           {...register('meta_description')}
         />
       </div>
 
       {/* og:image */}
       <div>
-        <label className="text-xs text-gray-400">Social Sharing Image (1200×630)</label>
+        <label className="text-xs text-muted-foreground">Social Sharing Image (1200×630)</label>
         <div className="flex gap-2 mt-1 items-center flex-wrap">
           {settings?.og_image_url && (
             <img
@@ -315,7 +319,6 @@ function AboutSettingsTab() {
 
       <Button
         type="submit"
-        className="bg-amber-500 text-black hover:bg-amber-400"
         disabled={updateMutation.isPending}
       >
         Save
@@ -328,7 +331,7 @@ function AboutSettingsTab() {
 
 function ContactSubmissionsTab() {
   return (
-    <div className="text-gray-400 text-sm">
+    <div className="text-muted-foreground text-sm">
       Contact submissions view — available when backend returns data.
     </div>
   )
@@ -337,27 +340,40 @@ function ContactSubmissionsTab() {
 // ─── Main Portfolio Page ──────────────────────────────────────────────────────
 
 export default function Portfolio() {
-  const [, setSelectedCategory] = useState<Category | null>(null)
+  const [activeTab, setActiveTab] = useState('hero')
+  const [selectedCatId, setSelectedCatId] = useState('')
+
+  const goToPhotos = (cat: Category) => {
+    setSelectedCatId(cat.id)
+    setActiveTab('photos')
+  }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-white mb-6">Portfolio</h1>
-      <Tabs defaultValue="hero">
-        <TabsList className="mb-6 bg-white/5">
-          <TabsTrigger value="hero">Hero Carousel</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="photos">Category Photos</TabsTrigger>
-          <TabsTrigger value="about">About & Settings</TabsTrigger>
-          <TabsTrigger value="contact">Contact Submissions</TabsTrigger>
-        </TabsList>
+    <div className="p-4 sm:p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-br shadow-md text-black">
+          <Images className="h-5 w-5" />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground">Portfolio</h1>
+      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="overflow-x-auto pb-1 mb-6">
+          <TabsList className="bg-white/5 min-w-max">
+            <TabsTrigger value="hero">Hero Carousel</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="photos">Category Photos</TabsTrigger>
+            <TabsTrigger value="about">About & Settings</TabsTrigger>
+            <TabsTrigger value="contact">Contact Submissions</TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent value="hero">
           <HeroTab />
         </TabsContent>
         <TabsContent value="categories">
-          <CategoriesTab onSelectCategory={(c) => setSelectedCategory(c)} />
+          <CategoriesTab onSelectCategory={goToPhotos} />
         </TabsContent>
         <TabsContent value="photos">
-          <CategoryPhotosTab />
+          <CategoryPhotosTab selectedCatId={selectedCatId} setSelectedCatId={setSelectedCatId} />
         </TabsContent>
         <TabsContent value="about">
           <AboutSettingsTab />

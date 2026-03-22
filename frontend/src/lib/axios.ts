@@ -72,4 +72,5 @@ function redirectToLogin(): void {
   window.location.href = role === 'client' ? '/client/login' : '/login'
 }
 
+export { apiClient as api }
 export default apiClient

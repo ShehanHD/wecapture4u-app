@@ -19,7 +19,7 @@ Admin = Annotated[object, Depends(require_admin)]
 async def list_appointments(
     db: DB, _: Admin,
     status: Optional[str] = Query(None),
-    session_type_id: Optional[uuid.UUID] = Query(None),
+    session_type_id: Optional[uuid.UUID] = Query(None, description="Filter by session type (legacy single-ID filter)"),
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
 ):

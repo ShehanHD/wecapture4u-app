@@ -49,7 +49,7 @@ export function HeroCarousel({ photos, tagline }: Props) {
         )}
         <a
           href="#contact"
-          className="bg-amber-500 hover:bg-amber-400 text-black font-semibold px-8 py-3 rounded-full transition-colors"
+          className="bg-brand-solid hover:opacity-80 text-black font-semibold px-8 py-3 rounded-full transition-colors"
         >
           Book a Session
         </a>
@@ -86,7 +86,7 @@ export function HeroCarousel({ photos, tagline }: Props) {
               data-active={i === current}
               onClick={() => setCurrent(i)}
               className={`w-2 h-2 rounded-full transition-all ${
-                i === current ? 'bg-amber-400 w-4' : 'bg-white/35'
+                i === current ? 'bg-brand-solid w-4' : 'bg-white/35'
               }`}
               aria-label={`Go to photo ${i + 1}`}
             />

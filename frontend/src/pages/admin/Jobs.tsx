@@ -4,6 +4,7 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -11,20 +12,14 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, GripVertical } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useJobs, useJobStages, useCreateJob, useUpdateJob } from '@/hooks/useJobs'
-import { useClients } from '@/hooks/useClients'
-import type { Job } from '@/schemas/jobs'
+import { GripVertical, Clock, ChevronDown, Kanban } from 'lucide-react'
+import { useJobs, useJobStages, useUpdateJob } from '@/hooks/useJobs'
+import type { Job, JobStage } from '@/schemas/jobs'
+import { format, parseISO } from 'date-fns'
 
 // --- Sortable Job Card ---
 function JobCard({ job }: { job: Job }) {
+  const [expanded, setExpanded] = useState(false)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: job.id })
 
@@ -34,106 +29,116 @@ function JobCard({ job }: { job: Job }) {
     opacity: isDragging ? 0.4 : 1,
   }
 
+  const appt = job.appointment
+  const date = appt?.starts_at ? format(parseISO(appt.starts_at), 'MMM d') : null
+  const title = [appt?.title ?? 'Untitled', date].filter(Boolean).join(' · ')
+  const hasDetails = job.client || appt?.notes
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="rounded-lg bg-[#0c0c0c] border border-zinc-800 p-3 space-y-1 cursor-default"
+      className="rounded-lg bg-card border p-3 cursor-default"
     >
+      {/* Header: grip + title + expand toggle */}
       <div className="flex items-center gap-2">
-        <span {...attributes} {...listeners} className="cursor-grab text-zinc-600 hover:text-zinc-400">
+        <span
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-muted-foreground/40 hover:text-muted-foreground flex-shrink-0"
+        >
           <GripVertical className="h-4 w-4" />
         </span>
-        <Link
-          to={`/admin/jobs/${job.id}`}
-          className="text-sm font-medium text-white hover:text-amber-400 truncate flex-1"
+        <span
+          className="text-sm font-medium text-foreground truncate flex-1 cursor-pointer select-none"
+          onClick={() => setExpanded(e => !e)}
         >
-          {job.title}
-        </Link>
+          {title}
+        </span>
+        {hasDetails && (
+          <span
+            className="text-muted-foreground/40 hover:text-muted-foreground flex-shrink-0 cursor-pointer"
+            onClick={() => setExpanded(e => !e)}
+          >
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          </span>
+        )}
       </div>
-      {job.client && (
-        <p className="text-xs text-zinc-400 pl-6">{job.client.name}</p>
+
+      {/* Expandable details */}
+      {expanded && (
+        <div className="mt-2 pl-6 space-y-1.5">
+          {job.client && (
+            <p className="text-xs text-muted-foreground">{job.client.name}</p>
+          )}
+          {appt?.price && Number(appt.price) > 0 && (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3 flex-shrink-0" />
+              €{appt.price}
+            </span>
+          )}
+          {appt?.notes && (
+            <p className="text-xs text-muted-foreground/60 line-clamp-2">{appt.notes}</p>
+          )}
+          <Link
+            to={`/admin/jobs/${job.id}`}
+            className="inline-block text-xs text-brand-solid hover:opacity-70 pt-0.5"
+          >
+            View detail →
+          </Link>
+        </div>
       )}
     </div>
   )
 }
 
-// --- Create Job Modal ---
-const jobFormSchema = z.object({
-  client_id: z.string().uuid('Select a client'),
-  title: z.string().min(1, 'Title is required'),
-  stage_id: z.string().uuid('Select a stage'),
-  notes: z.string().optional(),
-})
-type JobFormValues = z.infer<typeof jobFormSchema>
+// --- Droppable Kanban Column ---
+function KanbanColumn({ stage, jobs }: { stage: JobStage; jobs: Job[] }) {
+  const [collapsed, setCollapsed] = useState(false)
+  const { setNodeRef, isOver } = useDroppable({ id: stage.id })
 
-function CreateJobModal({ open, onClose, defaultStageId }: {
-  open: boolean; onClose: () => void; defaultStageId?: string
-}) {
-  const { data: stages = [] } = useJobStages()
-  const { data: clients = [] } = useClients()
-  const createJob = useCreateJob()
-
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } =
-    useForm<JobFormValues>({
-      resolver: zodResolver(jobFormSchema),
-      defaultValues: { stage_id: defaultStageId ?? '' },
-    })
-
-  const onSubmit = async (values: JobFormValues) => {
-    await createJob.mutateAsync(values)
-    reset()
-    onClose()
+  if (collapsed) {
+    return (
+      <div
+        ref={setNodeRef}
+        className={`flex-shrink-0 w-10 rounded-xl bg-card border flex flex-col items-center py-3 gap-2 cursor-pointer transition-colors ${isOver ? 'bg-accent/60' : 'hover:bg-muted/60'}`}
+        style={{ borderTop: `3px solid ${stage.color}` }}
+        onClick={() => setCollapsed(false)}
+        title={`${stage.name} (${jobs.length})`}
+      >
+        <span className="text-xs text-muted-foreground font-medium" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+          {stage.name}
+        </span>
+        <span className="text-xs text-muted-foreground/60 mt-auto">{jobs.length}</span>
+      </div>
+    )
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="bg-[#1a1a1a] border-zinc-800 text-white max-w-md">
-        <DialogHeader>
-          <DialogTitle>New Job</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Label htmlFor="job_client_id">Client</Label>
-            <select
-              id="job_client_id"
-              {...register('client_id')}
-              className="w-full mt-1 rounded-md bg-zinc-900 border border-zinc-700 text-white px-3 py-2 text-sm"
-            >
-              <option value="">Select client…</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            {errors.client_id && <p className="text-xs text-red-400 mt-1">{errors.client_id.message}</p>}
-          </div>
-          <div>
-            <Label htmlFor="job_title">Title</Label>
-            <Input id="job_title" {...register('title')} className="bg-zinc-900 border-zinc-700 text-white mt-1" />
-            {errors.title && <p className="text-xs text-red-400 mt-1">{errors.title.message}</p>}
-          </div>
-          <div>
-            <Label>Stage</Label>
-            <select
-              {...register('stage_id')}
-              className="w-full mt-1 rounded-md bg-zinc-900 border border-zinc-700 text-white px-3 py-2 text-sm"
-            >
-              <option value="">Select stage…</option>
-              {stages.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-            {errors.stage_id && <p className="text-xs text-red-400 mt-1">{errors.stage_id.message}</p>}
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose} className="text-zinc-400">Cancel</Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-amber-500 hover:bg-amber-400 text-black font-medium">
-              Create job
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <div className="flex-1 min-w-56 rounded-xl bg-card border flex flex-col">
+      <div
+        className="px-4 py-3 rounded-t-xl flex items-center gap-2 cursor-pointer select-none hover:bg-muted/40 transition-colors"
+        style={{ borderTop: `3px solid ${stage.color}` }}
+        onClick={() => setCollapsed(true)}
+      >
+        <span className="text-sm font-medium text-foreground">{stage.name}</span>
+        <span className="ml-auto text-xs text-muted-foreground">{jobs.length}</span>
+        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60" />
+      </div>
+
+      <div
+        ref={setNodeRef}
+        className={`p-2 space-y-2 min-h-[120px] flex-1 rounded-b-xl transition-colors ${
+          isOver ? 'bg-muted/40' : ''
+        }`}
+      >
+        <SortableContext items={jobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
+          {jobs.map(job => (
+            <JobCard key={job.id} job={job} />
+          ))}
+        </SortableContext>
+      </div>
+    </div>
   )
 }
 
@@ -142,9 +147,7 @@ export function Jobs() {
   const { data: stages = [] } = useJobStages()
   const { data: jobs = [] } = useJobs()
   const updateJob = useUpdateJob()
-  const [modalOpen, setModalOpen] = useState(false)
   const [activeJob, setActiveJob] = useState<Job | null>(null)
-  const [defaultStageId, setDefaultStageId] = useState<string | undefined>()
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -163,6 +166,7 @@ export function Jobs() {
     const { active, over } = event
     if (!over || active.id === over.id) return
 
+    // over.id is either a stage id (column droppable) or a job id (card)
     const targetStage = stages.find(s => s.id === over.id)
     const targetJob = jobs.find(j => j.id === over.id)
     const newStageId = targetStage?.id ?? targetJob?.stage_id
@@ -176,53 +180,21 @@ export function Jobs() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-white">Jobs</h1>
-        <Button
-          onClick={() => { setDefaultStageId(stages[0]?.id); setModalOpen(true) }}
-          className="bg-amber-500 hover:bg-amber-400 text-black font-medium"
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          New Job
-        </Button>
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-br shadow-md text-black">
+          <Kanban className="h-5 w-5" />
+        </div>
+        <h1 className="text-2xl font-semibold text-foreground">Jobs</h1>
       </div>
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
           {stages.map(stage => (
-            <div
+            <KanbanColumn
               key={stage.id}
-              id={stage.id}
-              className="flex-shrink-0 w-72 rounded-xl bg-[#1a1a1a] border border-zinc-800"
-            >
-              <div
-                className="px-4 py-3 rounded-t-xl flex items-center gap-2"
-                style={{ borderTop: `3px solid ${stage.color}` }}
-              >
-                <span className="text-sm font-medium text-white">{stage.name}</span>
-                <span className="ml-auto text-xs text-zinc-500">
-                  {getJobsForStage(stage.id).length}
-                </span>
-              </div>
-
-              <div className="p-2 space-y-2 min-h-[120px]">
-                <SortableContext
-                  items={getJobsForStage(stage.id).map(j => j.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {getJobsForStage(stage.id).map(job => (
-                    <JobCard key={job.id} job={job} />
-                  ))}
-                </SortableContext>
-              </div>
-
-              <button
-                onClick={() => { setDefaultStageId(stage.id); setModalOpen(true) }}
-                className="w-full px-4 py-2 text-xs text-zinc-500 hover:text-zinc-300 text-left rounded-b-xl"
-              >
-                + Add job
-              </button>
-            </div>
+              stage={stage}
+              jobs={getJobsForStage(stage.id)}
+            />
           ))}
         </div>
 
@@ -230,12 +202,6 @@ export function Jobs() {
           {activeJob && <JobCard job={activeJob} />}
         </DragOverlay>
       </DndContext>
-
-      <CreateJobModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        defaultStageId={defaultStageId}
-      />
     </div>
   )
 }

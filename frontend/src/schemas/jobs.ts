@@ -17,11 +17,33 @@ const ClientSummarySchema = z.object({
   email: z.string(),
 })
 
+const SessionTypeSummarySchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+})
+
 const AppointmentSummarySchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   starts_at: z.string(),
+  ends_at: z.string().nullable(),
   status: z.string(),
+  location: z.string().nullable(),
+  session_time: z.enum(['morning', 'afternoon', 'evening']).nullable(),
+  session_type_ids: z.array(z.string().uuid()),
+  session_types: z.array(SessionTypeSummarySchema),
+  addons: z.array(z.string()),
+  deposit_paid: z.boolean(),
+  deposit_amount: z.string(),
+  contract_signed: z.boolean(),
+  price: z.string(),
+  notes: z.string().nullable(),
+})
+
+const StageSummarySchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  color: z.string(),
 })
 
 export const JobSchema = z.object({
@@ -29,18 +51,15 @@ export const JobSchema = z.object({
   client_id: z.string().uuid(),
   client: ClientSummarySchema.nullable().optional(),
   appointment_id: z.string().uuid().nullable(),
-  title: z.string(),
+  appointment: AppointmentSummarySchema.nullable().optional(),
   stage_id: z.string().uuid(),
-  shoot_date: z.string().nullable(),
-  delivery_deadline: z.string().nullable(),
+  stage: StageSummarySchema.nullable().optional(),
   delivery_url: z.string().nullable(),
-  notes: z.string().nullable(),
   created_at: z.string(),
 })
 export type Job = z.infer<typeof JobSchema>
 export const JobListSchema = z.array(JobSchema)
 
-export const JobDetailSchema = JobSchema.extend({
-  appointment: AppointmentSummarySchema.nullable().optional(),
-})
-export type JobDetail = z.infer<typeof JobDetailSchema>
+// JobDetailSchema is now identical to JobSchema
+export const JobDetailSchema = JobSchema
+export type JobDetail = Job

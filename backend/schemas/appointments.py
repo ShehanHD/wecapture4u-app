@@ -8,9 +8,12 @@ VALID_STATUSES = {"pending", "confirmed", "cancelled"}
 VALID_ADDONS = {"album", "thank_you_card", "enlarged_photos"}
 
 
+VALID_SESSION_TIMES = {"morning", "afternoon", "evening"}
+
 class AppointmentCreate(BaseModel):
     client_id: uuid.UUID
-    session_type_id: Optional[uuid.UUID] = None
+    session_type_ids: list[uuid.UUID] = []
+    session_time: Optional[str] = None
     title: str
     starts_at: datetime
     ends_at: Optional[datetime] = None
@@ -21,7 +24,15 @@ class AppointmentCreate(BaseModel):
     deposit_amount: Decimal = Decimal("0")
     deposit_account_id: Optional[uuid.UUID] = None
     contract_signed: bool = False
+    price: Decimal = Decimal("0")
     notes: Optional[str] = None
+
+    @field_validator("session_time")
+    @classmethod
+    def session_time_must_be_valid(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in VALID_SESSION_TIMES:
+            raise ValueError(f"session_time must be one of {VALID_SESSION_TIMES}")
+        return v
 
     @field_validator("status")
     @classmethod
@@ -40,7 +51,8 @@ class AppointmentCreate(BaseModel):
 
 
 class AppointmentUpdate(BaseModel):
-    session_type_id: Optional[uuid.UUID] = None
+    session_type_ids: Optional[list[uuid.UUID]] = None
+    session_time: Optional[str] = None
     title: Optional[str] = None
     starts_at: Optional[datetime] = None
     ends_at: Optional[datetime] = None
@@ -51,6 +63,7 @@ class AppointmentUpdate(BaseModel):
     deposit_amount: Optional[Decimal] = None
     deposit_account_id: Optional[uuid.UUID] = None
     contract_signed: Optional[bool] = None
+    price: Optional[Decimal] = None
     notes: Optional[str] = None
 
     @field_validator("status")
@@ -72,8 +85,9 @@ class AppointmentOut(BaseModel):
 
     id: uuid.UUID
     client_id: uuid.UUID
-    session_type_id: Optional[uuid.UUID]
-    session_type: Optional[SessionTypeSummary]
+    session_type_ids: list[uuid.UUID]
+    session_time: Optional[str]
+    session_types: list[SessionTypeSummary] = []  # resolved by service
     title: str
     starts_at: datetime
     ends_at: Optional[datetime]
@@ -84,5 +98,6 @@ class AppointmentOut(BaseModel):
     deposit_amount: Decimal
     deposit_account_id: Optional[uuid.UUID]
     contract_signed: bool
+    price: Decimal
     notes: Optional[str]
     created_at: datetime

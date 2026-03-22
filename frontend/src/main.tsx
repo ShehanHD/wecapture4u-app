@@ -6,14 +6,22 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { HelmetProvider } from 'react-helmet-async'
 import { queryClient } from '@/lib/queryClient'
 import { router } from '@/routes'
+import { useTheme } from '@/hooks/useTheme'
 import './index.css'
+
+function ThemeProvider({ children }: { children: React.ReactNode }) {
+  useTheme()
+  return <>{children}</>
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+        <ThemeProvider>
+          <RouterProvider router={router} />
+          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+        </ThemeProvider>
       </QueryClientProvider>
     </HelmetProvider>
   </React.StrictMode>,

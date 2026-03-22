@@ -30,8 +30,11 @@ export function useCreateAppointment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: createAppointment,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      if (variables.status === 'confirmed') {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      }
       toast.success('Appointment created')
     },
     onError: () => toast.error('Failed to create appointment'),
@@ -43,9 +46,14 @@ export function useUpdateAppointment() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<AppointmentCreatePayload> }) =>
       updateAppointment(id, payload),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
-      toast.success('Appointment updated')
+      if (variables.payload.status === 'confirmed') {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        toast.success('Appointment confirmed — job created automatically')
+      } else {
+        toast.success('Appointment updated')
+      }
     },
     onError: () => toast.error('Failed to update appointment'),
   })

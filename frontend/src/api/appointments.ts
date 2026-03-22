@@ -7,14 +7,17 @@ export interface AppointmentCreatePayload {
   client_id: string
   title: string
   starts_at: string
-  session_type_id?: string | null
+  session_type_ids?: string[]
+  session_time?: 'morning' | 'afternoon' | 'evening' | null
   ends_at?: string | null
   location?: string | null
   status?: 'pending' | 'confirmed' | 'cancelled'
   addons?: string[]
   deposit_paid?: boolean
   deposit_amount?: string
+  deposit_account_id?: string | null
   contract_signed?: boolean
+  price?: string
   notes?: string | null
 }
 

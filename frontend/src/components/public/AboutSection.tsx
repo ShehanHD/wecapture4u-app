@@ -16,10 +16,11 @@ export function AboutSection({ adminName, adminAvatarUrl, bio, instagramUrl, fac
           <img
             src={adminAvatarUrl}
             alt={adminName ?? ''}
-            className="w-24 h-24 rounded-full object-cover border-2 border-amber-500/30"
+            className="w-24 h-24 rounded-full object-cover border-2"
+            style={{ borderColor: 'color-mix(in srgb, var(--brand-from) 30%, transparent)' }}
           />
         ) : (
-          <div className="w-24 h-24 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-3xl">
+          <div className="w-24 h-24 rounded-full flex items-center justify-center font-bold text-3xl" style={{ background: 'color-mix(in srgb, var(--brand-from) 20%, transparent)', color: 'var(--brand-from)' }}>
             {adminName?.[0]?.toUpperCase() ?? '?'}
           </div>
         )}
@@ -31,7 +32,7 @@ export function AboutSection({ adminName, adminAvatarUrl, bio, instagramUrl, fac
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-amber-400 hover:text-amber-300 text-sm"
+              className="text-brand-solid hover:opacity-70 text-sm"
             >
               Instagram
             </a>
@@ -41,7 +42,7 @@ export function AboutSection({ adminName, adminAvatarUrl, bio, instagramUrl, fac
               href={facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-amber-400 hover:text-amber-300 text-sm"
+              className="text-brand-solid hover:opacity-70 text-sm"
             >
               Facebook
             </a>

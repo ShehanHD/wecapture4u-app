@@ -8,15 +8,12 @@ export type { Job, JobDetail, JobStage }
 
 export interface JobCreatePayload {
   client_id: string
-  title: string
   stage_id: string
   appointment_id?: string | null
-  shoot_date?: string | null
-  delivery_deadline?: string | null
-  notes?: string | null
 }
 
-export interface JobUpdatePayload extends Partial<JobCreatePayload> {
+export interface JobUpdatePayload {
+  stage_id?: string
   delivery_url?: string | null
 }
 
@@ -69,3 +66,5 @@ export async function reorderJobStages(stages: StagePositionItem[]): Promise<Job
 export async function deleteJobStage(id: string): Promise<void> {
   await api.delete(`/api/job-stages/${id}`)
 }
+
+

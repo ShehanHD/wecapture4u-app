@@ -38,9 +38,9 @@ def test_appointment_tablename():
 def test_appointment_has_required_columns():
     cols = {c.name for c in Appointment.__table__.columns}
     assert {
-        "id", "client_id", "session_type_id", "title", "starts_at", "ends_at",
+        "id", "client_id", "session_type_ids", "session_time", "title", "starts_at", "ends_at",
         "location", "status", "addons", "deposit_paid", "deposit_amount",
-        "deposit_account_id", "contract_signed", "notes", "created_at"
+        "deposit_account_id", "contract_signed", "price", "notes", "created_at"
     }.issubset(cols)
 
 
@@ -65,8 +65,7 @@ def test_job_tablename():
 def test_job_columns():
     cols = {c.name for c in Job.__table__.columns}
     assert {
-        "id", "client_id", "appointment_id", "title", "stage_id",
-        "shoot_date", "delivery_deadline", "delivery_url", "notes", "created_at"
+        "id", "client_id", "appointment_id", "stage_id", "delivery_url", "created_at"
     }.issubset(cols)
 
 
@@ -82,7 +81,7 @@ def test_invoice_columns():
     cols = {c.name for c in Invoice.__table__.columns}
     assert {
         "id", "job_id", "client_id", "status", "subtotal", "discount", "tax",
-        "total", "deposit_amount", "balance_due", "requires_review",
+        "total", "balance_due", "requires_review",
         "due_date", "sent_at", "paid_at", "created_at"
     }.issubset(cols)
 

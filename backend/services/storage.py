@@ -4,17 +4,16 @@ Shared Supabase Storage helpers for portfolio and avatar uploads.
 from __future__ import annotations
 import io
 import logging
-import os
 import uuid
 from typing import Optional
 
 from fastapi import HTTPException, UploadFile
 from PIL import Image
 
+from config import settings
+
 logger = logging.getLogger(__name__)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 PORTFOLIO_BUCKET = "portfolio"
 STORAGE_PREFIX = "/storage/v1/object/public/portfolio/"
 
@@ -25,7 +24,7 @@ def _get_supabase():
     global _supabase_client
     if _supabase_client is None:
         from supabase import create_client
-        _supabase_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+        _supabase_client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
     return _supabase_client
 
 
@@ -106,7 +105,7 @@ def upload_to_storage(
             content,
             {"content-type": content_type, "upsert": "true"},
         )
-        return f"{SUPABASE_URL}{STORAGE_PREFIX}{path}"
+        return f"{settings.SUPABASE_URL}{STORAGE_PREFIX}{path}"
     except Exception as e:
         logger.error("Storage upload failed for path %s: %s", path, e)
         raise HTTPException(503, "Photo storage is unavailable. Please contact the administrator.")

@@ -11,6 +11,7 @@ from schemas.jobs import (
     JobStageCreate, JobStageUpdate, JobStageOut,
     StagePositionReorder,
 )
+from schemas.invoices import InvoiceOut
 from services import jobs as job_svc
 from services import settings as settings_svc
 
@@ -37,7 +38,7 @@ async def create_job(body: JobCreate, db: DB, _: Admin):
 
 @router.get("/jobs/{id}", response_model=JobDetailOut)
 async def get_job(id: uuid.UUID, db: DB, _: Admin):
-    return await job_svc.get_job(db, id=id)
+    return await job_svc.get_job_detail(db, id=id)
 
 
 @router.patch("/jobs/{id}", response_model=JobOut)
@@ -48,6 +49,11 @@ async def update_job(id: uuid.UUID, body: JobUpdate, db: DB, _: Admin):
 @router.delete("/jobs/{id}", status_code=204)
 async def delete_job(id: uuid.UUID, db: DB, _: Admin):
     await job_svc.delete_job(db, id=id)
+
+
+@router.post("/jobs/{id}/invoice", response_model=InvoiceOut, status_code=201)
+async def create_job_invoice(id: uuid.UUID, db: DB, _: Admin):
+    return await job_svc.create_job_invoice(db, id=id)
 
 
 # --- Job Stages ---

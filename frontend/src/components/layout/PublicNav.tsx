@@ -23,7 +23,7 @@ export function PublicNav() {
   return (
     <nav className={navClass}>
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="/" className="text-amber-400 font-bold tracking-wide">
+        <a href="/" className="text-brand-solid font-bold tracking-wide">
           weCapture4U
         </a>
 
@@ -43,7 +43,7 @@ export function PublicNav() {
           </a>
           <a
             href="#contact"
-            className="bg-amber-500 hover:bg-amber-400 text-black text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            className="bg-brand-solid hover:opacity-80 text-black text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
           >
             Book Now
           </a>
@@ -81,7 +81,7 @@ export function PublicNav() {
           </a>
           <a
             href="#contact"
-            className="block bg-amber-500 text-black font-semibold px-4 py-2 rounded-lg text-center"
+            className="block bg-brand-solid text-black font-semibold px-4 py-2 rounded-lg text-center"
             onClick={() => setMenuOpen(false)}
           >
             Book Now

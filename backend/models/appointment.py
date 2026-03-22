@@ -11,7 +11,8 @@ class Appointment(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id", ondelete="RESTRICT"), nullable=False)
-    session_type_id = Column(UUID(as_uuid=True), ForeignKey("session_types.id", ondelete="SET NULL"), nullable=True)
+    session_type_ids = Column(ARRAY(UUID(as_uuid=True)), nullable=False, server_default="{}")
+    session_time = Column(String, nullable=True)  # 'morning' | 'afternoon' | 'evening'
     title = Column(String, nullable=False)
     starts_at = Column(DateTime(timezone=True), nullable=False)
     ends_at = Column(DateTime(timezone=True), nullable=True)
@@ -26,9 +27,10 @@ class Appointment(Base):
     # No SQLAlchemy relationship until Plan 8 (Accounting).
     deposit_account_id = Column(UUID(as_uuid=True), nullable=True)
     contract_signed = Column(Boolean, nullable=False, server_default="false")
+    price = Column(Numeric(10, 2), nullable=False, server_default="0")
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     client = relationship("Client", back_populates="appointments", lazy="select")
-    session_type = relationship("SessionType", lazy="select")
+    # session_types resolved at query time via session_type_ids array (no ORM relationship)
     job = relationship("Job", back_populates="appointment", uselist=False, lazy="select")
