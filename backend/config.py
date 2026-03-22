@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     WEBAUTHN_RP_ID: str
     WEBAUTHN_RP_NAME: str
+    CRON_SECRET: str = ""
 
     @property
     def allowed_origins_list(self) -> list[str]:
