@@ -58,3 +58,23 @@ class WebAuthnCredentialResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# --- WebAuthn request bodies ---
+class WebAuthnAuthenticateOptionsRequest(BaseModel):
+    email: EmailStr
+
+
+class WebAuthnRegisterVerifyRequest(BaseModel):
+    id: str
+    rawId: str
+    response: dict
+    type: str
+
+
+class WebAuthnAuthenticateVerifyRequest(BaseModel):
+    email: EmailStr
+    id: str
+    rawId: str
+    response: dict
+    type: str
