@@ -1,19 +1,26 @@
+import json
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
+from webauthn import verify_registration_response, verify_authentication_response
+from webauthn.helpers.exceptions import InvalidCBORData, InvalidAuthenticatorDataStructure
 
 from database import get_db
 from models.user import User, PasswordResetToken
-from models.auth import RefreshToken
+from models.auth import RefreshToken, WebAuthnCredential
 from schemas.auth import (
     LoginRequest, TokenResponse, RefreshRequest,
     ForgotPasswordRequest, ResetPasswordRequest, CurrentUser,
+    WebAuthnDeviceCheckResponse, WebAuthnCredentialResponse,
+    WebAuthnAuthenticateOptionsRequest, WebAuthnRegisterVerifyRequest,
+    WebAuthnAuthenticateVerifyRequest,
 )
 from services.auth import (
     verify_password, create_access_token, generate_opaque_token,
     hash_token, refresh_token_expiry, send_password_reset_email, hash_password,
 )
+from services.webauthn import get_registration_options, get_authentication_options, options_to_json
 from dependencies.auth import get_current_user
 from config import settings
 
@@ -161,14 +168,6 @@ async def reset_password(body: ResetPasswordRequest, db: AsyncSession = Depends(
     return {"message": "Password updated successfully."}
 
 
-# --- WebAuthn endpoints ---
-from webauthn import verify_registration_response, verify_authentication_response  # noqa: E402
-from webauthn.helpers.exceptions import InvalidCBORData, InvalidAuthenticatorDataStructure  # noqa: E402
-from models.auth import WebAuthnCredential  # noqa: E402
-from services.webauthn import get_registration_options, get_authentication_options, options_to_json  # noqa: E402
-from schemas.auth import WebAuthnDeviceCheckResponse, WebAuthnCredentialResponse  # noqa: E402
-import json  # noqa: E402
-from fastapi import Request  # noqa: E402
 
 class ChallengeStore:
     """In-memory challenge store with TTL expiry.
@@ -233,7 +232,7 @@ async def webauthn_register_options(
 
 @router.post("/webauthn/register/verify", status_code=status.HTTP_201_CREATED)
 async def webauthn_register_verify(
-    body: dict,
+    body: WebAuthnRegisterVerifyRequest,
     request: Request,
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -244,7 +243,7 @@ async def webauthn_register_verify(
 
     try:
         verification = verify_registration_response(
-            credential=body,
+            credential=body.model_dump(),
             expected_challenge=challenge,
             expected_rp_id=settings.WEBAUTHN_RP_ID,
             expected_origin=f"https://{settings.WEBAUTHN_RP_ID}",
@@ -278,10 +277,8 @@ async def webauthn_register_verify(
 
 
 @router.post("/webauthn/authenticate/options")
-async def webauthn_authenticate_options(body: dict, db: AsyncSession = Depends(get_db)):
-    email = body.get("email")
-    if not email:
-        raise HTTPException(status_code=400, detail="email required")
+async def webauthn_authenticate_options(body: WebAuthnAuthenticateOptionsRequest, db: AsyncSession = Depends(get_db)):
+    email = body.email
 
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
@@ -301,8 +298,8 @@ async def webauthn_authenticate_options(body: dict, db: AsyncSession = Depends(g
 
 
 @router.post("/webauthn/authenticate/verify", response_model=TokenResponse)
-async def webauthn_authenticate_verify(body: dict, db: AsyncSession = Depends(get_db)):
-    email = body.get("email")
+async def webauthn_authenticate_verify(body: WebAuthnAuthenticateVerifyRequest, db: AsyncSession = Depends(get_db)):
+    email = body.email
     challenge = _challenges.pop(email)
     if not challenge:
         raise HTTPException(status_code=400, detail="No pending authentication challenge.")
@@ -317,17 +314,23 @@ async def webauthn_authenticate_verify(body: dict, db: AsyncSession = Depends(ge
     )
     stored_creds = {c.credential_id: c for c in cred_result.scalars().all()}
 
+    matched = stored_creds.get(body.id)
+    if not matched:
+        raise HTTPException(status_code=401, detail="Unknown credential")
+
     try:
-        verify_authentication_response(
-            credential=body,
+        result = verify_authentication_response(
+            credential=body.model_dump(),
             expected_challenge=challenge,
             expected_rp_id=settings.WEBAUTHN_RP_ID,
             expected_origin=f"https://{settings.WEBAUTHN_RP_ID}",
-            credential_public_key=list(stored_creds.values())[0].public_key,
-            credential_current_sign_count=list(stored_creds.values())[0].sign_count,
+            credential_public_key=matched.public_key,
+            credential_current_sign_count=matched.sign_count,
         )
     except Exception as exc:
         raise HTTPException(status_code=401, detail=f"Authentication failed: {exc}")
+
+    matched.sign_count = result.new_sign_count
 
     access_token = create_access_token({"sub": str(user.id), "role": user.role.value})
     raw_refresh = generate_opaque_token()

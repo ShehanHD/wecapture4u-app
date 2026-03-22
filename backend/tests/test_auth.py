@@ -51,3 +51,18 @@ async def test_reset_password_short_password_rejected(client: AsyncClient) -> No
     assert response.status_code == 422
     body = response.json()
     assert "8 characters" in str(body)
+
+
+@pytest.mark.asyncio
+async def test_webauthn_authenticate_verify_rejects_unknown_credential(client: AsyncClient) -> None:
+    """Endpoint must return 400 when no pending challenge exists (covers the unknown-credential path)."""
+    response = await client.post("/api/auth/webauthn/authenticate/verify", json={
+        "email": "user@example.com",
+        "id": "nonexistent-credential-id",
+        "rawId": "nonexistent-credential-id",
+        "response": {"clientDataJSON": "x", "authenticatorData": "x", "signature": "x"},
+        "type": "public-key",
+    })
+    # No pending challenge → should get 400, not 500
+    assert response.status_code == 400
+    assert "challenge" in response.json()["detail"].lower()
