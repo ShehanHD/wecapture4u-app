@@ -170,8 +170,37 @@ from schemas.auth import WebAuthnDeviceCheckResponse, WebAuthnCredentialResponse
 import json  # noqa: E402
 from fastapi import Request  # noqa: E402
 
-# In-memory challenge store (single-process only — sufficient for non-serverless deployment)
-_challenges: dict[str, bytes] = {}
+class ChallengeStore:
+    """In-memory challenge store with TTL expiry.
+
+    Entries older than TTL_SECONDS are treated as missing.
+    Lazy pruning runs on every set() call — no background thread needed.
+    Single-process only; sufficient for non-serverless deployment.
+    """
+    TTL_SECONDS = 300  # 5 minutes
+
+    def __init__(self) -> None:
+        self._store: dict[str, tuple[bytes, datetime]] = {}
+
+    def set(self, key: str, challenge: bytes) -> None:
+        self._prune()
+        self._store[key] = (challenge, datetime.now(timezone.utc))
+
+    def pop(self, key: str) -> bytes | None:
+        entry = self._store.pop(key, None)
+        if entry is None:
+            return None
+        challenge, created_at = entry
+        if datetime.now(timezone.utc) - created_at > timedelta(seconds=self.TTL_SECONDS):
+            return None
+        return challenge
+
+    def _prune(self) -> None:
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=self.TTL_SECONDS)
+        self._store = {k: v for k, v in self._store.items() if v[1] > cutoff}
+
+
+_challenges = ChallengeStore()
 
 
 @router.get("/webauthn/device-check", response_model=WebAuthnDeviceCheckResponse)
@@ -198,7 +227,7 @@ async def webauthn_register_options(
     )
     existing = [c.public_key for c in cred_result.scalars().all()]
     options = get_registration_options(str(current_user.id), current_user.email, existing)
-    _challenges[str(current_user.id)] = options.challenge
+    _challenges.set(str(current_user.id), options.challenge)
     return json.loads(options_to_json(options))
 
 
@@ -209,7 +238,7 @@ async def webauthn_register_verify(
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    challenge = _challenges.pop(str(current_user.id), None)
+    challenge = _challenges.pop(str(current_user.id))
     if not challenge:
         raise HTTPException(status_code=400, detail="No pending registration challenge.")
 
@@ -267,14 +296,14 @@ async def webauthn_authenticate_options(body: dict, db: AsyncSession = Depends(g
         raise HTTPException(status_code=404, detail="No credentials registered")
 
     options = get_authentication_options([c.public_key for c in credentials])
-    _challenges[email] = options.challenge
+    _challenges.set(email, options.challenge)
     return json.loads(options_to_json(options))
 
 
 @router.post("/webauthn/authenticate/verify", response_model=TokenResponse)
 async def webauthn_authenticate_verify(body: dict, db: AsyncSession = Depends(get_db)):
     email = body.get("email")
-    challenge = _challenges.pop(email, None)
+    challenge = _challenges.pop(email)
     if not challenge:
         raise HTTPException(status_code=400, detail="No pending authentication challenge.")
 

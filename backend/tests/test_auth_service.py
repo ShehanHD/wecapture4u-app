@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from services.auth import (
     hash_password, verify_password,
     create_access_token, decode_access_token,
@@ -89,3 +89,44 @@ def test_webauthn_authenticate_verify_accepts_valid_body():
     )
     assert req.email == "user@example.com"
     assert req.id == "credential-id"
+
+
+# --- ChallengeStore Tests ---
+def test_challenge_store_set_and_pop():
+    from routers.auth import ChallengeStore
+    store = ChallengeStore()
+    store.set("user@example.com", b"challenge-bytes")
+    result = store.pop("user@example.com")
+    assert result == b"challenge-bytes"
+
+
+def test_challenge_store_pop_missing_returns_none():
+    from routers.auth import ChallengeStore
+    store = ChallengeStore()
+    assert store.pop("nobody@example.com") is None
+
+
+def test_challenge_store_pop_consumed_returns_none():
+    from routers.auth import ChallengeStore
+    store = ChallengeStore()
+    store.set("user@example.com", b"challenge-bytes")
+    store.pop("user@example.com")  # consume
+    assert store.pop("user@example.com") is None  # gone
+
+
+def test_challenge_store_expired_returns_none():
+    from routers.auth import ChallengeStore
+    store = ChallengeStore()
+    stale_time = datetime.now(timezone.utc) - timedelta(seconds=ChallengeStore.TTL_SECONDS + 1)
+    store._store["user@example.com"] = (b"old-challenge", stale_time)
+    assert store.pop("user@example.com") is None
+
+
+def test_challenge_store_prune_removes_stale_on_set():
+    from routers.auth import ChallengeStore
+    store = ChallengeStore()
+    stale_time = datetime.now(timezone.utc) - timedelta(seconds=ChallengeStore.TTL_SECONDS + 1)
+    store._store["stale@example.com"] = (b"old", stale_time)
+    store.set("new@example.com", b"new-challenge")  # triggers _prune
+    assert "stale@example.com" not in store._store
+    assert "new@example.com" in store._store
