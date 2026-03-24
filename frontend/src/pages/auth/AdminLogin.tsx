@@ -22,6 +22,7 @@ export default function AdminLogin() {
   const [hasBiometric, setHasBiometric] = useState(false)
   const [checkedEmail, setCheckedEmail] = useState('')
   const [biometricLoading, setBiometricLoading] = useState(false)
+  const [directBiometricLoading, setDirectBiometricLoading] = useState(false)
 
   const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -36,6 +37,18 @@ export default function AdminLogin() {
       setHasBiometric(data.has_credential)
     } catch {
       setHasBiometric(false)
+    }
+  }
+
+  const handleDirectBiometric = async () => {
+    setError(null)
+    setDirectBiometricLoading(true)
+    try {
+      await loginWithBiometric()
+    } catch {
+      setError('Biometric login failed. Please sign in with email and password.')
+    } finally {
+      setDirectBiometricLoading(false)
     }
   }
 
@@ -75,6 +88,23 @@ export default function AdminLogin() {
         </div>
 
         <div className="space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-11 rounded-xl"
+            onClick={handleDirectBiometric}
+            disabled={directBiometricLoading}
+          >
+            <Fingerprint className="w-4 h-4 mr-2" />
+            {directBiometricLoading ? 'Verifying…' : 'Use Face ID / Fingerprint'}
+          </Button>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or sign in with email</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
           <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
             <Input

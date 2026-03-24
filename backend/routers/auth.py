@@ -1,5 +1,6 @@
 import json
 import base64
+import uuid
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -275,44 +276,67 @@ async def webauthn_register_verify(
 
 @router.post("/webauthn/authenticate/options")
 async def webauthn_authenticate_options(body: WebAuthnAuthenticateOptionsRequest, db: AsyncSession = Depends(get_db)):
-    email = body.email
-
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    cred_result = await db.execute(
-        select(WebAuthnCredential).where(WebAuthnCredential.user_id == user.id)
-    )
-    credentials = cred_result.scalars().all()
-    if not credentials:
-        raise HTTPException(status_code=404, detail="No credentials registered")
-
-    options = get_authentication_options([c.public_key for c in credentials])
-    _challenges.set(email, options.challenge)
-    return json.loads(options_to_json(options))
+    if body.email:
+        # Email-based flow: only allow credentials for this user
+        result = await db.execute(select(User).where(User.email == body.email))
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        cred_result = await db.execute(
+            select(WebAuthnCredential).where(WebAuthnCredential.user_id == user.id)
+        )
+        credentials = cred_result.scalars().all()
+        if not credentials:
+            raise HTTPException(status_code=404, detail="No credentials registered")
+        options = get_authentication_options([c.public_key for c in credentials])
+        _challenges.set(body.email, options.challenge)
+        return json.loads(options_to_json(options))
+    else:
+        # Usernameless flow: empty allowCredentials — device picks the credential
+        challenge_id = str(uuid.uuid4())
+        options = get_authentication_options([])
+        _challenges.set(challenge_id, options.challenge)
+        response = json.loads(options_to_json(options))
+        response["challenge_id"] = challenge_id
+        return response
 
 
 @router.post("/webauthn/authenticate/verify", response_model=TokenResponse)
 async def webauthn_authenticate_verify(body: WebAuthnAuthenticateVerifyRequest, db: AsyncSession = Depends(get_db)):
-    email = body.email
-    challenge = _challenges.pop(email)
+    # Retrieve challenge — keyed by email (email flow) or challenge_id (usernameless flow)
+    challenge_key = body.email if body.email else body.challenge_id
+    if not challenge_key:
+        raise HTTPException(status_code=400, detail="email or challenge_id required.")
+    challenge = _challenges.pop(challenge_key)
     if not challenge:
         raise HTTPException(status_code=400, detail="No pending authentication challenge.")
 
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
-    if not user or not user.is_active:
-        raise HTTPException(status_code=401, detail="User not found or inactive")
+    if body.email:
+        # Email flow: look up user directly
+        user_result = await db.execute(select(User).where(User.email == body.email))
+        user = user_result.scalar_one_or_none()
+        if not user or not user.is_active:
+            raise HTTPException(status_code=401, detail="User not found or inactive")
+        cred_result = await db.execute(
+            select(WebAuthnCredential).where(WebAuthnCredential.user_id == user.id)
+        )
+        stored_creds = {c.credential_id: c for c in cred_result.scalars().all()}
+        matched = stored_creds.get(body.id)
+    else:
+        # Usernameless flow: find credential by ID, then get user from it
+        cred_result = await db.execute(
+            select(WebAuthnCredential).where(WebAuthnCredential.credential_id == body.id)
+        )
+        matched = cred_result.scalar_one_or_none()
+        if matched:
+            user_result = await db.execute(select(User).where(User.id == matched.user_id))
+            user = user_result.scalar_one_or_none()
+            if not user or not user.is_active:
+                user = None
+        else:
+            user = None
 
-    cred_result = await db.execute(
-        select(WebAuthnCredential).where(WebAuthnCredential.user_id == user.id)
-    )
-    stored_creds = {c.credential_id: c for c in cred_result.scalars().all()}
-
-    matched = stored_creds.get(body.id)
-    if not matched:
+    if not matched or not user:
         raise HTTPException(status_code=401, detail="Unknown credential")
 
     try:

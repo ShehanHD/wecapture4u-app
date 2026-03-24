@@ -8,6 +8,7 @@ from webauthn import (
 from webauthn.helpers.structs import (
     AuthenticatorSelectionCriteria,
     UserVerificationRequirement,
+    ResidentKeyRequirement,
     PublicKeyCredentialDescriptor,
 )
 from config import settings
@@ -23,7 +24,8 @@ def get_registration_options(user_id: str, user_email: str, existing_credential_
             PublicKeyCredentialDescriptor(id=cid) for cid in existing_credential_ids
         ],
         authenticator_selection=AuthenticatorSelectionCriteria(
-            user_verification=UserVerificationRequirement.PREFERRED,
+            user_verification=UserVerificationRequirement.REQUIRED,
+            resident_key=ResidentKeyRequirement.REQUIRED,
         ),
     )
 

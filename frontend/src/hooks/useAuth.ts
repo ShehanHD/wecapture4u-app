@@ -33,11 +33,12 @@ export function useAuth() {
     }
   }, [navigate])
 
-  const loginWithBiometric = useCallback(async (email: string) => {
-    const { data: options } = await apiClient.post('/api/auth/webauthn/authenticate/options', { email })
-    const credential = await startAuthentication(options)
+  const loginWithBiometric = useCallback(async (email?: string) => {
+    const { data: options } = await apiClient.post('/api/auth/webauthn/authenticate/options', email ? { email } : {})
+    const { challenge_id, ...webauthnOptions } = options
+    const credential = await startAuthentication(webauthnOptions)
     const { data } = await apiClient.post('/api/auth/webauthn/authenticate/verify', {
-      email,
+      ...(email ? { email } : { challenge_id }),
       ...credential,
     })
     auth.setTokens(data.access_token, data.refresh_token)

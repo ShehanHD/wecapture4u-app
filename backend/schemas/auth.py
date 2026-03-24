@@ -62,7 +62,7 @@ class WebAuthnCredentialResponse(BaseModel):
 
 # --- WebAuthn request bodies ---
 class WebAuthnAuthenticateOptionsRequest(BaseModel):
-    email: EmailStr
+    email: EmailStr | None = None
 
 
 class WebAuthnRegisterVerifyRequest(BaseModel):
@@ -73,7 +73,8 @@ class WebAuthnRegisterVerifyRequest(BaseModel):
 
 
 class WebAuthnAuthenticateVerifyRequest(BaseModel):
-    email: EmailStr
+    email: EmailStr | None = None
+    challenge_id: str | None = None
     id: str
     rawId: str
     response: dict
