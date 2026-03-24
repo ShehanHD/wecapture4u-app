@@ -2,11 +2,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link } from 'react-router-dom'
+import { Fingerprint } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState } from 'react'
+import apiClient from '@/lib/axios'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -15,11 +17,41 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function ClientLogin() {
-  const { login } = useAuth()
+  const { login, loginWithBiometric } = useAuth()
   const [error, setError] = useState<string | null>(null)
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const [hasBiometric, setHasBiometric] = useState(false)
+  const [checkedEmail, setCheckedEmail] = useState('')
+  const [biometricLoading, setBiometricLoading] = useState(false)
+
+  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
+
+  const checkBiometric = async () => {
+    const email = getValues('email')
+    if (!email || checkedEmail === email) return
+    setCheckedEmail(email)
+    try {
+      const { data } = await apiClient.get(`/api/auth/webauthn/device-check?email=${encodeURIComponent(email)}`)
+      setHasBiometric(data.has_credential)
+    } catch {
+      setHasBiometric(false)
+    }
+  }
+
+  const handleBiometric = async () => {
+    const email = getValues('email')
+    if (!email) return
+    setError(null)
+    setBiometricLoading(true)
+    try {
+      await loginWithBiometric(email)
+    } catch {
+      setError('Biometric login failed. Please use your password.')
+    } finally {
+      setBiometricLoading(false)
+    }
+  }
 
   const onSubmit = async (data: FormData) => {
     setError(null)
@@ -32,14 +64,22 @@ export default function ClientLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-full max-w-sm space-y-6 p-8 bg-card rounded-lg">
-        <h1 className="text-2xl font-bold text-white">Client Login</h1>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-sm bg-card border border-border rounded-2xl shadow-lg p-8">
+        <div className="flex flex-col items-center mb-8">
+          <h1 className="text-xl font-semibold text-foreground">Client Portal</h1>
+          <p className="text-sm text-muted-foreground mt-1">Sign in to view your jobs</p>
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register('email')} />
+            <Input
+              id="email"
+              type="email"
+              {...register('email')}
+              onBlur={checkBiometric}
+            />
             {errors.email && <p className="text-red-400 text-sm">{errors.email.message}</p>}
           </div>
 
@@ -51,12 +91,24 @@ export default function ClientLogin() {
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button type="submit" className="w-full h-10 rounded-xl" disabled={isSubmitting}>
             {isSubmitting ? 'Signing in…' : 'Sign In'}
           </Button>
         </form>
 
-        <Link to="/client/forgot-password" className="block text-center text-sm text-muted hover:text-primary">
+        {hasBiometric && (
+          <Button
+            variant="outline"
+            className="w-full h-10 rounded-xl mt-3"
+            onClick={handleBiometric}
+            disabled={biometricLoading}
+          >
+            <Fingerprint className="w-4 h-4 mr-2" />
+            {biometricLoading ? 'Verifying…' : 'Use Face ID / Fingerprint'}
+          </Button>
+        )}
+
+        <Link to="/client/forgot-password" className="block text-center text-sm text-muted hover:text-primary mt-4">
           Forgot password?
         </Link>
       </div>

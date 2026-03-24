@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { startAuthentication, startRegistration } from '@simplewebauthn/browser'
 import { auth } from '@/lib/auth'
 import apiClient from '@/lib/axios'
 import { queryClient } from '@/lib/queryClient'
@@ -11,7 +12,12 @@ export function useAuth() {
     const { data } = await apiClient.post('/api/auth/login', { email, password })
     auth.setTokens(data.access_token, data.refresh_token)
     const role = auth.getRole()
-    navigate(role === 'admin' ? '/admin' : '/client')
+    const dismissed = localStorage.getItem('biometric_setup_dismissed')
+    if (!dismissed) {
+      navigate(role === 'admin' ? '/admin/biometric/setup' : '/client/biometric/setup')
+    } else {
+      navigate(role === 'admin' ? '/admin' : '/client')
+    }
   }, [navigate])
 
   const logout = useCallback(async () => {
@@ -27,10 +33,30 @@ export function useAuth() {
     }
   }, [navigate])
 
+  const loginWithBiometric = useCallback(async (email: string) => {
+    const { data: options } = await apiClient.post('/api/auth/webauthn/authenticate/options', { email })
+    const credential = await startAuthentication(options)
+    const { data } = await apiClient.post('/api/auth/webauthn/authenticate/verify', {
+      email,
+      ...credential,
+    })
+    auth.setTokens(data.access_token, data.refresh_token)
+    const role = auth.getRole()
+    navigate(role === 'admin' ? '/admin' : '/client')
+  }, [navigate])
+
+  const registerBiometric = useCallback(async () => {
+    const { data: options } = await apiClient.post('/api/auth/webauthn/register/options', {})
+    const credential = await startRegistration(options)
+    await apiClient.post('/api/auth/webauthn/register/verify', credential)
+  }, [])
+
   return {
     isAuthenticated: auth.isAuthenticated(),
     role: auth.getRole(),
     login,
     logout,
+    loginWithBiometric,
+    registerBiometric,
   }
 }

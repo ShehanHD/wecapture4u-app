@@ -3,8 +3,12 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import Landing from '@/pages/public/Landing'
 import Gallery from '@/pages/public/Gallery'
 import AdminLogin from '@/pages/auth/AdminLogin'
+import ClientLogin from '@/pages/auth/ClientLogin'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
+import ResetPassword from '@/pages/auth/ResetPassword'
+import BiometricSetup from '@/pages/auth/BiometricSetup'
 import { AdminRoute } from '@/components/auth/AdminRoute'
+import { ClientRoute } from '@/components/auth/ClientRoute'
 import { AdminShell } from '@/components/layout/AdminShell'
 
 // Admin pages
@@ -22,14 +26,22 @@ export const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
   { path: '/portfolio/:slug', element: <Gallery /> },
 
-  // Auth routes
+  // Admin auth routes
   { path: '/login', element: <AdminLogin /> },
   { path: '/forgot-password', element: <ForgotPassword /> },
+  { path: '/reset-password', element: <ResetPassword /> },
+
+  // Client auth routes
+  { path: '/client/login', element: <ClientLogin /> },
+  { path: '/client/forgot-password', element: <ForgotPassword /> },
+  { path: '/client/reset-password', element: <ResetPassword /> },
 
   // Protected admin routes — AdminRoute guard → AdminShell layout
   {
     element: <AdminRoute />,
     children: [
+      // Biometric setup — outside AdminShell (no sidebar during setup)
+      { path: '/admin/biometric/setup', element: <BiometricSetup /> },
       {
         path: '/admin',
         element: <AdminShell />,
@@ -50,6 +62,15 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Redirect root /admin to dashboard
+  // Protected client routes
+  {
+    element: <ClientRoute />,
+    children: [
+      { path: '/client/biometric/setup', element: <BiometricSetup /> },
+      // Client portal pages added in client portal plan
+    ],
+  },
+
+  // Fallback
   { path: '*', element: <Navigate to="/login" replace /> },
 ])
