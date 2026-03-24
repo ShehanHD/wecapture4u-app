@@ -1,4 +1,5 @@
 import json
+import base64
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -259,11 +260,7 @@ async def webauthn_register_verify(
     except ImportError:
         device_name = None
 
-    credential_id = (
-        verification.credential_id.decode()
-        if isinstance(verification.credential_id, bytes)
-        else str(verification.credential_id)
-    )
+    credential_id = base64.urlsafe_b64encode(verification.credential_id).rstrip(b'=').decode('ascii')
 
     db.add(WebAuthnCredential(
         user_id=current_user.id,
