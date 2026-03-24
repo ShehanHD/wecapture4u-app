@@ -74,7 +74,7 @@ export default function AdminLogin() {
           <p className="text-sm text-muted-foreground mt-1">Sign in to your account</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4">
           <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -86,30 +86,40 @@ export default function AdminLogin() {
             {errors.email && <p className="text-red-400 text-sm">{errors.email.message}</p>}
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" {...register('password')} />
-            {errors.password && <p className="text-red-400 text-sm">{errors.password.message}</p>}
-          </div>
+          {hasBiometric && (
+            <>
+              <Button
+                type="button"
+                className="w-full h-10 rounded-xl"
+                onClick={handleBiometric}
+                disabled={biometricLoading}
+              >
+                <Fingerprint className="w-4 h-4 mr-2" />
+                {biometricLoading ? 'Verifying…' : 'Use Face ID / Fingerprint'}
+              </Button>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground">or use password</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+            </>
+          )}
 
-          <Button type="submit" className="w-full h-10 rounded-xl" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in…' : 'Sign In'}
-          </Button>
-        </form>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" {...register('password')} />
+              {errors.password && <p className="text-red-400 text-sm">{errors.password.message}</p>}
+            </div>
 
-        {hasBiometric && (
-          <Button
-            variant="outline"
-            className="w-full h-10 rounded-xl mt-3"
-            onClick={handleBiometric}
-            disabled={biometricLoading}
-          >
-            <Fingerprint className="w-4 h-4 mr-2" />
-            {biometricLoading ? 'Verifying…' : 'Use Face ID / Fingerprint'}
-          </Button>
-        )}
+            {error && <p className="text-red-400 text-sm">{error}</p>}
+
+            <Button type="submit" className="w-full h-10 rounded-xl" disabled={isSubmitting}>
+              {isSubmitting ? 'Signing in…' : 'Sign In'}
+            </Button>
+          </form>
+        </div>
 
         <Link to="/forgot-password" className="block text-center text-sm text-muted hover:text-primary mt-4">
           Forgot password?
