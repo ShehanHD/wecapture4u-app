@@ -1,3 +1,6 @@
+# Git worktrees
+.worktrees/
+
 # Python
 backend/venv/
 backend/__pycache__/
