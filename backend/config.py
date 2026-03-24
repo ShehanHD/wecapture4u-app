@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     CRON_SECRET: str = ""
 
     @property
+    def webauthn_origin(self) -> str:
+        if self.WEBAUTHN_RP_ID == "localhost":
+            return "http://localhost:5173"
+        return f"https://{self.WEBAUTHN_RP_ID}"
+
+    @property
     def allowed_origins_list(self) -> list[str]:
         origins = [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
         if self.ENVIRONMENT == "development":

@@ -246,7 +246,7 @@ async def webauthn_register_verify(
             credential=body.model_dump(),
             expected_challenge=challenge,
             expected_rp_id=settings.WEBAUTHN_RP_ID,
-            expected_origin=f"https://{settings.WEBAUTHN_RP_ID}",
+            expected_origin=settings.webauthn_origin,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Registration failed: {exc}")
@@ -323,7 +323,7 @@ async def webauthn_authenticate_verify(body: WebAuthnAuthenticateVerifyRequest, 
             credential=body.model_dump(),
             expected_challenge=challenge,
             expected_rp_id=settings.WEBAUTHN_RP_ID,
-            expected_origin=f"https://{settings.WEBAUTHN_RP_ID}",
+            expected_origin=settings.webauthn_origin,
             credential_public_key=matched.public_key,
             credential_current_sign_count=matched.sign_count,
         )
