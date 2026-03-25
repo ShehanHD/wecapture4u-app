@@ -1,7 +1,8 @@
 import { api } from '@/lib/axios'
 import {
   JobListSchema, JobSchema, JobDetailSchema, JobStageListSchema, JobStageSchema,
-  type Job, type JobDetail, type JobStage,
+  AlbumStageSchema, AlbumStageListSchema,
+  type Job, type JobDetail, type JobStage, type AlbumStage,
 } from '@/schemas/jobs'
 
 export type { Job, JobDetail, JobStage }
@@ -69,4 +70,44 @@ export async function deleteJobStage(id: string): Promise<void> {
   await api.delete(`/api/job-stages/${id}`)
 }
 
+// ─── Album Stage types ────────────────────────────────────────────────────────
 
+export type { AlbumStage }
+
+export interface AlbumStageCreatePayload {
+  name: string
+  color: string
+  is_terminal?: boolean
+}
+
+export interface AlbumStageUpdatePayload {
+  name?: string
+  color?: string
+  is_terminal?: boolean
+}
+
+// ─── Album Stage API functions ────────────────────────────────────────────────
+
+export async function fetchAlbumStages(): Promise<AlbumStage[]> {
+  const { data } = await api.get('/api/album-stages')
+  return AlbumStageListSchema.parse(data)
+}
+
+export async function createAlbumStage(payload: AlbumStageCreatePayload): Promise<AlbumStage> {
+  const { data } = await api.post('/api/album-stages', payload)
+  return AlbumStageSchema.parse(data)
+}
+
+export async function updateAlbumStage(id: string, payload: AlbumStageUpdatePayload): Promise<AlbumStage> {
+  const { data } = await api.patch(`/api/album-stages/${id}`, payload)
+  return AlbumStageSchema.parse(data)
+}
+
+export async function reorderAlbumStages(stages: StagePositionItem[]): Promise<AlbumStage[]> {
+  const { data } = await api.patch('/api/album-stages/positions', { stages })
+  return AlbumStageListSchema.parse(data)
+}
+
+export async function deleteAlbumStage(id: string): Promise<void> {
+  await api.delete(`/api/album-stages/${id}`)
+}
