@@ -19,6 +19,8 @@ export interface JobUpdatePayload {
 
 export interface StagePositionItem { id: string; position: number }
 
+export type JobStageUpdatePayload = { name?: string; color?: string; is_terminal?: boolean }
+
 export async function fetchJobs(params?: { stage_id?: string; client_id?: string }): Promise<Job[]> {
   const { data } = await api.get('/api/jobs', { params })
   return JobListSchema.parse(data)
@@ -53,7 +55,7 @@ export async function createJobStage(payload: { name: string; color: string; is_
   return JobStageSchema.parse(data)
 }
 
-export async function updateJobStage(id: string, payload: { name?: string; color?: string; is_terminal?: boolean }): Promise<JobStage> {
+export async function updateJobStage(id: string, payload: JobStageUpdatePayload): Promise<JobStage> {
   const { data } = await api.patch(`/api/job-stages/${id}`, payload)
   return JobStageSchema.parse(data)
 }

@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import {
   fetchJobs, fetchJob, createJob, updateJob, deleteJob,
   fetchJobStages, createJobStage, updateJobStage, reorderJobStages, deleteJobStage,
-  type JobCreatePayload, type JobUpdatePayload, type StagePositionItem,
+  type JobCreatePayload, type JobUpdatePayload, type StagePositionItem, type JobStageUpdatePayload,
 } from '@/api/jobs'
 import { getApiErrorMessage } from '@/lib/apiError'
 
@@ -100,7 +100,7 @@ export function useCreateJobStage() {
 export function useUpdateJobStage() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: { name?: string; color?: string; is_terminal?: boolean } }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: JobStageUpdatePayload }) =>
       updateJobStage(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-stages'] })
