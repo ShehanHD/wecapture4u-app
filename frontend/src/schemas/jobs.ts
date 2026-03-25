@@ -66,7 +66,7 @@ export const JobSchema = z.object({
   stage_id: z.string().uuid(),
   stage: StageSummarySchema.nullable().optional(),
   delivery_url: z.string().nullable(),
-  album_stage_id: z.string().uuid().nullable().optional(),
+  album_stage_id: z.string().uuid().nullable(),
   album_stage: z.object({ id: z.string().uuid(), name: z.string(), color: z.string() }).nullable().optional(),
   created_at: z.string(),
 })

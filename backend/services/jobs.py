@@ -75,14 +75,13 @@ async def get_job_detail(db: AsyncSession, *, id: uuid.UUID):
             SessionTypeSummary.model_validate(st) for st in st_result.scalars().all()
         ]
 
-    # Embed full ordered album stages for progress bar rendering
-    if job.album_stage_id is not None:
-        album_stages_result = await db.execute(
-            select(AlbumStage).order_by(AlbumStage.position)
-        )
-        out.album_stages = [
-            AlbumStageOut.model_validate(s) for s in album_stages_result.scalars().all()
-        ]
+    # Embed full ordered album stages for progress bar rendering (always included)
+    album_stages_result = await db.execute(
+        select(AlbumStage).order_by(AlbumStage.position)
+    )
+    out.album_stages = [
+        AlbumStageOut.model_validate(s) for s in album_stages_result.scalars().all()
+    ]
 
     return out
 

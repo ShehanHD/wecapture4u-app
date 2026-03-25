@@ -153,6 +153,34 @@ async def test_delete_album_stage_with_jobs_returns_409(test_client, admin_auth_
     assert resp.status_code == 409
 
 
+# ─── ON DELETE SET NULL ───────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_delete_album_stage_on_delete_set_null(db_session):
+    """ON DELETE SET NULL: deleting an album_stage row via raw DB delete nullifies job.album_stage_id."""
+    from sqlalchemy import delete as sa_delete, select as sa_select
+    stage = await _seed_stage(db_session, name="Transitional", position=997)
+    client = Client(name="Dan", email=f"dan_{uuid4().hex[:6]}@test.com", tags=[])
+    db_session.add(client)
+    job_stage = JobStage(name="Booked", color="#f59e0b", position=95)
+    db_session.add(job_stage)
+    await db_session.flush()
+    job = Job(client_id=client.id, stage_id=job_stage.id, album_stage_id=stage.id)
+    db_session.add(job)
+    await db_session.flush()
+    job_id = job.id
+
+    # Bypass the API guard and delete directly — verifies ON DELETE SET NULL migration constraint
+    await db_session.execute(sa_delete(AlbumStage).where(AlbumStage.id == stage.id))
+    await db_session.flush()
+    # Expire identity map so the next query reflects DB state (not ORM cache)
+    db_session.expire_all()
+
+    result = await db_session.execute(sa_select(Job).where(Job.id == job_id))
+    refreshed = result.scalar_one()
+    assert refreshed.album_stage_id is None
+
+
 # ─── Auto-assign ──────────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
