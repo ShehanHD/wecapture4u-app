@@ -10,6 +10,8 @@ from schemas.jobs import (
     JobCreate, JobUpdate, JobOut, JobDetailOut,
     JobStageCreate, JobStageUpdate, JobStageOut,
     StagePositionReorder,
+    AlbumStageCreate, AlbumStageUpdate, AlbumStageOut,
+    AlbumStagePositionReorder,
 )
 from schemas.invoices import InvoiceOut
 from services import jobs as job_svc
@@ -86,3 +88,35 @@ async def update_job_stage(id: uuid.UUID, body: JobStageUpdate, db: DB, _: Admin
 @router.delete("/job-stages/{id}", status_code=204)
 async def delete_job_stage(id: uuid.UUID, db: DB, _: Admin):
     await settings_svc.delete_job_stage(db, id=id)
+
+
+# --- Album Stages ---
+
+@router.get("/album-stages", response_model=list[AlbumStageOut])
+async def list_album_stages(db: DB, _: Admin):
+    return await settings_svc.list_album_stages(db)
+
+
+@router.post("/album-stages", response_model=AlbumStageOut, status_code=201)
+async def create_album_stage(body: AlbumStageCreate, db: DB, _: Admin):
+    return await settings_svc.create_album_stage(
+        db, name=body.name, color=body.color, is_terminal=body.is_terminal
+    )
+
+
+@router.patch("/album-stages/positions", response_model=list[AlbumStageOut])
+async def reorder_album_stages(body: AlbumStagePositionReorder, db: DB, _: Admin):
+    stages = [{"id": str(s.id), "position": s.position} for s in body.stages]
+    return await settings_svc.reorder_album_stages(db, stages=stages)
+
+
+@router.patch("/album-stages/{id}", response_model=AlbumStageOut)
+async def update_album_stage(id: uuid.UUID, body: AlbumStageUpdate, db: DB, _: Admin):
+    return await settings_svc.update_album_stage(
+        db, id=id, name=body.name, color=body.color, is_terminal=body.is_terminal
+    )
+
+
+@router.delete("/album-stages/{id}", status_code=204)
+async def delete_album_stage(id: uuid.UUID, db: DB, _: Admin):
+    await settings_svc.delete_album_stage(db, id=id)
