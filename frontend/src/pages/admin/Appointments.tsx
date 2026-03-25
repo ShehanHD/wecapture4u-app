@@ -645,10 +645,7 @@ export function Appointments() {
 
   const handleAppointmentCreated = () => {
     if (!confirmingRequest) return
-    updateBookingRequest.mutate(
-      { id: confirmingRequest.id, status: 'confirmed' },
-      { onError: () => toast.error('Appointment created but could not confirm booking request') },
-    )
+    updateBookingRequest.mutate({ id: confirmingRequest.id, status: 'confirmed' })
     setConfirmingRequest(null)
   }
 
