@@ -106,7 +106,7 @@ async def create_job(db: AsyncSession, *, data: dict) -> Job:
             else:
                 logger.warning("No album stages seeded — job %s created without album_stage_id", job.id)
 
-    return job
+    return await get_job(db, id=job.id)
 
 
 async def update_job(db: AsyncSession, *, id: uuid.UUID, data: dict) -> Job:
