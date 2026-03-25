@@ -124,7 +124,7 @@ interface AppointmentModalProps {
 
 function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: AppointmentModalProps) {
   const { data: sessionTypes = [] } = useSessionTypes()
-  const { data: existingClient } = useClient(appointment?.client_id ?? '')
+  const { data: existingClient } = useClient(appointment?.client_id ?? prefill?.client_id ?? '')
   const createMutation = useCreateAppointment()
   const updateMutation = useUpdateAppointment()
 
@@ -240,7 +240,7 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
               <div>
                 <Label>Client</Label>
                 <ClientCombobox
-                  key={appointment?.id ?? 'new'}
+                  key={appointment?.id ?? prefill?.client_id ?? 'new'}
                   value={clientId ?? ''}
                   onChange={(id) => setValue('client_id', id, { shouldValidate: true })}
                   initialName={existingClient?.name}
@@ -630,6 +630,7 @@ export function Appointments() {
   const requestPrefill = useMemo(() => {
     if (!confirmingRequest) return undefined
     return {
+      client_id: confirmingRequest.client_id,
       starts_at: confirmingRequest.preferred_date,
       session_type_ids: confirmingRequest.session_type_id ? [confirmingRequest.session_type_id] : [],
       addon_album: confirmingRequest.addons.includes('album'),
