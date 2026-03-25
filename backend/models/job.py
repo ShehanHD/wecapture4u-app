@@ -19,6 +19,19 @@ class JobStage(Base):
     jobs = relationship("Job", back_populates="stage", lazy="select")
 
 
+class AlbumStage(Base):
+    __tablename__ = "album_stages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=False)
+    color = Column(String, nullable=False)
+    position = Column(Integer, nullable=False)
+    is_terminal = Column(Boolean, nullable=False, server_default="false")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    jobs = relationship("Job", back_populates="album_stage", lazy="select")
+
+
 class Job(Base):
     __tablename__ = "jobs"
 
@@ -27,9 +40,11 @@ class Job(Base):
     appointment_id = Column(UUID(as_uuid=True), ForeignKey("appointments.id", ondelete="SET NULL"), nullable=True)
     stage_id = Column(UUID(as_uuid=True), ForeignKey("job_stages.id", ondelete="RESTRICT"), nullable=False)
     delivery_url = Column(String, nullable=True)
+    album_stage_id = Column(UUID(as_uuid=True), ForeignKey("album_stages.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     client = relationship("Client", back_populates="jobs", lazy="select")
     appointment = relationship("Appointment", back_populates="job", lazy="select")
     stage = relationship("JobStage", back_populates="jobs", lazy="select")
+    album_stage = relationship("AlbumStage", back_populates="jobs", lazy="select")
     invoices = relationship("Invoice", back_populates="job", lazy="select")
