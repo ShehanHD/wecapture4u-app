@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { Calendar, dateFnsLocalizer, type View } from 'react-big-calendar'
-import { format, parse, startOfWeek, getDay, parseISO, addHours } from 'date-fns'
+import { format, parse, startOfWeek, getDay, parseISO, addHours, formatDistanceToNow } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Plus, CheckCircle2, XCircle, CalendarDays } from 'lucide-react'
@@ -16,11 +16,14 @@ import {
 } from '@/components/ui/select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { toast } from 'sonner'
 import { useAppointments, useCreateAppointment, useUpdateAppointment, useDeleteAppointment } from '@/hooks/useAppointments'
 import { useSessionTypes } from '@/hooks/useSettings'
 import { useClients, useClient } from '@/hooks/useClients'
+import { useBookingRequests, useUpdateBookingRequest } from '@/hooks/useBookingRequests'
 import type { Appointment } from '@/schemas/appointments'
 import type { Client } from '@/schemas/clients'
+import type { BookingRequest } from '@/schemas/bookingRequests'
 
 const localizer = dateFnsLocalizer({
   format,
@@ -115,9 +118,11 @@ interface AppointmentModalProps {
   open: boolean
   onClose: () => void
   appointment?: Appointment | null
+  prefill?: Partial<AppointmentFormValues>
+  onCreated?: () => void
 }
 
-function AppointmentModal({ open, onClose, appointment }: AppointmentModalProps) {
+function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: AppointmentModalProps) {
   const { data: sessionTypes = [] } = useSessionTypes()
   const { data: existingClient } = useClient(appointment?.client_id ?? '')
   const createMutation = useCreateAppointment()
@@ -171,7 +176,17 @@ function AppointmentModal({ open, onClose, appointment }: AppointmentModalProps)
         notes: appointment.notes ?? undefined,
       })
     } else {
-      reset({ status: 'pending', multi_day: false, session_type_ids: [], addon_album: false, addon_thank_you_card: false, addon_enlarged_photos: false, deposit_paid: false, contract_signed: false })
+      reset({
+        status: 'pending',
+        multi_day: false,
+        session_type_ids: [],
+        addon_album: false,
+        addon_thank_you_card: false,
+        addon_enlarged_photos: false,
+        deposit_paid: false,
+        contract_signed: false,
+        ...prefill,
+      })
     }
   }, [open, appointment?.id])
 
@@ -201,6 +216,7 @@ function AppointmentModal({ open, onClose, appointment }: AppointmentModalProps)
       await updateMutation.mutateAsync({ id: appointment.id, payload })
     } else {
       await createMutation.mutateAsync(payload)
+      onCreated?.()
     }
     reset()
     onClose()
@@ -273,6 +289,11 @@ function AppointmentModal({ open, onClose, appointment }: AppointmentModalProps)
                     <span className="text-sm text-muted-foreground">Any</span>
                   </label>
                 </div>
+                {prefill?.session_time && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Client preference: <span className="capitalize">{prefill.session_time}</span>
+                  </p>
+                )}
               </div>
 
               {/* Location */}
@@ -415,12 +436,169 @@ function AppointmentModal({ open, onClose, appointment }: AppointmentModalProps)
   )
 }
 
+const TIME_SLOT_LABELS: Record<string, string> = {
+  morning: 'Morning',
+  afternoon: 'Afternoon',
+  evening: 'Evening',
+  all_day: 'All Day',
+}
+
+const ADDON_LABELS: Record<string, string> = {
+  album: 'Album',
+  thank_you_card: 'Thank You Card',
+  enlarged_photos: 'Enlarged Photos',
+}
+
+function RequestsTab({ onConfirm }: { onConfirm: (r: BookingRequest) => void }) {
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'confirmed' | 'rejected'>('pending')
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectNotes, setRejectNotes] = useState('')
+  const { data: requests = [], isLoading } = useBookingRequests(statusFilter)
+  const { data: sessionTypes = [] } = useSessionTypes()
+  const updateRequest = useUpdateBookingRequest()
+
+  const sessionTypeName = (id: string | null) =>
+    id ? (sessionTypes.find(st => st.id === id)?.name ?? '—') : '—'
+
+  const handleReject = () => {
+    if (!rejectingId) return
+    updateRequest.mutate(
+      { id: rejectingId, status: 'rejected', admin_notes: rejectNotes || undefined },
+      {
+        onSettled: () => {
+          setRejectingId(null)
+          setRejectNotes('')
+        },
+      },
+    )
+  }
+
+  const FILTERS = ['pending', 'confirmed', 'rejected'] as const
+
+  if (isLoading) return null
+
+  return (
+    <div className="space-y-4">
+      {/* Status filter */}
+      <div className="flex rounded-lg overflow-hidden border w-fit">
+        {FILTERS.map(f => (
+          <button
+            key={f}
+            onClick={() => setStatusFilter(f)}
+            className={`px-3 py-1.5 text-sm capitalize ${statusFilter === f ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="rounded-xl bg-card border overflow-hidden">
+        {requests.length === 0 ? (
+          <p className="p-6 text-sm text-center text-muted-foreground">No {statusFilter} requests.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="border-b border">
+              <tr className="text-left">
+                <th className="px-4 py-3 text-muted-foreground font-medium">Client</th>
+                <th className="px-4 py-3 text-muted-foreground font-medium">Preferred Date</th>
+                <th className="px-4 py-3 text-muted-foreground font-medium">Time Slot</th>
+                <th className="px-4 py-3 text-muted-foreground font-medium">Session Type</th>
+                <th className="px-4 py-3 text-muted-foreground font-medium">Add-ons</th>
+                <th className="px-4 py-3 text-muted-foreground font-medium">Message</th>
+                <th className="px-4 py-3 text-muted-foreground font-medium">Submitted</th>
+                {statusFilter === 'pending' && <th className="px-4 py-3" />}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {requests.map(r => (
+                <tr key={r.id} className="hover:bg-muted/30">
+                  <td className="px-4 py-3 font-medium text-foreground">{r.client_name}</td>
+                  <td className="px-4 py-3 text-foreground/80 whitespace-nowrap">
+                    {format(new Date(r.preferred_date + 'T00:00:00'), 'MMM d, yyyy')}
+                  </td>
+                  <td className="px-4 py-3 text-foreground/80">{TIME_SLOT_LABELS[r.time_slot] ?? r.time_slot}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{sessionTypeName(r.session_type_id)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {r.addons.length > 0 ? r.addons.map(a => ADDON_LABELS[a] ?? a).join(', ') : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground max-w-[200px]">
+                    {r.message
+                      ? <span title={r.message}>{r.message.length > 60 ? r.message.slice(0, 60) + '\u2026' : r.message}</span>
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs">
+                    {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                  </td>
+                  {statusFilter === 'pending' && (
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" onClick={() => onConfirm(r)}>Confirm</Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setRejectingId(r.id); setRejectNotes('') }}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Reject modal */}
+      <Dialog open={!!rejectingId} onOpenChange={(o) => { if (!o) { setRejectingId(null); setRejectNotes('') } }}>
+        <DialogContent className="bg-card border text-foreground sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reject booking request</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="reject-notes">Notes to client (optional)</Label>
+              <textarea
+                id="reject-notes"
+                value={rejectNotes}
+                onChange={e => setRejectNotes(e.target.value)}
+                rows={3}
+                placeholder="Reason for rejection\u2026"
+                className="w-full mt-1 rounded-md bg-input border text-foreground px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => { setRejectingId(null); setRejectNotes('') }}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={updateRequest.isPending}
+                onClick={handleReject}
+              >
+                Reject
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
 export function Appointments() {
   const [view, setView] = useState<'calendar' | 'list'>('list')
   const [calendarView, setCalendarView] = useState<View>('month')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Appointment | null>(null)
+
+  const [activeTab, setActiveTab] = useState<'appointments' | 'requests'>('appointments')
+  const [confirmingRequest, setConfirmingRequest] = useState<BookingRequest | null>(null)
+  const updateBookingRequest = useUpdateBookingRequest()
 
   const { data: appointments = [], isLoading } = useAppointments()
   const deleteMutation = useDeleteAppointment()
@@ -449,6 +627,37 @@ export function Appointments() {
     setDeleteTarget(null)
   }
 
+  const requestPrefill = useMemo(() => {
+    if (!confirmingRequest) return undefined
+    return {
+      starts_at: confirmingRequest.preferred_date,
+      session_type_ids: confirmingRequest.session_type_id ? [confirmingRequest.session_type_id] : [],
+      addon_album: confirmingRequest.addons.includes('album'),
+      addon_thank_you_card: confirmingRequest.addons.includes('thank_you_card'),
+      addon_enlarged_photos: confirmingRequest.addons.includes('enlarged_photos'),
+      notes: confirmingRequest.message ?? undefined,
+      session_time: confirmingRequest.time_slot === 'all_day'
+        ? undefined
+        : (confirmingRequest.time_slot as 'morning' | 'afternoon' | 'evening'),
+      status: 'confirmed' as const,
+    }
+  }, [confirmingRequest])
+
+  const handleAppointmentCreated = () => {
+    if (!confirmingRequest) return
+    updateBookingRequest.mutate(
+      { id: confirmingRequest.id, status: 'confirmed' },
+      { onError: () => toast.error('Appointment created but could not confirm booking request') },
+    )
+    setConfirmingRequest(null)
+  }
+
+  const handleConfirmRequest = (request: BookingRequest) => {
+    setConfirmingRequest(request)
+    setEditingAppointment(null)
+    setModalOpen(true)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -458,28 +667,47 @@ export function Appointments() {
             </div>
             <h1 className="text-2xl font-semibold text-foreground">Appointments</h1>
           </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex rounded-lg overflow-hidden border">
-            <button
-              onClick={() => setView('calendar')}
-              className={`px-3 py-1.5 text-sm ${view === 'calendar' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Calendar
-            </button>
-            <button
-              onClick={() => setView('list')}
-              className={`px-3 py-1.5 text-sm ${view === 'list' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              List
-            </button>
+        {activeTab === 'appointments' && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex rounded-lg overflow-hidden border">
+              <button
+                onClick={() => setView('calendar')}
+                className={`px-3 py-1.5 text-sm ${view === 'calendar' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Calendar
+              </button>
+              <button
+                onClick={() => setView('list')}
+                className={`px-3 py-1.5 text-sm ${view === 'list' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                List
+              </button>
+            </div>
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1" />
+              New Appointment
+            </Button>
           </div>
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-1" />
-            New Appointment
-          </Button>
-        </div>
+        )}
       </div>
 
+      <div className="flex rounded-lg overflow-hidden border w-fit">
+        <button
+          onClick={() => setActiveTab('appointments')}
+          className={`px-3 py-1.5 text-sm ${activeTab === 'appointments' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Appointments
+        </button>
+        <button
+          onClick={() => setActiveTab('requests')}
+          className={`px-3 py-1.5 text-sm ${activeTab === 'requests' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Requests
+        </button>
+      </div>
+
+      {activeTab === 'appointments' ? (
+      <>
       {view === 'calendar' ? (
         <div className="rounded-xl bg-card border p-4" style={{ height: 600 }}>
           <Calendar
@@ -568,11 +796,17 @@ export function Appointments() {
           )}
         </div>
       )}
+      </>
+      ) : (
+        <RequestsTab onConfirm={handleConfirmRequest} />
+      )}
 
       <AppointmentModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => { setModalOpen(false); setConfirmingRequest(null) }}
         appointment={editingAppointment}
+        prefill={requestPrefill}
+        onCreated={confirmingRequest ? handleAppointmentCreated : undefined}
       />
 
       <ConfirmDialog
