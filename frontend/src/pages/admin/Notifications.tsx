@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Bell, Cake, Receipt } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -30,9 +30,11 @@ export function Notifications() {
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [typeFilter, setTypeFilter] = useState<string>('all')
 
-  const params: { unread?: boolean; type?: string; limit: number } = { limit: 100 }
-  if (unreadOnly) params.unread = true
-  if (typeFilter !== 'all') params.type = typeFilter
+  const params = {
+    limit: 100,
+    ...(unreadOnly ? { unread: true as const } : {}),
+    ...(typeFilter !== 'all' ? { type: typeFilter } : {}),
+  }
 
   const { data: notifications, isLoading } = useNotifications(params)
   const unreadCount = useUnreadCount()
@@ -112,8 +114,9 @@ export function Notifications() {
                   variant="ghost"
                   size="sm"
                   className="shrink-0 text-xs"
+                  aria-label={`Mark "${n.title}" as read`}
                   onClick={() => markRead.mutate(n.id)}
-                  disabled={markRead.isPending}
+                  disabled={markRead.variables === n.id && markRead.isPending}
                 >
                   Mark read
                 </Button>
