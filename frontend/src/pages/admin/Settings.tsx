@@ -52,6 +52,10 @@ function SortableStageRow({
 
   useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
 
+  useEffect(() => {
+    if (!editing) setName(stage.name)
+  }, [stage.name, editing])
+
   const save = () => {
     if (name.trim() && name !== stage.name) {
       updateStage.mutate({ id: stage.id, payload: { name: name.trim() } })
@@ -119,12 +123,13 @@ function SortableStageRow({
           className="h-7 text-sm flex-1"
         />
       ) : (
-        <span
-          className="flex-1 text-sm cursor-pointer hover:underline"
+        <button
+          type="button"
+          className="flex-1 text-left text-sm hover:underline bg-transparent"
           onClick={() => setEditing(true)}
         >
           {stage.name}
-        </span>
+        </button>
       )}
 
       {stage.is_terminal && (
@@ -253,6 +258,10 @@ function SessionTypeRow({ id, name }: { id: string; name: string }) {
 
   useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
 
+  useEffect(() => {
+    if (!editing) setValue(name)
+  }, [name, editing])
+
   const save = () => {
     if (value.trim() && value !== name) {
       update.mutate({ id, name: value.trim() })
@@ -277,12 +286,13 @@ function SessionTypeRow({ id, name }: { id: string; name: string }) {
           className="h-7 text-sm flex-1"
         />
       ) : (
-        <span
-          className="flex-1 text-sm cursor-pointer hover:underline"
+        <button
+          type="button"
+          className="flex-1 text-left text-sm hover:underline bg-transparent"
           onClick={() => setEditing(true)}
         >
           {name}
-        </span>
+        </button>
       )}
       <Button
         variant="ghost"
