@@ -180,7 +180,7 @@ export function AdminShell() {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-48 bg-popover border text-popover-foreground"
+                className="w-48 bg-popover border text-popover-foreground z-[100]"
               >
                 <DropdownMenuItem asChild className="cursor-pointer text-[13px] hover:bg-muted/50 focus:bg-muted/50">
                   <Link to="/admin/profile">
