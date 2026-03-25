@@ -22,9 +22,9 @@ Single-page tabbed UI. All backend endpoints and frontend API/hook layers alread
 
 | File | Change |
 |---|---|
-| `frontend/src/hooks/useJobs.ts` | Add job stage mutation hooks: `useCreateJobStage`, `useUpdateJobStage`, `useDeleteJobStage`, `useReorderJobStages` |
+| `frontend/src/hooks/useJobs.ts` | Add `useCreateJobStage` and `useUpdateJobStage` (the other two stage mutations already exist) |
 | `frontend/src/pages/admin/Settings.tsx` | New — 4-tab settings page |
-| `frontend/src/routes/index.tsx` | Wire `/admin/settings` route |
+| `frontend/src/routes/index.tsx` | Replace placeholder div at `path: 'settings'` with `<Settings />` |
 
 ---
 
@@ -88,7 +88,12 @@ Saves via `PATCH /api/settings`.
 
 - 409 responses (stage/type in use) → `toast.error(detail)` from backend message
 - Network errors → `toast.error('Failed to save')`
-- Optimistic updates are NOT used — wait for server confirmation before updating UI
+- New hooks (`useCreateJobStage`, `useUpdateJobStage`) do not use optimistic updates — wait for server confirmation
+- `useReorderJobStages` already exists with optimistic updates; that behavior is kept as-is
+
+**New hook behavior (`useCreateJobStage` / `useUpdateJobStage`):**
+- `onSuccess`: invalidate `['job-stages']`, `toast.success('Stage saved')`
+- `onError`: `toast.error('Failed to save stage')`
 
 ---
 
