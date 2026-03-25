@@ -1,9 +1,9 @@
 import logging
 import uuid
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func as sqlfunc
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
@@ -40,7 +40,7 @@ def _to_out(req: BookingRequest, client_name: str) -> BookingRequestOut:
 async def list_booking_requests(
     db: DB,
     _: Admin,
-    status: Optional[str] = Query("pending"),
+    status: Optional[Literal["pending", "confirmed", "rejected"]] = Query("pending"),
 ):
     q = (
         select(BookingRequest, Client.name.label("client_name"))
@@ -72,33 +72,33 @@ async def update_booking_request(
     req, client_name, client_email = row
     req.status = body.status
     req.admin_notes = body.admin_notes
-    req.updated_at = sqlfunc.now()
     await db.flush()
 
-    try:
-        if body.status == "confirmed":
-            await send_email(
-                to=client_email,
-                subject="Your booking request has been confirmed",
-                html=(
-                    f"<p>Hi {client_name},</p>"
-                    f"<p>Your booking request for <strong>{req.preferred_date}</strong> has been confirmed.</p>"
-                    + (f"<p>{body.admin_notes}</p>" if body.admin_notes else "")
-                    + "<p>Log in to your portal to view your job details.</p>"
-                ),
-            )
-        else:
-            await send_email(
-                to=client_email,
-                subject="Update on your booking request",
-                html=(
-                    f"<p>Hi {client_name},</p>"
-                    f"<p>Unfortunately your booking request for <strong>{req.preferred_date}</strong> could not be confirmed.</p>"
-                    + (f"<p>{body.admin_notes}</p>" if body.admin_notes else "")
-                    + "<p>Feel free to submit a new request at a different date.</p>"
-                ),
-            )
-    except Exception:
-        logger.warning("Failed to send booking %s email to %s", body.status, client_email)
+    if client_email:
+        try:
+            if body.status == "confirmed":
+                await send_email(
+                    to=client_email,
+                    subject="Your booking request has been confirmed",
+                    html=(
+                        f"<p>Hi {client_name},</p>"
+                        f"<p>Your booking request for <strong>{req.preferred_date}</strong> has been confirmed.</p>"
+                        + (f"<p>{body.admin_notes}</p>" if body.admin_notes else "")
+                        + "<p>Log in to your portal to view your job details.</p>"
+                    ),
+                )
+            else:
+                await send_email(
+                    to=client_email,
+                    subject="Update on your booking request",
+                    html=(
+                        f"<p>Hi {client_name},</p>"
+                        f"<p>Unfortunately your booking request for <strong>{req.preferred_date}</strong> could not be confirmed.</p>"
+                        + (f"<p>{body.admin_notes}</p>" if body.admin_notes else "")
+                        + "<p>Feel free to submit a new request at a different date.</p>"
+                    ),
+                )
+        except Exception:
+            logger.warning("Failed to send booking %s email to %s", body.status, client_email)
 
     return _to_out(req, client_name)

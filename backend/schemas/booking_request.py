@@ -9,11 +9,11 @@ class BookingRequestOut(BaseModel):
     client_id: uuid.UUID
     client_name: str
     preferred_date: date
-    time_slot: str
+    time_slot: Literal["morning", "afternoon", "evening", "all_day"]
     session_type_id: Optional[uuid.UUID]
     addons: list[str]
     message: Optional[str]
-    status: str
+    status: Literal["pending", "confirmed", "rejected"]
     admin_notes: Optional[str]
     created_at: datetime
     updated_at: datetime
