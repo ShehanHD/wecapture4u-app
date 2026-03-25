@@ -37,6 +37,33 @@ class StagePositionReorder(BaseModel):
     stages: list[StagePositionItem]
 
 
+class AlbumStageCreate(BaseModel):
+    name: str
+    color: str  # hex e.g. '#6b7280'
+    is_terminal: bool = False
+
+
+class AlbumStageUpdate(BaseModel):
+    name: Optional[str] = None
+    color: Optional[str] = None
+    is_terminal: Optional[bool] = None
+
+
+class AlbumStageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    color: str
+    position: int
+    is_terminal: bool
+    created_at: datetime
+
+
+class AlbumStagePositionReorder(BaseModel):
+    stages: list[StagePositionItem]
+
+
 class JobCreate(BaseModel):
     client_id: uuid.UUID
     stage_id: uuid.UUID
@@ -46,6 +73,7 @@ class JobCreate(BaseModel):
 class JobUpdate(BaseModel):
     stage_id: Optional[uuid.UUID] = None
     delivery_url: Optional[str] = None
+    album_stage_id: Optional[uuid.UUID] = None
 
 
 class ClientSummary(BaseModel):
@@ -98,8 +126,11 @@ class JobOut(BaseModel):
     stage_id: uuid.UUID
     stage: Optional[StageSummary]
     delivery_url: Optional[str]
+    album_stage_id: Optional[uuid.UUID] = None
+    album_stage: Optional[StageSummary] = None
     created_at: datetime
 
 
-# JobDetailOut is now identical to JobOut — kept as alias for router compatibility
-JobDetailOut = JobOut
+class JobDetailOut(JobOut):
+    """Extends JobOut with the full ordered album stage list (for progress bar rendering)."""
+    album_stages: list[AlbumStageOut] = []
