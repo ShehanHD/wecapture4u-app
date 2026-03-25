@@ -115,6 +115,13 @@ class StageSummary(BaseModel):
     color: str
 
 
+class AlbumStageSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    name: str
+    color: str
+
+
 class JobOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -127,7 +134,7 @@ class JobOut(BaseModel):
     stage: Optional[StageSummary]
     delivery_url: Optional[str]
     album_stage_id: Optional[uuid.UUID] = None
-    album_stage: Optional[StageSummary] = None
+    album_stage: Optional[AlbumStageSummary] = None
     created_at: datetime
 
 
