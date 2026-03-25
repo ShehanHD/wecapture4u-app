@@ -259,11 +259,19 @@ function DevicesSection() {
 // --- Page ---
 export function Profile() {
   return (
-    <div className="p-6 max-w-xl space-y-6">
+    <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Profile</h1>
-      <IdentitySection />
-      <PasswordSection />
-      <DevicesSection />
+      <div className="flex flex-wrap gap-6 items-start">
+        <div className="flex-1 min-w-72">
+          <IdentitySection />
+        </div>
+        <div className="flex-1 min-w-72">
+          <PasswordSection />
+        </div>
+        <div className="flex-1 min-w-72">
+          <DevicesSection />
+        </div>
+      </div>
     </div>
   )
 }
