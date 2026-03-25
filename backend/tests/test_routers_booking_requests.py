@@ -56,7 +56,9 @@ async def test_list_booking_requests_status_filter(test_client, admin_auth_heade
 
     resp = await test_client.get("/api/booking-requests?status=confirmed", headers=admin_auth_headers)
     assert resp.status_code == 200
-    assert len(resp.json()) == 1
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["status"] == "confirmed"
 
 
 @pytest.mark.asyncio
