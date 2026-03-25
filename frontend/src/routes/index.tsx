@@ -21,6 +21,7 @@ import { JobDetail } from '@/pages/admin/JobDetail'
 import { Clients } from '@/pages/admin/Clients'
 import { ClientDetail } from '@/pages/admin/ClientDetail'
 import { Profile } from '@/pages/admin/Profile'
+import { Notifications } from '@/pages/admin/Notifications'
 import { Settings } from '@/pages/admin/Settings'
 
 export const router = createBrowserRouter([
@@ -56,7 +57,7 @@ export const router = createBrowserRouter([
           { path: 'clients', element: <Clients /> },
           { path: 'clients/:id', element: <ClientDetail /> },
           { path: 'accounting', element: <Accounting /> },
-          { path: 'notifications', element: <div className="text-white">Notifications — Plan 7</div> },
+          { path: 'notifications', element: <Notifications /> },
           { path: 'settings', element: <Settings /> },
           { path: 'profile', element: <Profile /> },
         ],
