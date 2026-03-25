@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   fetchJobs, fetchJob, createJob, updateJob, deleteJob,
-  fetchJobStages, reorderJobStages, deleteJobStage,
+  fetchJobStages, createJobStage, updateJobStage, reorderJobStages, deleteJobStage,
   type JobCreatePayload, type JobUpdatePayload, type StagePositionItem,
 } from '@/api/jobs'
 import { getApiErrorMessage } from '@/lib/apiError'
@@ -82,5 +82,30 @@ export function useDeleteJobStage() {
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, 'Cannot delete — jobs are assigned to this stage'))
     },
+  })
+}
+
+export function useCreateJobStage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: createJobStage,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job-stages'] })
+      toast.success('Stage created')
+    },
+    onError: () => toast.error('Failed to create stage'),
+  })
+}
+
+export function useUpdateJobStage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { name?: string; color?: string; is_terminal?: boolean } }) =>
+      updateJobStage(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job-stages'] })
+      toast.success('Stage saved')
+    },
+    onError: () => toast.error('Failed to save stage'),
   })
 }
