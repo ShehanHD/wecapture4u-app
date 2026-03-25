@@ -7,7 +7,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from models.job import Job, JobStage
+from models.job import Job, JobStage, AlbumStage
 from models.client import Client
 from services import email as email_svc
 
@@ -29,6 +29,7 @@ def _job_options():
         selectinload(Job.client),
         selectinload(Job.appointment),
         selectinload(Job.stage),
+        selectinload(Job.album_stage),
     ]
 
 
@@ -58,12 +59,12 @@ async def get_job(db: AsyncSession, *, id: uuid.UUID) -> Job:
 
 
 async def get_job_detail(db: AsyncSession, *, id: uuid.UUID):
-    """Return JobOut with appointment session types resolved."""
+    """Return JobDetailOut with appointment session types resolved and full album stages list."""
     from models.session_type import SessionType
-    from schemas.jobs import JobOut, AppointmentSummary, SessionTypeSummary
+    from schemas.jobs import JobDetailOut, AppointmentSummary, SessionTypeSummary, AlbumStageOut
 
     job = await get_job(db, id=id)
-    out = JobOut.model_validate(job)
+    out = JobDetailOut.model_validate(job)
 
     if job.appointment and job.appointment.session_type_ids:
         st_result = await db.execute(
@@ -74,6 +75,15 @@ async def get_job_detail(db: AsyncSession, *, id: uuid.UUID):
             SessionTypeSummary.model_validate(st) for st in st_result.scalars().all()
         ]
 
+    # Embed full ordered album stages for progress bar rendering
+    if job.album_stage_id is not None:
+        album_stages_result = await db.execute(
+            select(AlbumStage).order_by(AlbumStage.position)
+        )
+        out.album_stages = [
+            AlbumStageOut.model_validate(s) for s in album_stages_result.scalars().all()
+        ]
+
     return out
 
 
@@ -81,6 +91,21 @@ async def create_job(db: AsyncSession, *, data: dict) -> Job:
     job = Job(**data)
     db.add(job)
     await db.flush()
+
+    # Auto-assign first album stage if the appointment has the 'album' addon
+    if job.appointment_id:
+        from models.appointment import Appointment
+        appt = await db.get(Appointment, job.appointment_id)
+        if appt and 'album' in (appt.addons or []):
+            first_stage = await db.scalar(
+                select(AlbumStage).order_by(AlbumStage.position).limit(1)
+            )
+            if first_stage:
+                job.album_stage_id = first_stage.id
+                await db.flush()
+            else:
+                logger.warning("No album stages seeded — job %s created without album_stage_id", job.id)
+
     return job
 
 
