@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, ChevronDown, LogOut, Menu, Moon, Sun, User, X } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme' // reads global theme state for the toggle button
+import { useQueryClient } from '@tanstack/react-query'
 import { useNotifications, useUnreadCount, useMarkAllRead } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
@@ -101,8 +102,14 @@ function NotificationBell() {
 export function AdminShell() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const queryClient = useQueryClient()
   const [mobileOpen, setMobileOpen] = useState(false)
   const { theme, toggle: toggleTheme } = useTheme()
+
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['notifications'] })
+  }, [location.pathname, queryClient])
 
   const handleLogout = () => {
     logout()
