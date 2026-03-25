@@ -20,8 +20,6 @@ import { Label } from '@/components/ui/label'
 // --- Schemas ---
 const identitySchema = z.object({
   full_name: z.string().min(1, 'Name required'),
-  email: z.string().email('Invalid email'),
-  current_password: z.string().optional(),
 })
 type IdentityForm = z.infer<typeof identitySchema>
 
@@ -48,29 +46,15 @@ function IdentitySection() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<IdentityForm>({
     resolver: zodResolver(identitySchema),
-    values: {
-      full_name: profile?.full_name ?? '',
-      email: profile?.email ?? '',
-      current_password: '',
-    },
+    values: { full_name: profile?.full_name ?? '' },
   })
 
-  const currentEmail = watch('email')
-  const emailChanged = currentEmail !== profile?.email
-
   const onSubmit = async (data: IdentityForm) => {
-    const payload: Parameters<typeof updateProfile.mutateAsync>[0] = {}
-    if (data.full_name !== profile?.full_name) payload.full_name = data.full_name
-    if (data.email !== profile?.email) {
-      payload.email = data.email
-      payload.current_password = data.current_password
-    }
-    if (Object.keys(payload).length === 0) return
-    await updateProfile.mutateAsync(payload)
+    if (data.full_name === profile?.full_name) return
+    await updateProfile.mutateAsync({ full_name: data.full_name })
     setSuccess(true)
     setTimeout(() => setSuccess(false), 3000)
   }
@@ -126,22 +110,8 @@ function IdentitySection() {
 
         <div className="space-y-1.5">
           <Label>Email</Label>
-          <Input type="email" {...register('email')} />
-          {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
+          <Input type="email" value={profile?.email ?? ''} disabled className="opacity-60" />
         </div>
-
-        {emailChanged && (
-          <div className="space-y-1.5">
-            <Label>
-              Current Password{' '}
-              <span className="text-muted-foreground">(required to change email)</span>
-            </Label>
-            <Input type="password" {...register('current_password')} />
-            {errors.current_password && (
-              <p className="text-destructive text-sm">{errors.current_password.message}</p>
-            )}
-          </div>
-        )}
 
         {updateProfile.error && (
           <p className="text-destructive text-sm">

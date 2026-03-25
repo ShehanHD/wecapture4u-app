@@ -54,6 +54,7 @@ class WebAuthnDeviceCheckResponse(BaseModel):
 
 class WebAuthnCredentialResponse(BaseModel):
     id: uuid.UUID
+    credential_id: str
     device_name: str | None
     created_at: datetime
 
