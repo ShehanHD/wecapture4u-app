@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 PORTFOLIO_BUCKET = "portfolio"
 STORAGE_PREFIX = "/storage/v1/object/public/portfolio/"
 
+AVATARS_BUCKET = "avatars"
+AVATARS_PREFIX = "/storage/v1/object/public/avatars/"
+
 _supabase_client = None
 
 
@@ -91,6 +94,7 @@ def upload_to_storage(
     path: str,
     content: bytes,
     *,
+    bucket: str = PORTFOLIO_BUCKET,
     content_type: str = "image/webp",
 ) -> str:
     """
@@ -98,14 +102,15 @@ def upload_to_storage(
     Returns the full public URL.
     Raises HTTPException 503 on Storage failure.
     """
+    prefix = AVATARS_PREFIX if bucket == AVATARS_BUCKET else STORAGE_PREFIX
     try:
         sb = _get_supabase()
-        sb.storage.from_(PORTFOLIO_BUCKET).upload(
+        sb.storage.from_(bucket).upload(
             path,
             content,
             {"content-type": content_type, "upsert": "true"},
         )
-        return f"{settings.SUPABASE_URL}{STORAGE_PREFIX}{path}"
+        return f"{settings.SUPABASE_URL}{prefix}{path}"
     except Exception as e:
         logger.error("Storage upload failed for path %s: %s", path, e)
         raise HTTPException(503, "Photo storage is unavailable. Please contact the administrator.")

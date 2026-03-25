@@ -13,6 +13,7 @@ from routers.jobs import router as jobs_router
 from routers.invoices import router as invoices_router
 from routers.notifications import router as notifications_router
 from routers.cron import router as cron_router
+from routers.profile import router as profile_router
 
 app = FastAPI(title="weCapture4U API", version="1.0.0", lifespan=lifespan)
 
@@ -34,3 +35,4 @@ app.include_router(jobs_router, prefix="/api", tags=["jobs"])
 app.include_router(invoices_router, prefix="/api", tags=["invoices"])
 app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(cron_router)
+app.include_router(profile_router)
