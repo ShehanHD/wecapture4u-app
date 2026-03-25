@@ -73,6 +73,7 @@ async def update_booking_request(
     req.status = body.status
     req.admin_notes = body.admin_notes
     await db.flush()
+    await db.refresh(req)
 
     if client_email:
         try:
