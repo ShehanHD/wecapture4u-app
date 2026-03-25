@@ -9,8 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 import {
   useNotifications,
   useUnreadCount,
@@ -52,17 +50,19 @@ export function Notifications() {
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <Switch
-            id="unread-only"
-            checked={unreadOnly}
-            onCheckedChange={setUnreadOnly}
-          />
-          <Label htmlFor="unread-only" className="text-sm cursor-pointer">
-            Unread only
-          </Label>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={unreadOnly}
+            onClick={() => setUnreadOnly(v => !v)}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${unreadOnly ? 'bg-primary' : 'bg-muted'}`}
+          >
+            <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${unreadOnly ? 'translate-x-4' : 'translate-x-1'}`} />
+          </button>
+          <span className="text-sm cursor-pointer" onClick={() => setUnreadOnly(v => !v)}>Unread only</span>
         </div>
 
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
+        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? 'all')}>
           <SelectTrigger className="w-52">
             <SelectValue placeholder="All types" />
           </SelectTrigger>
