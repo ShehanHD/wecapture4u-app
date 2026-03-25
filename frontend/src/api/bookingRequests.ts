@@ -5,7 +5,7 @@ import {
   type BookingRequest,
 } from '@/schemas/bookingRequests'
 
-export async function fetchBookingRequests(status = 'pending'): Promise<BookingRequest[]> {
+export async function fetchBookingRequests(status?: string): Promise<BookingRequest[]> {
   const { data } = await api.get('/api/booking-requests', { params: { status } })
   return BookingRequestListSchema.parse(data)
 }
