@@ -21,6 +21,8 @@ class ExpenseUpdate(BaseModel):
     description: Optional[str] = None
     expense_account_id: Optional[uuid.UUID] = None
     amount: Optional[Decimal] = None
+    payment_status: Optional[str] = None  # paid | payable
+    payment_account_id: Optional[uuid.UUID] = None
     receipt_url: Optional[str] = None
     notes: Optional[str] = None
 
