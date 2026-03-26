@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from models.invoice import Invoice, InvoiceItem, InvoicePayment
 
 logger = logging.getLogger(__name__)
@@ -242,7 +242,7 @@ async def add_payment(
     *,
     invoice_id: uuid.UUID,
     amount: Decimal,
-    payment_date,
+    payment_date: date,
     account_id: uuid.UUID,
     notes: Optional[str] = None,
 ) -> InvoicePayment:
