@@ -106,3 +106,25 @@ async def get_account(db: AsyncSession, *, id: uuid.UUID) -> Account:
     account = await _get_or_404(db, id)
     account.balance = await _compute_balance(db, account.id, account.normal_balance)
     return account
+
+
+async def create_account(
+    db: AsyncSession,
+    *,
+    code: str,
+    name: str,
+    type: str,
+) -> Account:
+    if type not in VALID_ACCOUNT_TYPES:
+        raise HTTPException(status_code=422, detail=f"Invalid account type '{type}'. Must be one of: {', '.join(sorted(VALID_ACCOUNT_TYPES))}.")
+
+    existing = await db.execute(select(Account).where(Account.code == code))
+    if existing.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=409, detail=f"Account code '{code}' already exists.")
+
+    normal_balance = _TYPE_TO_NORMAL_BALANCE[type]
+    account = Account(code=code, name=name, type=type, normal_balance=normal_balance)
+    db.add(account)
+    await db.flush()
+    account.balance = Decimal("0.00")
+    return account

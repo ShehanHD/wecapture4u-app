@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from dependencies.auth import require_admin
-from schemas.accounts import AccountOut
+from schemas.accounts import AccountCreate, AccountOut
 from services import accounts as svc
 
 router = APIRouter()
@@ -21,6 +21,11 @@ async def list_accounts(
     archived: Optional[bool] = Query(None),
 ):
     return await svc.list_accounts(db, type=type, archived=archived)
+
+
+@router.post("/accounts", response_model=AccountOut, status_code=201)
+async def create_account(body: AccountCreate, db: DB, _: Admin):
+    return await svc.create_account(db, code=body.code, name=body.name, type=body.type)
 
 
 @router.get("/accounts/{id}", response_model=AccountOut)

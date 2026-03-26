@@ -66,3 +66,52 @@ async def test_get_account_by_id(test_client, admin_auth_headers, db_session):
 async def test_get_account_not_found(test_client, admin_auth_headers):
     resp = await test_client.get(f"/api/accounts/{uuid4()}", headers=admin_auth_headers)
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_account_derives_normal_balance(test_client, admin_auth_headers):
+    resp = await test_client.post(
+        "/api/accounts",
+        json={"code": "6001", "name": "Photography Props", "type": "expense"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["code"] == "6001"
+    assert data["name"] == "Photography Props"
+    assert data["type"] == "expense"
+    assert data["normal_balance"] == "debit"  # derived from type
+    assert data["is_system"] is False
+    assert data["archived"] is False
+    assert data["balance"] == "0.00"
+
+
+@pytest.mark.asyncio
+async def test_create_account_liability_gets_credit_normal_balance(test_client, admin_auth_headers):
+    resp = await test_client.post(
+        "/api/accounts",
+        json={"code": "2400", "name": "Test Liability", "type": "liability"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 201
+    assert resp.json()["normal_balance"] == "credit"
+
+
+@pytest.mark.asyncio
+async def test_create_account_duplicate_code_returns_409(test_client, admin_auth_headers):
+    resp = await test_client.post(
+        "/api/accounts",
+        json={"code": "1010", "name": "Duplicate", "type": "asset"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_create_account_invalid_type_returns_422(test_client, admin_auth_headers):
+    resp = await test_client.post(
+        "/api/accounts",
+        json={"code": "9900", "name": "Bad Type", "type": "notatype"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 422
