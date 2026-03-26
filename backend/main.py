@@ -3,10 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from scheduler import lifespan
 
-# Model registration (ensures all ORM classes are registered before mappers configure)
-import models.account  # noqa: F401
-import models.journal  # noqa: F401
-
 # Routers
 from routers import health, auth
 from routers.portfolio import router as portfolio_router

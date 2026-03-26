@@ -9,3 +9,6 @@ from models.job import JobStage, Job  # noqa: F401
 from models.invoice import Invoice, InvoiceItem  # noqa: F401
 from models.notification import Notification  # noqa: F401
 from models.admin import AppSettings  # noqa: F401 (also contains portfolio/SEO columns)
+# Plan 8 accounting models
+from models.account import Account  # noqa: F401
+from models.journal import JournalEntry, JournalLine  # noqa: F401
