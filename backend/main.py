@@ -15,6 +15,7 @@ from routers.notifications import router as notifications_router
 from routers.cron import router as cron_router
 from routers.profile import router as profile_router
 from routers.booking_requests import router as booking_requests_router
+from routers.accounts import router as accounts_router
 
 app = FastAPI(title="weCapture4U API", version="1.0.0", lifespan=lifespan)
 
@@ -38,3 +39,4 @@ app.include_router(notifications_router, prefix="/api", tags=["notifications"])
 app.include_router(cron_router)
 app.include_router(profile_router)
 app.include_router(booking_requests_router, prefix="/api", tags=["booking-requests"])
+app.include_router(accounts_router, prefix="/api", tags=["accounts"])
