@@ -1,5 +1,5 @@
 import uuid
-import logging
+from datetime import date
 from decimal import Decimal
 from typing import Optional
 
@@ -9,8 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.account import Account
 from models.journal import JournalEntry, JournalLine
-
-logger = logging.getLogger(__name__)
 
 _TYPE_TO_NORMAL_BALANCE: dict[str, str] = {
     "asset": "debit",
@@ -35,6 +33,7 @@ async def _compute_balance(
     db: AsyncSession,
     account_id: uuid.UUID,
     normal_balance: str,
+    as_of_date: Optional[date] = None,
 ) -> Decimal:
     q = (
         select(
@@ -47,6 +46,8 @@ async def _compute_balance(
             JournalEntry.status == "posted",
         )
     )
+    if as_of_date is not None:
+        q = q.where(JournalEntry.date <= as_of_date)
     result = await db.execute(q)
     row = result.one()
     d = Decimal(str(row.d))
