@@ -187,3 +187,54 @@ async def test_update_account_not_found(test_client, admin_auth_headers):
         headers=admin_auth_headers,
     )
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_system_account_returns_403(test_client, admin_auth_headers, db_session):
+    from sqlalchemy import text
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '1010'"))
+    account_id = result.scalar_one()
+
+    resp = await test_client.delete(f"/api/accounts/{account_id}", headers=admin_auth_headers)
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_delete_account_with_journal_lines_returns_409(test_client, admin_auth_headers, db_session):
+    from models.account import Account
+    from models.journal import JournalEntry, JournalLine
+    from datetime import date
+
+    # Create a custom account and a journal line referencing it
+    acct = Account(code="8001", name="Has Lines", type="expense", normal_balance="debit", is_system=False)
+    db_session.add(acct)
+    await db_session.flush()
+
+    entry = JournalEntry(date=date.today(), description="Test entry", status="draft", created_by="manual")
+    db_session.add(entry)
+    await db_session.flush()
+
+    line = JournalLine(entry_id=entry.id, account_id=acct.id, debit="100.00", credit="0")
+    db_session.add(line)
+    await db_session.flush()
+
+    resp = await test_client.delete(f"/api/accounts/{acct.id}", headers=admin_auth_headers)
+    assert resp.status_code == 409
+    assert "1 journal line" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_delete_account_success(test_client, admin_auth_headers, db_session):
+    from models.account import Account
+
+    acct = Account(code="8002", name="To Delete", type="expense", normal_balance="debit", is_system=False)
+    db_session.add(acct)
+    await db_session.flush()
+    acct_id = acct.id
+
+    resp = await test_client.delete(f"/api/accounts/{acct_id}", headers=admin_auth_headers)
+    assert resp.status_code == 204
+
+    # Confirm gone
+    resp2 = await test_client.get(f"/api/accounts/{acct_id}", headers=admin_auth_headers)
+    assert resp2.status_code == 404

@@ -36,3 +36,8 @@ async def get_account(id: uuid.UUID, db: DB, _: Admin):
 @router.patch("/accounts/{id}", response_model=AccountOut)
 async def update_account(id: uuid.UUID, body: AccountUpdate, db: DB, _: Admin):
     return await svc.update_account(db, id=id, name=body.name, archived=body.archived)
+
+
+@router.delete("/accounts/{id}", status_code=204)
+async def delete_account(id: uuid.UUID, db: DB, _: Admin):
+    await svc.delete_account(db, id=id)

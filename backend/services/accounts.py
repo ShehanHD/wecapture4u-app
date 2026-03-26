@@ -130,6 +130,26 @@ async def update_account(
     return account
 
 
+async def delete_account(db: AsyncSession, *, id: uuid.UUID) -> None:
+    account = await _get_or_404(db, id)
+
+    if account.is_system:
+        raise HTTPException(status_code=403, detail="System accounts cannot be deleted.")
+
+    count_result = await db.execute(
+        select(func.count(JournalLine.id)).where(JournalLine.account_id == id)
+    )
+    line_count = count_result.scalar_one()
+    if line_count > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Account is referenced in {line_count} journal line(s).",
+        )
+
+    await db.delete(account)
+    await db.flush()
+
+
 async def create_account(
     db: AsyncSession,
     *,
