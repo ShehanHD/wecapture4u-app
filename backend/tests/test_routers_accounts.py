@@ -238,3 +238,117 @@ async def test_delete_account_success(test_client, admin_auth_headers, db_sessio
     # Confirm gone
     resp2 = await test_client.get(f"/api/accounts/{acct_id}", headers=admin_auth_headers)
     assert resp2.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_ledger_empty(test_client, admin_auth_headers, db_session):
+    from sqlalchemy import text
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '1100'"))
+    account_id = result.scalar_one()
+
+    resp = await test_client.get(f"/api/accounts/{account_id}/ledger", headers=admin_auth_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["opening_balance"] == "0.00"
+    assert data["closing_balance"] == "0.00"
+    assert data["lines"] == []
+    assert data["normal_balance"] == "debit"
+
+
+@pytest.mark.asyncio
+async def test_ledger_with_posted_lines(test_client, admin_auth_headers, db_session):
+    from models.account import Account
+    from models.journal import JournalEntry, JournalLine
+    from datetime import date
+
+    # Custom revenue account (credit normal balance)
+    acct = Account(code="4999", name="Test Revenue", type="revenue", normal_balance="credit", is_system=False)
+    db_session.add(acct)
+    await db_session.flush()
+
+    # Need a debit account for the other side of the entry
+    from sqlalchemy import text
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '1100'"))
+    ar_id = result.scalar_one()
+
+    # Posted entry: Dr AR 300, Cr Test Revenue 300
+    entry = JournalEntry(
+        date=date(2026, 3, 1),
+        description="Invoice sent",
+        reference_type="invoice",
+        reference_id=None,
+        status="posted",
+        created_by="system",
+    )
+    db_session.add(entry)
+    await db_session.flush()
+
+    db_session.add(JournalLine(entry_id=entry.id, account_id=ar_id, debit="300.00", credit="0"))
+    db_session.add(JournalLine(entry_id=entry.id, account_id=acct.id, debit="0", credit="300.00"))
+    await db_session.flush()
+
+    # Second posted entry on same account
+    entry2 = JournalEntry(
+        date=date(2026, 3, 15),
+        description="Another invoice",
+        status="posted",
+        created_by="system",
+    )
+    db_session.add(entry2)
+    await db_session.flush()
+    db_session.add(JournalLine(entry_id=entry2.id, account_id=ar_id, debit="200.00", credit="0"))
+    db_session.add(JournalLine(entry_id=entry2.id, account_id=acct.id, debit="0", credit="200.00"))
+    await db_session.flush()
+
+    resp = await test_client.get(f"/api/accounts/{acct.id}/ledger", headers=admin_auth_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["opening_balance"] == "0.00"
+    assert len(data["lines"]) == 2
+    # Credit normal balance: running = credit - debit
+    assert data["lines"][0]["running_balance"] == "300.00"
+    assert data["lines"][1]["running_balance"] == "500.00"
+    assert data["closing_balance"] == "500.00"
+
+
+@pytest.mark.asyncio
+async def test_ledger_with_start_date_computes_opening_balance(test_client, admin_auth_headers, db_session):
+    from models.account import Account
+    from models.journal import JournalEntry, JournalLine
+    from sqlalchemy import text
+    from datetime import date
+
+    acct = Account(code="4998", name="Test Revenue 2", type="revenue", normal_balance="credit", is_system=False)
+    db_session.add(acct)
+    await db_session.flush()
+
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '1100'"))
+    ar_id = result.scalar_one()
+
+    # Pre-period entry (Jan)
+    entry_jan = JournalEntry(date=date(2026, 1, 10), description="Jan entry", status="posted", created_by="system")
+    db_session.add(entry_jan)
+    await db_session.flush()
+    db_session.add(JournalLine(entry_id=entry_jan.id, account_id=ar_id, debit="100.00", credit="0"))
+    db_session.add(JournalLine(entry_id=entry_jan.id, account_id=acct.id, debit="0", credit="100.00"))
+    await db_session.flush()
+
+    # In-period entry (March)
+    entry_mar = JournalEntry(date=date(2026, 3, 5), description="Mar entry", status="posted", created_by="system")
+    db_session.add(entry_mar)
+    await db_session.flush()
+    db_session.add(JournalLine(entry_id=entry_mar.id, account_id=ar_id, debit="50.00", credit="0"))
+    db_session.add(JournalLine(entry_id=entry_mar.id, account_id=acct.id, debit="0", credit="50.00"))
+    await db_session.flush()
+
+    resp = await test_client.get(
+        f"/api/accounts/{acct.id}/ledger?start_date=2026-03-01",
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["opening_balance"] == "100.00"  # Jan entry is pre-period
+    assert len(data["lines"]) == 1
+    assert data["lines"][0]["running_balance"] == "150.00"
+    assert data["closing_balance"] == "150.00"

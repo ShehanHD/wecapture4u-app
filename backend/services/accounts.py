@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Optional
 
@@ -148,6 +148,67 @@ async def delete_account(db: AsyncSession, *, id: uuid.UUID) -> None:
 
     await db.delete(account)
     await db.flush()
+
+
+async def get_account_ledger(
+    db: AsyncSession,
+    *,
+    id: uuid.UUID,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+) -> dict:
+    account = await _get_or_404(db, id)
+
+    opening_balance = Decimal("0.00")
+    if start_date is not None:
+        opening_balance = await _compute_balance(
+            db, id, account.normal_balance, as_of_date=start_date - timedelta(days=1)
+        )
+
+    q = (
+        select(JournalLine, JournalEntry)
+        .join(JournalEntry, JournalLine.entry_id == JournalEntry.id)
+        .where(
+            JournalLine.account_id == id,
+            JournalEntry.status == "posted",
+        )
+        .order_by(JournalEntry.date, JournalEntry.created_at)
+    )
+    if start_date is not None:
+        q = q.where(JournalEntry.date >= start_date)
+    if end_date is not None:
+        q = q.where(JournalEntry.date <= end_date)
+
+    result = await db.execute(q)
+    rows = result.all()
+
+    running = opening_balance
+    lines = []
+    for line, entry in rows:
+        d = Decimal(str(line.debit))
+        c = Decimal(str(line.credit))
+        if account.normal_balance == "debit":
+            running = (running + d - c).quantize(Decimal("0.01"))
+        else:
+            running = (running + c - d).quantize(Decimal("0.01"))
+        lines.append({
+            "journal_entry_id": entry.id,
+            "date": entry.date,
+            "description": entry.description,
+            "line_description": line.description,
+            "debit": d,
+            "credit": c,
+            "running_balance": running,
+        })
+
+    return {
+        "account_id": account.id,
+        "account_name": account.name,
+        "normal_balance": account.normal_balance,
+        "opening_balance": opening_balance,
+        "closing_balance": running,
+        "lines": lines,
+    }
 
 
 async def create_account(
