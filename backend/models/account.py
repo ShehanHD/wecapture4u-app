@@ -2,6 +2,7 @@ import uuid
 from sqlalchemy import Column, String, Boolean, DateTime, Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from models.base import Base
 
 
@@ -24,6 +25,4 @@ class Account(Base):
     archived = Column(Boolean, nullable=False, server_default="false")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    # journal_lines relationship added in Task 4 when JournalLine model is defined.
-    # Also add to imports: from sqlalchemy.orm import relationship
-    # journal_lines = relationship("JournalLine", back_populates="account", lazy="select")
+    journal_lines = relationship("JournalLine", back_populates="account", lazy="select")

@@ -100,3 +100,41 @@ async def test_invoice_item_revenue_account_fk(db_session: AsyncSession):
     )
     fetched = result.scalar_one()
     assert fetched.revenue_account_id == session_fees_id
+
+
+@pytest.mark.asyncio
+async def test_journal_entry_with_lines(db_session: AsyncSession):
+    """JournalEntry with two balanced JournalLines can be created and related."""
+    from models.journal import JournalEntry, JournalLine
+
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '1100'"))
+    ar_id = result.scalar_one()
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '4000'"))
+    fees_id = result.scalar_one()
+
+    entry = JournalEntry(
+        date=date.today(),
+        description="Invoice sent - test",
+        reference_type="invoice",
+        reference_id=uuid4(),
+        status="draft",
+        created_by="system",
+    )
+    db_session.add(entry)
+    await db_session.flush()
+
+    dr_line = JournalLine(
+        entry_id=entry.id, account_id=ar_id,
+        debit=Decimal("500.00"), credit=Decimal("0"),
+    )
+    cr_line = JournalLine(
+        entry_id=entry.id, account_id=fees_id,
+        debit=Decimal("0"), credit=Decimal("500.00"),
+    )
+    db_session.add_all([dr_line, cr_line])
+    await db_session.flush()
+
+    await db_session.refresh(entry, ["lines"])
+    assert len(entry.lines) == 2
+    assert entry.status == "draft"
+    assert entry.created_by == "system"
