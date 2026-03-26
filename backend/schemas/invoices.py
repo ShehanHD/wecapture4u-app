@@ -49,8 +49,8 @@ class InvoiceUpdate(BaseModel):
 
 class PaymentCreate(BaseModel):
     amount: Decimal
-    paid_at: date
-    method: Optional[str] = None
+    payment_date: date
+    account_id: uuid.UUID
     notes: Optional[str] = None
 
 
@@ -59,8 +59,8 @@ class PaymentOut(BaseModel):
     id: uuid.UUID
     invoice_id: uuid.UUID
     amount: Decimal
-    paid_at: date
-    method: Optional[str]
+    payment_date: date
+    account_id: uuid.UUID
     notes: Optional[str]
     created_at: datetime
 

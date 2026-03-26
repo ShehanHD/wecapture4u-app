@@ -94,7 +94,14 @@ async def delete_invoice_item(id: uuid.UUID, item_id: uuid.UUID, db: DB, _: Admi
 
 @router.post("/invoices/{id}/payments", response_model=PaymentOut, status_code=201)
 async def add_payment(id: uuid.UUID, body: PaymentCreate, db: DB, _: Admin):
-    return await svc.add_payment(db, invoice_id=id, amount=body.amount, paid_at=body.paid_at, method=body.method, notes=body.notes)
+    return await svc.add_payment(
+        db,
+        invoice_id=id,
+        amount=body.amount,
+        payment_date=body.payment_date,
+        account_id=body.account_id,
+        notes=body.notes,
+    )
 
 
 @router.delete("/invoices/{id}/payments/{pid}", status_code=204)

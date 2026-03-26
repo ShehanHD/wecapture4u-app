@@ -242,8 +242,8 @@ async def add_payment(
     *,
     invoice_id: uuid.UUID,
     amount: Decimal,
-    paid_at,
-    method: Optional[str] = None,
+    payment_date,
+    account_id: uuid.UUID,
     notes: Optional[str] = None,
 ) -> InvoicePayment:
     invoice = await get_invoice(db, id=invoice_id)
@@ -252,8 +252,8 @@ async def add_payment(
     payment = InvoicePayment(
         invoice_id=invoice_id,
         amount=amount.quantize(Decimal("0.01")),
-        paid_at=paid_at,
-        method=method,
+        payment_date=payment_date,
+        account_id=account_id,
         notes=notes,
     )
     db.add(payment)

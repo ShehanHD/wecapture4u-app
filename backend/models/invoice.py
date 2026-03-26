@@ -32,7 +32,7 @@ class Invoice(Base):
         back_populates="invoice",
         cascade="all, delete-orphan",
         lazy="select",
-        order_by="InvoicePayment.paid_at",
+        order_by="InvoicePayment.payment_date",
     )
 
 
@@ -54,10 +54,10 @@ class InvoicePayment(Base):
     __tablename__ = "invoice_payments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False)
+    invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="RESTRICT"), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
-    paid_at = Column(Date, nullable=False)
-    method = Column(String, nullable=True)
+    payment_date = Column(Date, nullable=False)
+    account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id", ondelete="RESTRICT", use_alter=True), nullable=False)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
