@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Literal, Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 AccountType = Literal["asset", "liability", "equity", "revenue", "expense"]
@@ -15,7 +15,7 @@ class AccountCreate(BaseModel):
 
 
 class AccountUpdate(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(None, min_length=1)
     archived: Optional[bool] = None
 
 

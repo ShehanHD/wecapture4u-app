@@ -176,3 +176,14 @@ async def test_rename_system_account_allowed(test_client, admin_auth_headers, db
     )
     assert resp.status_code == 200
     assert resp.json()["name"] == "Petty Cash"
+
+
+@pytest.mark.asyncio
+async def test_update_account_not_found(test_client, admin_auth_headers):
+    from uuid import uuid4
+    resp = await test_client.patch(
+        f"/api/accounts/{uuid4()}",
+        json={"name": "Ghost"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 404
