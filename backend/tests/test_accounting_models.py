@@ -65,3 +65,38 @@ async def test_account_model_create_and_query(db_session: AsyncSession):
     await db_session.flush()
     assert acct.id is not None
     assert acct.archived is False
+
+
+@pytest.mark.asyncio
+async def test_invoice_item_revenue_account_fk(db_session: AsyncSession):
+    """InvoiceItem.revenue_account_id FK references accounts table correctly."""
+    from models.invoice import Invoice, InvoiceItem
+    from models.client import Client
+
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '4000'"))
+    session_fees_id = result.scalar_one()
+
+    client = Client(name="FK Test", email=f"fk_{uuid4().hex[:8]}@test.internal", tags=[])
+    db_session.add(client)
+    await db_session.flush()
+
+    invoice = Invoice(client_id=client.id, status="draft")
+    db_session.add(invoice)
+    await db_session.flush()
+
+    item = InvoiceItem(
+        invoice_id=invoice.id,
+        description="Session",
+        quantity=Decimal("1"),
+        unit_price=Decimal("300.00"),
+        amount=Decimal("300.00"),
+        revenue_account_id=session_fees_id,
+    )
+    db_session.add(item)
+    await db_session.flush()
+
+    result = await db_session.execute(
+        select(InvoiceItem).where(InvoiceItem.id == item.id)
+    )
+    fetched = result.scalar_one()
+    assert fetched.revenue_account_id == session_fees_id

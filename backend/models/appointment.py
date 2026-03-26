@@ -23,9 +23,7 @@ class Appointment(Base):
     addons = Column(ARRAY(Text), nullable=False, server_default="{}")
     deposit_paid = Column(Boolean, nullable=False, server_default="false")
     deposit_amount = Column(Numeric(10, 2), nullable=False, server_default="0")
-    # deposit_account_id FKs to accounts table (created in 003_accounting.sql).
-    # No SQLAlchemy relationship until Plan 8 (Accounting).
-    deposit_account_id = Column(UUID(as_uuid=True), nullable=True)
+    deposit_account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id", ondelete="SET NULL"), nullable=True)
     contract_signed = Column(Boolean, nullable=False, server_default="false")
     price = Column(Numeric(10, 2), nullable=False, server_default="0")
     notes = Column(Text, nullable=True)

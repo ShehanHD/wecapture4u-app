@@ -41,7 +41,7 @@ class InvoiceItem(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     invoice_id = Column(UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False)
-    revenue_account_id = Column(UUID(as_uuid=True), nullable=True)
+    revenue_account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id", ondelete="SET NULL"), nullable=True)
     description = Column(String, nullable=False)
     quantity = Column(Numeric(10, 2), nullable=False, server_default="1")
     unit_price = Column(Numeric(10, 2), nullable=False)
