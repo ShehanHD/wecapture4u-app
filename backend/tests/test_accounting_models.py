@@ -138,3 +138,38 @@ async def test_journal_entry_with_lines(db_session: AsyncSession):
     assert len(entry.lines) == 2
     assert entry.status == "draft"
     assert entry.created_by == "system"
+
+
+@pytest.mark.asyncio
+async def test_expense_model_create(db_session: AsyncSession):
+    """Expense model supports paid and payable payment_status values."""
+    from models.expense import Expense
+
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '5000'"))
+    equipment_id = result.scalar_one()
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '1010'"))
+    bank_id = result.scalar_one()
+
+    paid_expense = Expense(
+        date=date.today(),
+        description="Camera lens",
+        expense_account_id=equipment_id,
+        amount=Decimal("800.00"),
+        payment_status="paid",
+        payment_account_id=bank_id,
+    )
+    db_session.add(paid_expense)
+    await db_session.flush()
+    assert paid_expense.id is not None
+    assert paid_expense.payment_status == "paid"
+
+    payable_expense = Expense(
+        date=date.today(),
+        description="Print order",
+        expense_account_id=equipment_id,
+        amount=Decimal("200.00"),
+        payment_status="payable",
+    )
+    db_session.add(payable_expense)
+    await db_session.flush()
+    assert payable_expense.payment_account_id is None

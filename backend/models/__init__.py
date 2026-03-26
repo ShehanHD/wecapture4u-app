@@ -12,3 +12,4 @@ from models.admin import AppSettings  # noqa: F401 (also contains portfolio/SEO 
 # Plan 8 accounting models
 from models.account import Account  # noqa: F401
 from models.journal import JournalEntry, JournalLine  # noqa: F401
+from models.expense import Expense  # noqa: F401
