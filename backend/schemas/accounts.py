@@ -1,14 +1,17 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict
+
+
+AccountType = Literal["asset", "liability", "equity", "revenue", "expense"]
 
 
 class AccountCreate(BaseModel):
     code: str
     name: str
-    type: str  # asset | liability | equity | revenue | expense
+    type: AccountType
 
 
 class AccountUpdate(BaseModel):
