@@ -108,6 +108,28 @@ async def get_account(db: AsyncSession, *, id: uuid.UUID) -> Account:
     return account
 
 
+async def update_account(
+    db: AsyncSession,
+    *,
+    id: uuid.UUID,
+    name: Optional[str] = None,
+    archived: Optional[bool] = None,
+) -> Account:
+    account = await _get_or_404(db, id)
+
+    if archived is True and account.is_system:
+        raise HTTPException(status_code=403, detail="System accounts cannot be archived.")
+
+    if name is not None:
+        account.name = name
+    if archived is not None:
+        account.archived = archived
+
+    await db.flush()
+    account.balance = await _compute_balance(db, account.id, account.normal_balance)
+    return account
+
+
 async def create_account(
     db: AsyncSession,
     *,

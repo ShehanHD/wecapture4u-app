@@ -115,3 +115,64 @@ async def test_create_account_invalid_type_returns_422(test_client, admin_auth_h
         headers=admin_auth_headers,
     )
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_rename_account(test_client, admin_auth_headers, db_session):
+    from models.account import Account
+    acct = Account(code="7001", name="Old Name", type="expense", normal_balance="debit", is_system=False)
+    db_session.add(acct)
+    await db_session.flush()
+
+    resp = await test_client.patch(
+        f"/api/accounts/{acct.id}",
+        json={"name": "New Name"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "New Name"
+
+
+@pytest.mark.asyncio
+async def test_archive_system_account_returns_403(test_client, admin_auth_headers, db_session):
+    from sqlalchemy import text
+    result = await db_session.execute(text("SELECT id FROM accounts WHERE code = '1010'"))
+    account_id = result.scalar_one()
+
+    resp = await test_client.patch(
+        f"/api/accounts/{account_id}",
+        json={"archived": True},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_archive_non_system_account(test_client, admin_auth_headers, db_session):
+    from models.account import Account
+    acct = Account(code="7002", name="To Archive", type="expense", normal_balance="debit", is_system=False)
+    db_session.add(acct)
+    await db_session.flush()
+
+    resp = await test_client.patch(
+        f"/api/accounts/{acct.id}",
+        json={"archived": True},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["archived"] is True
+
+
+@pytest.mark.asyncio
+async def test_rename_system_account_allowed(test_client, admin_auth_headers, db_session):
+    from sqlalchemy import text
+    result2 = await db_session.execute(text("SELECT id FROM accounts WHERE code = '1000'"))
+    account_id = result2.scalar_one()  # Cash on Hand — is_system=True
+
+    resp = await test_client.patch(
+        f"/api/accounts/{account_id}",
+        json={"name": "Petty Cash"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "Petty Cash"
