@@ -9,8 +9,8 @@ AccountType = Literal["asset", "liability", "equity", "revenue", "expense"]
 
 
 class AccountCreate(BaseModel):
-    code: str
-    name: str
+    code: str = Field(min_length=1, max_length=20)
+    name: str = Field(min_length=1)
     type: AccountType
 
 

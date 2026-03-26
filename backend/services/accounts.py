@@ -18,9 +18,6 @@ _TYPE_TO_NORMAL_BALANCE: dict[str, str] = {
     "revenue": "credit",
 }
 
-VALID_ACCOUNT_TYPES = set(_TYPE_TO_NORMAL_BALANCE.keys())
-
-
 async def _get_or_404(db: AsyncSession, account_id: uuid.UUID) -> Account:
     result = await db.execute(select(Account).where(Account.id == account_id))
     account = result.scalar_one_or_none()
