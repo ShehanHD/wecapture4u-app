@@ -35,3 +35,33 @@ async def test_invoice_payment_uses_payment_date_and_account_id(db_session: Asyn
 
     assert payment.payment_date == date.today()
     assert payment.account_id == account_id
+
+
+@pytest.mark.asyncio
+async def test_account_model_create_and_query(db_session: AsyncSession):
+    """Seeded accounts exist and new custom accounts can be created."""
+    from models.account import Account
+
+    # Verify seeded Business Bank Account
+    result = await db_session.execute(
+        select(Account).where(Account.code == "1010")
+    )
+    bank = result.scalar_one()
+    assert bank.name == "Business Bank Account"
+    assert bank.type == "asset"
+    assert bank.normal_balance == "debit"
+    assert bank.is_system is True
+    assert bank.archived is False
+
+    # Create a custom account
+    acct = Account(
+        code="9001",
+        name="Test Custom Account",
+        type="expense",
+        normal_balance="debit",
+        is_system=False,
+    )
+    db_session.add(acct)
+    await db_session.flush()
+    assert acct.id is not None
+    assert acct.archived is False
