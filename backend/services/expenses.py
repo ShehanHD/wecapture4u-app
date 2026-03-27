@@ -28,6 +28,13 @@ async def _get_ap_account_id(db: AsyncSession) -> uuid.UUID:
     return ap_id
 
 
+async def _verify_account_exists(db: AsyncSession, account_id: uuid.UUID, field_name: str) -> None:
+    from models.account import Account
+    exists = await db.scalar(select(Account.id).where(Account.id == account_id))
+    if exists is None:
+        raise HTTPException(status_code=422, detail=f"{field_name} does not refer to a valid account.")
+
+
 async def _has_posted_entry(db: AsyncSession, expense_id: uuid.UUID) -> bool:
     count = await db.scalar(
         select(JournalEntry.id)
@@ -138,6 +145,13 @@ async def create_expense(
     receipt_url: Optional[str] = None,
     notes: Optional[str] = None,
 ) -> Expense:
+    if payment_status == "paid" and payment_account_id is None:
+        raise HTTPException(status_code=422, detail="payment_account_id is required when payment_status is 'paid'.")
+
+    await _verify_account_exists(db, expense_account_id, "expense_account_id")
+    if payment_account_id is not None:
+        await _verify_account_exists(db, payment_account_id, "payment_account_id")
+
     expense = Expense(
         date=date,
         description=description,
