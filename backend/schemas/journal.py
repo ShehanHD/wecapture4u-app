@@ -35,6 +35,21 @@ class JournalEntryUpdate(BaseModel):
     lines: Optional[list[JournalLineCreate]] = None
 
 
+class JournalEntryListOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    date: date
+    description: str
+    status: str
+    created_by: str
+    reference_type: Optional[str]
+    void_of: Optional[uuid.UUID]
+    created_at: datetime
+    total_debit: Decimal
+    total_credit: Decimal
+
+
 class JournalEntryOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
