@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class JournalLineCreate(BaseModel):
@@ -25,14 +25,14 @@ class JournalLineOut(BaseModel):
 
 class JournalEntryCreate(BaseModel):
     date: date
-    description: str
-    lines: list[JournalLineCreate]
+    description: str = Field(min_length=1)
+    lines: list[JournalLineCreate] = Field(min_length=1)
 
 
 class JournalEntryUpdate(BaseModel):
     date: Optional[date] = None
-    description: Optional[str] = None
-    lines: Optional[list[JournalLineCreate]] = None
+    description: Optional[str] = Field(None, min_length=1)
+    lines: Optional[list[JournalLineCreate]] = Field(None, min_length=1)
 
 
 class JournalEntryListOut(BaseModel):
