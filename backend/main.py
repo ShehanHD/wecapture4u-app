@@ -17,6 +17,7 @@ from routers.profile import router as profile_router
 from routers.booking_requests import router as booking_requests_router
 from routers.accounts import router as accounts_router
 from routers.journal_entries import router as journal_entries_router
+from routers.expenses import router as expenses_router
 
 app = FastAPI(title="weCapture4U API", version="1.0.0", lifespan=lifespan)
 
@@ -42,3 +43,4 @@ app.include_router(profile_router)
 app.include_router(booking_requests_router, prefix="/api", tags=["booking-requests"])
 app.include_router(accounts_router, prefix="/api", tags=["accounts"])
 app.include_router(journal_entries_router, prefix="/api", tags=["journal-entries"])
+app.include_router(expenses_router, prefix="/api", tags=["expenses"])
