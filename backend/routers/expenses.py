@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from dependencies.auth import require_admin
-from schemas.expenses import ExpenseCreate, ExpenseOut, ExpensePayPayload, ExpenseUpdate
+from schemas.expenses import ExpenseCreate, ExpenseOut, ExpensePayPayload, ExpensePaymentStatus, ExpenseUpdate
 from services import expenses as svc
 
 router = APIRouter()
@@ -19,7 +19,7 @@ Admin = Annotated[object, Depends(require_admin)]
 async def list_expenses(
     db: DB, _: Admin,
     expense_account_id: Optional[uuid.UUID] = Query(None),
-    payment_status: Optional[str] = Query(None),
+    payment_status: Optional[ExpensePaymentStatus] = Query(None),
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
 ):

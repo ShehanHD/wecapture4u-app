@@ -8,7 +8,7 @@ from decimal import Decimal
 
 async def _get_account_id(db_session, code: str):
     from sqlalchemy import text
-    return await db_session.scalar(text(f"SELECT id FROM accounts WHERE code = '{code}'"))
+    return await db_session.scalar(text("SELECT id FROM accounts WHERE code = :code"), {"code": code})
 
 
 async def _seed_expense(db_session, *, payment_status="paid", amount="200.00"):
