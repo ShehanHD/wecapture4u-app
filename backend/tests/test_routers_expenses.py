@@ -207,3 +207,100 @@ async def test_create_payable_expense_draft_credits_accounts_payable(test_client
     lines = result.scalars().all()
     credit_line = next(ln for ln in lines if ln.credit > 0)
     assert credit_line.account_id == ap_id
+
+
+# ── Task 3: update + delete ───────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_update_expense_description(test_client, admin_auth_headers, db_session):
+    exp = await _seed_expense(db_session)
+    resp = await test_client.patch(
+        f"/api/expenses/{exp.id}",
+        json={"description": "Updated description"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["description"] == "Updated description"
+
+
+@pytest.mark.asyncio
+async def test_update_expense_not_found(test_client, admin_auth_headers):
+    resp = await test_client.patch(
+        f"/api/expenses/{uuid4()}",
+        json={"description": "Ghost"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_expense_blocked_if_posted_entry(test_client, admin_auth_headers, db_session):
+    """PATCH blocked when a posted journal entry references this expense."""
+    from models.journal import JournalEntry, JournalLine
+    eq_id = await _get_account_id(db_session, "5000")
+    bank_id = await _get_account_id(db_session, "1010")
+    exp = await _seed_expense(db_session)
+
+    # Seed a posted journal entry referencing this expense
+    entry = JournalEntry(
+        date=date_type(2026, 3, 1),
+        description="Posted entry for expense",
+        status="posted",
+        created_by="system",
+        reference_type="expense",
+        reference_id=exp.id,
+    )
+    db_session.add(entry)
+    await db_session.flush()
+    db_session.add(JournalLine(entry_id=entry.id, account_id=eq_id, debit=Decimal("200"), credit=Decimal("0")))
+    db_session.add(JournalLine(entry_id=entry.id, account_id=bank_id, debit=Decimal("0"), credit=Decimal("200")))
+    await db_session.flush()
+
+    resp = await test_client.patch(
+        f"/api/expenses/{exp.id}",
+        json={"description": "Blocked"},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_delete_expense_success(test_client, admin_auth_headers, db_session):
+    exp = await _seed_expense(db_session)
+    resp = await test_client.delete(f"/api/expenses/{exp.id}", headers=admin_auth_headers)
+    assert resp.status_code == 204
+
+    resp2 = await test_client.get(f"/api/expenses/{exp.id}", headers=admin_auth_headers)
+    assert resp2.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_expense_not_found(test_client, admin_auth_headers):
+    resp = await test_client.delete(f"/api/expenses/{uuid4()}", headers=admin_auth_headers)
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_expense_blocked_if_posted_entry(test_client, admin_auth_headers, db_session):
+    """DELETE blocked when a posted journal entry references this expense."""
+    from models.journal import JournalEntry, JournalLine
+    eq_id = await _get_account_id(db_session, "5000")
+    bank_id = await _get_account_id(db_session, "1010")
+    exp = await _seed_expense(db_session)
+
+    entry = JournalEntry(
+        date=date_type(2026, 3, 1),
+        description="Posted",
+        status="posted",
+        created_by="system",
+        reference_type="expense",
+        reference_id=exp.id,
+    )
+    db_session.add(entry)
+    await db_session.flush()
+    db_session.add(JournalLine(entry_id=entry.id, account_id=eq_id, debit=Decimal("200"), credit=Decimal("0")))
+    db_session.add(JournalLine(entry_id=entry.id, account_id=bank_id, debit=Decimal("0"), credit=Decimal("200")))
+    await db_session.flush()
+
+    resp = await test_client.delete(f"/api/expenses/{exp.id}", headers=admin_auth_headers)
+    assert resp.status_code == 409
