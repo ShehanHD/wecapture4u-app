@@ -169,14 +169,22 @@ export async function fetchReport(
   params: Record<string, string>,
 ): Promise<unknown> {
   const { data } = await api.get(`/api/reports/${type}`, { params })
+  // Reports have varying shapes — spec uses z.unknown(). Validate it's at least an object.
+  if (typeof data !== 'object' || data === null) {
+    throw new Error(`Unexpected report response for ${type}`)
+  }
   return data
 }
 
-export function downloadReportCsv(type: ReportType, params: Record<string, string>): void {
-  const qs = new URLSearchParams({ ...params, format: 'csv' }).toString()
-  const url = `${api.defaults.baseURL ?? ''}/api/reports/${type}?${qs}`
+export async function downloadReportCsv(type: ReportType, params: Record<string, string>): Promise<void> {
+  const { data } = await api.get(`/api/reports/${type}`, {
+    params: { ...params, format: 'csv' },
+    responseType: 'blob',
+  })
+  const url = URL.createObjectURL(data as Blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `${type}.csv`
   a.click()
+  URL.revokeObjectURL(url)
 }

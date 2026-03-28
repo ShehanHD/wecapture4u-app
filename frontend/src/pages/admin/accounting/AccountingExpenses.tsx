@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useExpenses, useCreateExpense, useDeleteExpense, usePayExpense, useAccounts } from '@/hooks/useAccounting'
 import type { ExpenseOut } from '@/schemas/accounting'
 
@@ -14,6 +15,7 @@ export function AccountingExpenses() {
   const [filter, setFilter] = useState<FilterStatus>('all')
   const [showAddForm, setShowAddForm] = useState(false)
   const [payTarget, setPayTarget] = useState<ExpenseOut | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [addForm, setAddForm] = useState({
     date: new Date().toISOString().split('T')[0],
     description: '',
@@ -202,7 +204,7 @@ export function AccountingExpenses() {
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7 text-destructive"
-                          onClick={() => handleDelete(exp.id)}
+                          onClick={() => setDeleteConfirmId(exp.id)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -215,6 +217,18 @@ export function AccountingExpenses() {
           </table>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        onOpenChange={open => { if (!open) setDeleteConfirmId(null) }}
+        title="Delete expense"
+        description="Delete this expense? This cannot be undone."
+        destructive
+        onConfirm={() => {
+          if (deleteConfirmId) handleDelete(deleteConfirmId)
+          setDeleteConfirmId(null)
+        }}
+      />
 
       <Dialog open={!!payTarget} onOpenChange={open => { if (!open) setPayTarget(null) }}>
         <DialogContent>
