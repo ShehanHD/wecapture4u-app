@@ -1,6 +1,6 @@
 // frontend/src/pages/admin/accounting/AccountingExpenses.tsx
 import { useState } from 'react'
-import axios from 'axios'
+import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -60,7 +60,7 @@ export function AccountingExpenses() {
       setDeleteTarget(null)
       toast.success('Expense deleted')
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 409) {
+      if (isAxiosError(err) && err.response?.status === 409) {
         toast.error('Cannot delete: this expense has a posted journal entry.')
       } else {
         toast.error('Failed to delete expense')
