@@ -126,6 +126,153 @@ function BalanceSheetReport() {
   )
 }
 
+// ─── Trial Balance ────────────────────────────────────────────────────────────
+
+type TBData = {
+  as_of_date: string
+  rows: { code: string; name: string; debit_balance: string; credit_balance: string }[]
+  total_debit: string
+  total_credit: string
+  balanced: boolean
+}
+
+function TrialBalanceReport() {
+  const [asOf, setAsOf] = useState(today())
+  const [data, setData] = useState<TBData | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function run() {
+    setLoading(true)
+    try { setData(await fetchReport('trial-balance', { as_of_date: asOf }) as TBData) }
+    catch { toast.error('Failed to load report') }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-end gap-3">
+        <div>
+          <label className="text-xs text-muted-foreground block mb-1">As of</label>
+          <Input type="date" value={asOf} onChange={e => setAsOf(e.target.value)} className="h-8 text-sm" />
+        </div>
+        <Button size="sm" onClick={run} disabled={loading}>Run</Button>
+        {data && (
+          <Button size="sm" variant="outline" onClick={() => downloadReportCsv('trial-balance', { as_of_date: asOf })}>
+            <Download className="h-3 w-3 mr-1" /> CSV
+          </Button>
+        )}
+      </div>
+      {data && (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Code</th>
+                <th className="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Account</th>
+                <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Debit</th>
+                <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Credit</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {data.rows.map(row => (
+                <tr key={row.code}>
+                  <td className="px-4 py-2 text-xs text-muted-foreground font-mono">{row.code}</td>
+                  <td className="px-4 py-2">{row.name}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {parseFloat(row.debit_balance) !== 0 ? `$${row.debit_balance}` : '—'}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {parseFloat(row.credit_balance) !== 0 ? `$${row.credit_balance}` : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-border bg-muted/30 font-medium">
+                <td className="px-4 py-2" colSpan={2}>
+                  Totals{' '}
+                  <span className={`ml-1 text-xs px-1.5 py-0.5 rounded ${data.balanced ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                    {data.balanced ? 'Balanced' : 'Unbalanced'}
+                  </span>
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums">${data.total_debit}</td>
+                <td className="px-4 py-2 text-right tabular-nums">${data.total_credit}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Cash Flow ────────────────────────────────────────────────────────────────
+
+type CFData = {
+  start_date: string
+  end_date: string
+  cash_collected: string
+  cash_spent: string
+  net_change: string
+}
+
+function CashFlowReport() {
+  const [startDate, setStartDate] = useState(monthStart())
+  const [endDate, setEndDate] = useState(today())
+  const [data, setData] = useState<CFData | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function run() {
+    setLoading(true)
+    try { setData(await fetchReport('cash-flow', { start_date: startDate, end_date: endDate }) as CFData) }
+    catch { toast.error('Failed to load report') }
+    finally { setLoading(false) }
+  }
+
+  const netChange = data ? parseFloat(data.net_change) : 0
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-end gap-3">
+        <div><label className="text-xs text-muted-foreground block mb-1">From</label>
+          <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="h-8 text-sm" /></div>
+        <div><label className="text-xs text-muted-foreground block mb-1">To</label>
+          <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="h-8 text-sm" /></div>
+        <Button size="sm" onClick={run} disabled={loading}>Run</Button>
+        {data && (
+          <Button size="sm" variant="outline" onClick={() => downloadReportCsv('cash-flow', { start_date: startDate, end_date: endDate })}>
+            <Download className="h-3 w-3 mr-1" /> CSV
+          </Button>
+        )}
+      </div>
+      {data && (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-border">
+              <tr>
+                <td className="px-4 py-3">Cash collected from clients</td>
+                <td className="px-4 py-3 text-right tabular-nums text-green-400">${data.cash_collected}</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3">Cash spent on expenses</td>
+                <td className="px-4 py-3 text-right tabular-nums text-red-400">${data.cash_spent}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-border bg-muted/30 font-medium">
+                <td className="px-4 py-3">Net cash change</td>
+                <td className={`px-4 py-3 text-right tabular-nums ${netChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {netChange >= 0 ? '+' : ''}${data.net_change}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function GenericReport({ type, params: paramDefs }: {
   type: ReportType
   params: Array<{ key: string; label: string; defaultValue?: string }>
@@ -179,15 +326,8 @@ export function AccountingReports() {
 
       <TabsContent value="pl"><PLReport /></TabsContent>
       <TabsContent value="balance-sheet"><BalanceSheetReport /></TabsContent>
-      <TabsContent value="trial-balance">
-        <GenericReport type="trial-balance" params={[{ key: 'as_of_date', label: 'As of', defaultValue: today() }]} />
-      </TabsContent>
-      <TabsContent value="cash-flow">
-        <GenericReport type="cash-flow" params={[
-          { key: 'start_date', label: 'From', defaultValue: monthStart() },
-          { key: 'end_date', label: 'To', defaultValue: today() },
-        ]} />
-      </TabsContent>
+      <TabsContent value="trial-balance"><TrialBalanceReport /></TabsContent>
+      <TabsContent value="cash-flow"><CashFlowReport /></TabsContent>
       <TabsContent value="tax-summary">
         <GenericReport type="tax-summary" params={[
           { key: 'start_date', label: 'From', defaultValue: monthStart() },
