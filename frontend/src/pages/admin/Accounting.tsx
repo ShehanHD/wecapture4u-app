@@ -1,5 +1,12 @@
-import React from 'react'
+// frontend/src/pages/admin/Accounting.tsx
 import { BarChart2 } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AccountingOverview } from './accounting/AccountingOverview'
+import { AccountingAccounts } from './accounting/AccountingAccounts'
+import { AccountingJournal } from './accounting/AccountingJournal'
+import { AccountingExpenses } from './accounting/AccountingExpenses'
+import { AccountingPayments } from './accounting/AccountingPayments'
+import { AccountingReports } from './accounting/AccountingReports'
 
 export function Accounting() {
   return (
@@ -10,9 +17,24 @@ export function Accounting() {
         </div>
         <h1 className="text-2xl font-bold text-foreground">Accounting</h1>
       </div>
-      <div className="rounded-xl bg-card border p-8 text-center">
-        <p className="text-muted-foreground">Accounting module coming in Plan 8.</p>
-      </div>
+
+      <Tabs defaultValue="overview">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="accounts">Chart of Accounts</TabsTrigger>
+          <TabsTrigger value="journal">Journal</TabsTrigger>
+          <TabsTrigger value="expenses">Expenses</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview"><AccountingOverview /></TabsContent>
+        <TabsContent value="accounts"><AccountingAccounts /></TabsContent>
+        <TabsContent value="journal"><AccountingJournal /></TabsContent>
+        <TabsContent value="expenses"><AccountingExpenses /></TabsContent>
+        <TabsContent value="payments"><AccountingPayments /></TabsContent>
+        <TabsContent value="reports"><AccountingReports /></TabsContent>
+      </Tabs>
     </div>
   )
 }
