@@ -4,7 +4,7 @@ import { Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { fetchReport, downloadReportCsv, type ReportType } from '@/api/accounting'
+import { fetchReport, downloadReportCsv } from '@/api/accounting'
 import { toast } from 'sonner'
 
 function today(): string {
@@ -273,18 +273,26 @@ function CashFlowReport() {
   )
 }
 
-function GenericReport({ type, params: paramDefs }: {
-  type: ReportType
-  params: Array<{ key: string; label: string; defaultValue?: string }>
-}) {
-  const initParams = Object.fromEntries(paramDefs.map(p => [p.key, p.defaultValue ?? today()]))
-  const [params, setParams] = useState<Record<string, string>>(initParams)
-  const [data, setData] = useState<unknown | null>(null)
+// ─── Tax Summary ──────────────────────────────────────────────────────────────
+
+type TSData = {
+  start_date: string
+  end_date: string
+  taxable_revenue: string
+  deductible_expenses: Record<string, string>
+  total_deductible_expenses: string
+  net_taxable_income: string
+}
+
+function TaxSummaryReport() {
+  const [startDate, setStartDate] = useState(monthStart())
+  const [endDate, setEndDate] = useState(today())
+  const [data, setData] = useState<TSData | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function run() {
     setLoading(true)
-    try { setData(await fetchReport(type, params)) }
+    try { setData(await fetchReport('tax-summary', { start_date: startDate, end_date: endDate }) as TSData) }
     catch { toast.error('Failed to load report') }
     finally { setLoading(false) }
   }
@@ -292,21 +300,154 @@ function GenericReport({ type, params: paramDefs }: {
   return (
     <div className="space-y-4">
       <div className="flex items-end gap-3">
-        {paramDefs.map(p => (
-          <div key={p.key}>
-            <label className="text-xs text-muted-foreground block mb-1">{p.label}</label>
-            <Input type="date" value={params[p.key]} onChange={e => setParams(v => ({ ...v, [p.key]: e.target.value }))} className="h-8 text-sm" />
-          </div>
-        ))}
+        <div><label className="text-xs text-muted-foreground block mb-1">From</label>
+          <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="h-8 text-sm" /></div>
+        <div><label className="text-xs text-muted-foreground block mb-1">To</label>
+          <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="h-8 text-sm" /></div>
         <Button size="sm" onClick={run} disabled={loading}>Run</Button>
-        {data && <Button size="sm" variant="outline" onClick={() => downloadReportCsv(type, params)}>
-          <Download className="h-3 w-3 mr-1" /> CSV
-        </Button>}
+        {data && (
+          <Button size="sm" variant="outline" onClick={() => downloadReportCsv('tax-summary', { start_date: startDate, end_date: endDate })}>
+            <Download className="h-3 w-3 mr-1" /> CSV
+          </Button>
+        )}
       </div>
       {data && (
-        <pre className="rounded-lg border border-border bg-muted/30 p-4 text-xs overflow-auto max-h-96 text-muted-foreground">
-          {JSON.stringify(data, null, 2)}
-        </pre>
+        <div className="rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Description</th>
+                <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              <tr>
+                <td className="px-4 py-2 font-medium">Total Revenue</td>
+                <td className="px-4 py-2 text-right tabular-nums text-green-400">${data.taxable_revenue}</td>
+              </tr>
+              <tr>
+                <td colSpan={2} className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase">
+                  Deductible Expenses
+                </td>
+              </tr>
+              {Object.entries(data.deductible_expenses).map(([name, amt]) => (
+                <tr key={name}>
+                  <td className="px-4 py-2 pl-8">{name}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">${amt}</td>
+                </tr>
+              ))}
+              <tr>
+                <td className="px-4 py-2">Total Deductible</td>
+                <td className="px-4 py-2 text-right tabular-nums">${data.total_deductible_expenses}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-border bg-muted/30 font-medium">
+                <td className="px-4 py-3">Net Taxable Income</td>
+                <td className="px-4 py-3 text-right tabular-nums">${data.net_taxable_income}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── AR Aging ─────────────────────────────────────────────────────────────────
+
+type AREntry = {
+  invoice_id: string
+  client_name: string
+  balance: string
+  due_date: string | null
+  days_overdue: number
+}
+
+type ARData = {
+  as_of_date: string
+  buckets: {
+    current: AREntry[]
+    '1_30': AREntry[]
+    '31_60': AREntry[]
+    '61_90': AREntry[]
+    over_90: AREntry[]
+  }
+  total_outstanding: string
+}
+
+const BUCKET_LABELS: Record<string, string> = {
+  current: 'Current',
+  '1_30': '1–30 days overdue',
+  '31_60': '31–60 days overdue',
+  '61_90': '61–90 days overdue',
+  over_90: 'Over 90 days overdue',
+}
+
+function ARAgingReport() {
+  const [asOf, setAsOf] = useState(today())
+  const [data, setData] = useState<ARData | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function run() {
+    setLoading(true)
+    try { setData(await fetchReport('ar-aging', { as_of_date: asOf }) as ARData) }
+    catch { toast.error('Failed to load report') }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-end gap-3">
+        <div>
+          <label className="text-xs text-muted-foreground block mb-1">As of</label>
+          <Input type="date" value={asOf} onChange={e => setAsOf(e.target.value)} className="h-8 text-sm" />
+        </div>
+        <Button size="sm" onClick={run} disabled={loading}>Run</Button>
+        {data && (
+          <Button size="sm" variant="outline" onClick={() => downloadReportCsv('ar-aging', { as_of_date: asOf })}>
+            <Download className="h-3 w-3 mr-1" /> CSV
+          </Button>
+        )}
+      </div>
+      {data && (
+        <div className="space-y-3">
+          {(Object.keys(BUCKET_LABELS) as Array<keyof ARData['buckets']>).map(key => {
+            const entries = data.buckets[key]
+            if (entries.length === 0) return null
+            const subtotal = entries.reduce((sum, e) => sum + parseFloat(e.balance), 0)
+            return (
+              <div key={key} className="rounded-lg border border-border overflow-hidden">
+                <div className="flex justify-between items-center px-4 py-2 bg-muted/30 text-xs font-semibold text-muted-foreground uppercase">
+                  <span>{BUCKET_LABELS[key]}</span>
+                  <span className="tabular-nums">${subtotal.toFixed(2)}</span>
+                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Client</th>
+                      <th className="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Due Date</th>
+                      <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {entries.map(e => (
+                      <tr key={e.invoice_id}>
+                        <td className="px-4 py-2">{e.client_name}</td>
+                        <td className="px-4 py-2 text-muted-foreground">{e.due_date ?? '—'}</td>
+                        <td className="px-4 py-2 text-right tabular-nums">${e.balance}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          })}
+          <div className="flex justify-between items-center px-4 py-3 rounded-lg border border-border font-medium text-sm">
+            <span>Total Outstanding</span>
+            <span className="tabular-nums">${parseFloat(data.total_outstanding).toFixed(2)}</span>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -328,15 +469,8 @@ export function AccountingReports() {
       <TabsContent value="balance-sheet"><BalanceSheetReport /></TabsContent>
       <TabsContent value="trial-balance"><TrialBalanceReport /></TabsContent>
       <TabsContent value="cash-flow"><CashFlowReport /></TabsContent>
-      <TabsContent value="tax-summary">
-        <GenericReport type="tax-summary" params={[
-          { key: 'start_date', label: 'From', defaultValue: monthStart() },
-          { key: 'end_date', label: 'To', defaultValue: today() },
-        ]} />
-      </TabsContent>
-      <TabsContent value="ar-aging">
-        <GenericReport type="ar-aging" params={[{ key: 'as_of_date', label: 'As of', defaultValue: today() }]} />
-      </TabsContent>
+      <TabsContent value="tax-summary"><TaxSummaryReport /></TabsContent>
+      <TabsContent value="ar-aging"><ARAgingReport /></TabsContent>
     </Tabs>
   )
 }
