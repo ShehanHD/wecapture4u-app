@@ -110,11 +110,11 @@ async def get_pl(db: AsyncSession, start_date: date, end_date: date) -> dict:
     return {
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
-        "revenue_by_account": {k: str(v) for k, v in revenue_by_account.items()},
-        "total_revenue": str(total_revenue),
-        "expenses_by_account": {k: str(v) for k, v in expenses_by_account.items()},
-        "total_expenses": str(total_expenses),
-        "net_profit": str(total_revenue - total_expenses),
+        "revenue_by_account": {k: f"{v:.2f}" for k, v in revenue_by_account.items()},
+        "total_revenue": f"{total_revenue:.2f}",
+        "expenses_by_account": {k: f"{v:.2f}" for k, v in expenses_by_account.items()},
+        "total_expenses": f"{total_expenses:.2f}",
+        "net_profit": f"{total_revenue - total_expenses:.2f}",
     }
 
 
@@ -144,7 +144,7 @@ async def get_balance_sheet(db: AsyncSession, as_of_date: date) -> dict:
         entry = {
             "code": row["account"].code,
             "name": row["account"].name,
-            "balance": str(balance),
+            "balance": f"{balance:.2f}",
         }
         t = row["account"].type
         if t == "asset":
@@ -160,11 +160,11 @@ async def get_balance_sheet(db: AsyncSession, as_of_date: date) -> dict:
     return {
         "as_of_date": as_of_date.isoformat(),
         "assets": assets,
-        "total_assets": str(total_assets),
+        "total_assets": f"{total_assets:.2f}",
         "liabilities": liabilities,
-        "total_liabilities": str(total_liabilities),
+        "total_liabilities": f"{total_liabilities:.2f}",
         "equity": equity,
-        "total_equity": str(total_equity),
+        "total_equity": f"{total_equity:.2f}",
         "balanced": abs(total_assets - (total_liabilities + total_equity)) < Decimal("0.01"),
     }
 
@@ -179,7 +179,7 @@ def balance_sheet_to_csv(bs: dict) -> str:
         rows.append([e["code"], e["name"], "Equity", e["balance"]])
     rows.append(["", "Total Assets", "", bs["total_assets"]])
     rows.append(["", "Total Liabilities + Equity", "",
-                 str(Decimal(bs["total_liabilities"]) + Decimal(bs["total_equity"]))])
+                 f"{Decimal(bs['total_liabilities']) + Decimal(bs['total_equity']):.2f}"])
     return _rows_to_csv(["Code", "Name", "Type", "Balance"], rows)
 
 
@@ -241,9 +241,9 @@ async def get_cash_flow(db: AsyncSession, start_date: date, end_date: date) -> d
     return {
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
-        "cash_collected": str(cash_in),
-        "cash_spent": str(cash_out),
-        "net_change": str(cash_in - cash_out),
+        "cash_collected": f"{cash_in:.2f}",
+        "cash_spent": f"{cash_out:.2f}",
+        "net_change": f"{cash_in - cash_out:.2f}",
     }
 
 
@@ -280,10 +280,10 @@ async def get_tax_summary(db: AsyncSession, start_date: date, end_date: date) ->
     return {
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
-        "taxable_revenue": str(taxable_revenue),
-        "deductible_expenses": {k: str(v) for k, v in deductible_expenses.items()},
-        "total_deductible_expenses": str(total_deductible),
-        "net_taxable_income": str(taxable_revenue - total_deductible),
+        "taxable_revenue": f"{taxable_revenue:.2f}",
+        "deductible_expenses": {k: f"{v:.2f}" for k, v in deductible_expenses.items()},
+        "total_deductible_expenses": f"{total_deductible:.2f}",
+        "net_taxable_income": f"{taxable_revenue - total_deductible:.2f}",
     }
 
 
@@ -315,7 +315,12 @@ async def get_ar_aging(db: AsyncSession, as_of_date: date) -> dict:
         "current": [], "1_30": [], "31_60": [], "61_90": [], "over_90": []
     }
     for invoice, client in result.all():
-        reference_date = invoice.due_date or invoice.created_at.date()
+        if invoice.due_date is not None:
+            reference_date = invoice.due_date
+        elif invoice.created_at is not None:
+            reference_date = invoice.created_at.date()
+        else:
+            reference_date = date.today()
         days_overdue = (as_of_date - reference_date).days
         entry = {
             "invoice_id": str(invoice.id),

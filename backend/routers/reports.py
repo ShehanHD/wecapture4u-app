@@ -21,7 +21,7 @@ def _csv_response(csv_str: str, filename: str) -> StreamingResponse:
     return StreamingResponse(
         iter([csv_str]),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
