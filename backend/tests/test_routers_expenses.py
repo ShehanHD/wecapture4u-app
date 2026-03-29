@@ -304,3 +304,75 @@ async def test_delete_expense_blocked_if_posted_entry(test_client, admin_auth_he
 
     resp = await test_client.delete(f"/api/expenses/{exp.id}", headers=admin_auth_headers)
     assert resp.status_code == 409
+
+
+# ── Task 4: pay ───────────────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_pay_payable_expense_success(test_client, admin_auth_headers, db_session):
+    bank_id = await _get_account_id(db_session, "1010")
+    exp = await _seed_expense(db_session, payment_status="payable")
+
+    resp = await test_client.post(
+        f"/api/expenses/{exp.id}/pay",
+        json={"payment_account_id": str(bank_id)},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["payment_status"] == "paid"
+    assert data["payment_account_id"] == str(bank_id)
+    assert data["journal_entry_id"] is not None
+
+
+@pytest.mark.asyncio
+async def test_pay_already_paid_expense_returns_409(test_client, admin_auth_headers, db_session):
+    exp = await _seed_expense(db_session, payment_status="paid")
+    bank_id = await _get_account_id(db_session, "1010")
+
+    resp = await test_client.post(
+        f"/api/expenses/{exp.id}/pay",
+        json={"payment_account_id": str(bank_id)},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_pay_expense_creates_ap_settlement_draft(test_client, admin_auth_headers, db_session):
+    """Pay action creates Dr Accounts Payable / Cr Bank draft."""
+    from models.journal import JournalLine
+    from sqlalchemy import select
+    bank_id = await _get_account_id(db_session, "1010")
+    ap_id = await _get_account_id(db_session, "2000")
+    exp = await _seed_expense(db_session, payment_status="payable", amount="150.00")
+
+    resp = await test_client.post(
+        f"/api/expenses/{exp.id}/pay",
+        json={"payment_account_id": str(bank_id)},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 200
+    entry_id = resp.json()["journal_entry_id"]
+
+    result = await db_session.execute(
+        select(JournalLine).where(JournalLine.entry_id == entry_id)
+    )
+    lines = result.scalars().all()
+    assert len(lines) == 2
+    debit_line = next(ln for ln in lines if ln.debit > 0)
+    credit_line = next(ln for ln in lines if ln.credit > 0)
+    assert debit_line.account_id == ap_id
+    assert Decimal(str(debit_line.debit)) == Decimal("150.00")
+    assert credit_line.account_id == bank_id
+    assert Decimal(str(credit_line.credit)) == Decimal("150.00")
+
+
+@pytest.mark.asyncio
+async def test_pay_expense_not_found(test_client, admin_auth_headers):
+    resp = await test_client.post(
+        f"/api/expenses/{uuid4()}/pay",
+        json={"payment_account_id": str(uuid4())},
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 404
