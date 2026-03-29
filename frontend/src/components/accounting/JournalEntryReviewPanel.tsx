@@ -1,5 +1,5 @@
 // frontend/src/components/accounting/JournalEntryReviewPanel.tsx
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -22,14 +22,18 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export function JournalEntryReviewPanel({ entry, open, onClose }: Props) {
-  const [editLines, setEditLines] = useState<LineInput[] | null>(null)
+  // Track edit lines alongside the entry they belong to — avoids useEffect reset
+  const [editState, setEditState] = useState<{ entryId: string; lines: LineInput[] } | null>(null)
   const [voidConfirmOpen, setVoidConfirmOpen] = useState(false)
   const [isBalanced, setIsBalanced] = useState(false)
-
-  useEffect(() => {
-    setEditLines(null)
-  }, [entry?.id])
   const { data: accounts = [] } = useAccounts()
+
+  // Derived: editLines are only valid for the current entry
+  const editLines = editState !== null && editState.entryId === entry?.id ? editState.lines : null
+
+  function setEditLines(lines: LineInput[] | null) {
+    setEditState(lines && entry ? { entryId: entry.id, lines } : null)
+  }
 
   const postMutation = usePostJournalEntry(entry?.id ?? '')
   const voidMutation = useVoidJournalEntry(entry?.id ?? '')
