@@ -4,6 +4,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { fetchReport } from '@/api/accounting'
 import { useJournalEntries } from '@/hooks/useAccounting'
 
+function asStringRecord(val: unknown): Record<string, string> {
+  if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+    return val as Record<string, string>
+  }
+  return {}
+}
+
 function fmt(n: string | number | undefined): string {
   if (n === undefined) return '—'
   return `$${parseFloat(String(n)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -49,7 +56,7 @@ export function AccountingOverview() {
         Array.from({ length: monthCount }, async (_, i) => {
           const start = toISO(new Date(currentYear, i, 1))
           const end = toISO(new Date(currentYear, i + 1, 0))
-          const pl = await fetchReport('pl', { start_date: start, end_date: end }) as Record<string, string>
+          const pl = asStringRecord(await fetchReport('pl', { start_date: start, end_date: end }))
           return {
             month: new Date(currentYear, i).toLocaleString('default', { month: 'short' }),
             revenue: parseFloat(pl.total_revenue ?? '0'),
@@ -64,9 +71,9 @@ export function AccountingOverview() {
   const { data: recentEntries = [] } = useJournalEntries({ status: 'posted' })
   const last5 = recentEntries.slice(0, 5)
 
-  const cur = currentPL as Record<string, string> | undefined
-  const pri = priorPL as Record<string, string> | undefined
-  const ar = arAging as Record<string, string> | undefined
+  const cur = asStringRecord(currentPL)
+  const pri = asStringRecord(priorPL)
+  const ar = asStringRecord(arAging)
 
   const revenue = parseFloat(cur?.total_revenue ?? '0')
   const expenses = parseFloat(cur?.total_expenses ?? '0')
