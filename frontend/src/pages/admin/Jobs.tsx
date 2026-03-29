@@ -188,8 +188,7 @@ function AlbumKanbanColumn({ stage, jobs }: { stage: AlbumStage; jobs: Job[] }) 
 }
 
 // --- Album Kanban Board ---
-function AlbumKanban({ jobs }: { jobs: Job[] }) {
-  const { data: albumStages = [] } = useAlbumStages()
+function AlbumKanban({ jobs, albumStages }: { jobs: Job[]; albumStages: AlbumStage[] }) {
   const updateJob = useUpdateJob()
   const [activeJob, setActiveJob] = useState<Job | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
@@ -235,6 +234,7 @@ function AlbumKanban({ jobs }: { jobs: Job[] }) {
 export function Jobs() {
   const { data: stages = [] } = useJobStages()
   const { data: jobs = [] } = useJobs()
+  const { data: albumStages = [] } = useAlbumStages()
   const updateJob = useUpdateJob()
   const [activeJob, setActiveJob] = useState<Job | null>(null)
 
@@ -296,7 +296,7 @@ export function Jobs() {
         </TabsContent>
 
         <TabsContent value="albums" className="mt-4">
-          <AlbumKanban jobs={jobs} />
+          <AlbumKanban jobs={jobs} albumStages={albumStages} />
         </TabsContent>
       </Tabs>
     </div>

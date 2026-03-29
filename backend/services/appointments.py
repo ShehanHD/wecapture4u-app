@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 async def _auto_create_job(db: AsyncSession, appt: "Appointment") -> None:
     """Create a job in the 'Booked' stage for a newly confirmed appointment."""
-    from models.job import Job, JobStage
+    from models.job import Job, JobStage, AlbumStage
 
     logger.info("[auto-job] triggered for appointment %s (client=%s title=%r)", appt.id, appt.client_id, appt.title)
 
@@ -47,6 +47,17 @@ async def _auto_create_job(db: AsyncSession, appt: "Appointment") -> None:
     db.add(job)
     await db.flush()
     logger.info("[auto-job] created job %s in stage '%s'", job.id, stage.name)
+
+    if 'album' in (appt.addons or []):
+        first_album_stage = await db.scalar(
+            select(AlbumStage).order_by(AlbumStage.position).limit(1)
+        )
+        if first_album_stage:
+            job.album_stage_id = first_album_stage.id
+            await db.flush()
+            logger.info("[auto-job] assigned album stage '%s' to job %s", first_album_stage.name, job.id)
+        else:
+            logger.warning("[auto-job] no album stages seeded — job %s created without album_stage_id", job.id)
 
     if appt.price and appt.price > 0:
         from services.invoices import create_invoice, add_invoice_item, _recalculate_and_persist
@@ -140,16 +151,21 @@ async def create_appointment(db: AsyncSession, *, data: dict) -> AppointmentOut:
 async def update_appointment(
     db: AsyncSession, *, id: uuid.UUID, data: dict
 ) -> AppointmentOut:
-    from models.job import Job
+    from models.job import Job, AlbumStage
 
     appt = await get_appointment_orm(db, id=id)
     previous_status = appt.status
     new_status = data.get("status")
+    old_addons = set(appt.addons or [])
 
     for key, value in data.items():
         if value is not None:
             setattr(appt, key, value)
     await db.flush()
+
+    new_addons = set(appt.addons or [])
+    album_added = 'album' in new_addons and 'album' not in old_addons
+    album_removed = 'album' not in new_addons and 'album' in old_addons
 
     logger.info("[update-appointment] id=%s previous_status=%r new_status=%r", id, previous_status, new_status)
 
@@ -185,6 +201,21 @@ async def update_appointment(
                 "[auto-job] removed job %s and %d draft invoice(s) (appointment un-confirmed)",
                 linked_job.id, len(invoices),
             )
+
+    # Sync album_stage_id on the linked job when the album addon is added or removed
+    if appt.status == "confirmed" and (album_added or album_removed):
+        linked_job = await db.scalar(select(Job).where(Job.appointment_id == id).limit(1))
+        if linked_job:
+            if album_added:
+                first_album_stage = await db.scalar(
+                    select(AlbumStage).order_by(AlbumStage.position).limit(1)
+                )
+                linked_job.album_stage_id = first_album_stage.id if first_album_stage else None
+                logger.info("[update-appointment] album addon added — set album_stage_id=%s on job %s", linked_job.album_stage_id, linked_job.id)
+            else:
+                linked_job.album_stage_id = None
+                logger.info("[update-appointment] album addon removed — cleared album_stage_id on job %s", linked_job.id)
+            await db.flush()
 
     return await _to_out(db, appt)
 
