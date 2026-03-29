@@ -58,8 +58,13 @@ export function AccountingExpenses() {
       await deleteMutation.mutateAsync(id)
       setDeleteTarget(null)
       toast.success('Expense deleted')
-    } catch {
-      toast.error('Failed to delete expense')
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 409) {
+        toast.error('Cannot delete: this expense has a posted journal entry.')
+      } else {
+        toast.error('Failed to delete expense')
+      }
     }
   }
 
