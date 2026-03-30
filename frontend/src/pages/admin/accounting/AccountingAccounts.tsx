@@ -1,11 +1,12 @@
 // frontend/src/pages/admin/accounting/AccountingAccounts.tsx
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { AccountLedgerPanel } from '@/components/accounting/AccountLedgerPanel'
 import { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } from '@/hooks/useAccounting'
 import type { AccountOut } from '@/schemas/accounting'
 
@@ -30,6 +31,7 @@ export function AccountingAccounts() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<AccountOut | null>(null)
+  const [ledgerAccount, setLedgerAccount] = useState<AccountOut | null>(null)
   const [newForm, setNewForm] = useState<NewAccountForm>({
     code: '', name: '', type: 'asset', normal_balance: 'debit',
   })
@@ -195,6 +197,14 @@ export function AccountingAccounts() {
                   <td className="px-4 py-2 text-xs text-muted-foreground capitalize">{acct.normal_balance}</td>
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1 justify-end">
+                      {editingId !== acct.id && (
+                        <Button
+                          size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground"
+                          onClick={() => setLedgerAccount(acct)}
+                        >
+                          <BookOpen className="h-3 w-3" />
+                        </Button>
+                      )}
                       {!acct.is_system && editingId !== acct.id && (
                         <Button
                           size="icon" variant="ghost" className="h-7 w-7"
@@ -234,6 +244,11 @@ export function AccountingAccounts() {
         title="Delete account"
         description={`Delete "${deleteTarget?.name}"? This cannot be undone. If the account is in use, deletion will fail.`}
         onConfirm={() => deleteTarget && handleDelete(deleteTarget.id)}
+      />
+
+      <AccountLedgerPanel
+        account={ledgerAccount}
+        onClose={() => setLedgerAccount(null)}
       />
     </div>
   )
