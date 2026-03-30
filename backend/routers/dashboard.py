@@ -17,6 +17,8 @@ Admin = Annotated[object, Depends(require_admin)]
 class DashboardStats(BaseModel):
     total_cash: float
     total_bank: float
+    total_debits: float
+    total_credits: float
     this_month_revenue: float
     overdue_balance: float
     upcoming_balance: float

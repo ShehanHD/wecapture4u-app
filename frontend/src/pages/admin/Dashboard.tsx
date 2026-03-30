@@ -7,6 +7,7 @@ import {
 import {
   DollarSign, Briefcase, Users, FileWarning, CalendarPlus, Camera,
   CreditCard, Banknote, Building2, TrendingUp, Clock, BookImage,
+  ArrowDownLeft, ArrowUpRight,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { fetchDashboardStats } from '@/api/dashboard'
@@ -67,102 +68,25 @@ export function Dashboard() {
         />
       </div>
 
-      {/* Row 2: Revenue, Invoices, Jobs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="This Month Revenue"
-          value={v(stats?.this_month_revenue)}
-          sub="Payments received"
-          gradient="amber"
-          icon={<TrendingUp className="h-5 w-5" />}
-        />
-        <StatCard
-          label="Overdue Invoices"
-          value={v(stats?.overdue_balance)}
-          sub="Shoot date passed"
+      {/* Row 2: Total Debits & Credits */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <GradientStatCard
+          label="Total Debits"
+          value={v(stats?.total_debits)}
+          sub="All posted journal debits"
           gradient="coral"
-          icon={<FileWarning className="h-5 w-5" />}
+          icon={<ArrowUpRight className="h-5 w-5" />}
         />
-        <StatCard
-          label="Upcoming Payments"
-          value={v(stats?.upcoming_balance)}
-          sub="Future shoots"
-          gradient="purple"
-          icon={<DollarSign className="h-5 w-5" />}
-        />
-        <StatCard
-          label="Active Jobs"
-          value={n(stats?.active_jobs)}
-          sub="In progress"
+        <GradientStatCard
+          label="Total Credits"
+          value={v(stats?.total_credits)}
+          sub="All posted journal credits"
           gradient="emerald"
-          icon={<Briefcase className="h-5 w-5" />}
+          icon={<ArrowDownLeft className="h-5 w-5" />}
         />
       </div>
 
-      {/* Row 3: Jobs breakdown + Clients */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Jobs"
-          value={n(stats?.total_jobs)}
-          sub="All time"
-          gradient="purple"
-          icon={<Camera className="h-5 w-5" />}
-        />
-        <StatCard
-          label="This Month Jobs"
-          value={n(stats?.this_month_jobs)}
-          sub="Created this month"
-          gradient="cyan"
-          icon={<Camera className="h-5 w-5" />}
-        />
-        <StatCard
-          label="Future Jobs"
-          value={n(stats?.future_jobs)}
-          sub="Upcoming shoots"
-          gradient="amber"
-          icon={<CalendarPlus className="h-5 w-5" />}
-        />
-        <StatCard
-          label="Total Clients"
-          value={n(stats?.total_clients)}
-          sub="All time"
-          gradient="coral"
-          icon={<Users className="h-5 w-5" />}
-        />
-      </div>
-
-      {/* Albums row */}
-      <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">Albums</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <StatCard
-            label="Upcoming Albums"
-            value={n(stats?.upcoming_albums)}
-            sub="Shoot not yet done"
-            gradient="amber"
-            icon={<BookImage className="h-4 w-4" />}
-            className="py-3"
-          />
-          <StatCard
-            label="Ongoing Albums"
-            value={n(stats?.ongoing_albums)}
-            sub="In production"
-            gradient="purple"
-            icon={<Clock className="h-4 w-4" />}
-            className="py-3"
-          />
-          <StatCard
-            label="Total Albums"
-            value={n(stats?.total_albums)}
-            sub="All time"
-            gradient="cyan"
-            icon={<BookImage className="h-4 w-4" />}
-            className="py-3"
-          />
-        </div>
-      </div>
-
-      {/* Main grid: Revenue chart + Upcoming appointments */}
+      {/* Chart + Upcoming appointments */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-2xl bg-card border border-border p-6 shadow-sm">
           <h2 className="text-sm font-semibold text-foreground mb-1">Monthly Revenue</h2>
@@ -212,6 +136,32 @@ export function Dashboard() {
               ))}
             </ul>
           )}
+        </div>
+      </div>
+
+      {/* Row 3: Revenue, Invoices, Active Jobs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="This Month Revenue" value={v(stats?.this_month_revenue)} sub="Payments received" gradient="amber" icon={<TrendingUp className="h-5 w-5" />} />
+        <StatCard label="Overdue Invoices" value={v(stats?.overdue_balance)} sub="Shoot date passed" gradient="coral" icon={<FileWarning className="h-5 w-5" />} />
+        <StatCard label="Upcoming Payments" value={v(stats?.upcoming_balance)} sub="Future shoots" gradient="purple" icon={<DollarSign className="h-5 w-5" />} />
+        <StatCard label="Active Jobs" value={n(stats?.active_jobs)} sub="In progress" gradient="emerald" icon={<Briefcase className="h-5 w-5" />} />
+      </div>
+
+      {/* Row 4: Jobs breakdown + Clients */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Jobs" value={n(stats?.total_jobs)} sub="All time" gradient="purple" icon={<Camera className="h-5 w-5" />} />
+        <StatCard label="This Month Jobs" value={n(stats?.this_month_jobs)} sub="Created this month" gradient="cyan" icon={<Camera className="h-5 w-5" />} />
+        <StatCard label="Future Jobs" value={n(stats?.future_jobs)} sub="Upcoming shoots" gradient="amber" icon={<CalendarPlus className="h-5 w-5" />} />
+        <StatCard label="Total Clients" value={n(stats?.total_clients)} sub="All time" gradient="coral" icon={<Users className="h-5 w-5" />} />
+      </div>
+
+      {/* Albums */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-3">Albums</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <StatCard label="Upcoming Albums" value={n(stats?.upcoming_albums)} sub="Shoot not yet done" gradient="amber" icon={<BookImage className="h-4 w-4" />} className="py-3" />
+          <StatCard label="Ongoing Albums" value={n(stats?.ongoing_albums)} sub="In production" gradient="purple" icon={<Clock className="h-4 w-4" />} className="py-3" />
+          <StatCard label="Total Albums" value={n(stats?.total_albums)} sub="All time" gradient="cyan" icon={<BookImage className="h-4 w-4" />} className="py-3" />
         </div>
       </div>
 

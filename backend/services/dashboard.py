@@ -45,6 +45,19 @@ async def get_dashboard_stats(db: AsyncSession) -> dict:
     total_cash = await _asset_balance_by_name(db, "cash")
     total_bank = await _asset_balance_by_name(db, "bank")
 
+    # ── Total Debits & Credits (all posted journal lines, all time) ────────────
+    posted_entry_ids = select(JournalEntry.id).where(JournalEntry.status == "posted")
+    totals_row = await db.execute(
+        select(
+            func.coalesce(func.sum(JournalLine.debit), Decimal("0")).label("total_debits"),
+            func.coalesce(func.sum(JournalLine.credit), Decimal("0")).label("total_credits"),
+        )
+        .where(JournalLine.entry_id.in_(posted_entry_ids))
+    )
+    totals = totals_row.one()
+    total_debits = float(totals.total_debits)
+    total_credits = float(totals.total_credits)
+
     # ── This month revenue (invoice payments received this month) ──────────────
     this_month_revenue = await db.scalar(
         select(func.coalesce(func.sum(InvoicePayment.amount), Decimal("0")))
@@ -131,6 +144,8 @@ async def get_dashboard_stats(db: AsyncSession) -> dict:
     return {
         "total_cash": total_cash,
         "total_bank": total_bank,
+        "total_debits": total_debits,
+        "total_credits": total_credits,
         "this_month_revenue": float(this_month_revenue or 0),
         "overdue_balance": float(overdue_balance or 0),
         "upcoming_balance": float(upcoming_balance or 0),

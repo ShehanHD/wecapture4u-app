@@ -4,6 +4,8 @@ import { z } from 'zod'
 const DashboardStatsSchema = z.object({
   total_cash: z.number(),
   total_bank: z.number(),
+  total_debits: z.number(),
+  total_credits: z.number(),
   this_month_revenue: z.number(),
   overdue_balance: z.number(),
   upcoming_balance: z.number(),
