@@ -50,40 +50,12 @@ export function Dashboard() {
         <p className="text-sm text-muted-foreground mt-0.5">Welcome back — here's what's happening.</p>
       </div>
 
-      {/* Row 1: Cash & Bank */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <GradientStatCard
-          label="Total Cash"
-          value={v(stats?.total_cash)}
-          sub="Cash on hand"
-          gradient="amber"
-          icon={<Banknote className="h-5 w-5" />}
-        />
-        <GradientStatCard
-          label="Total Bank"
-          value={v(stats?.total_bank)}
-          sub="Bank account balance"
-          gradient="cyan"
-          icon={<Building2 className="h-5 w-5" />}
-        />
-      </div>
-
-      {/* Row 2: Total Debits & Credits */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <GradientStatCard
-          label="Total Debits"
-          value={v(stats?.total_debits)}
-          sub="All posted journal debits"
-          gradient="coral"
-          icon={<ArrowUpRight className="h-5 w-5" />}
-        />
-        <GradientStatCard
-          label="Total Credits"
-          value={v(stats?.total_credits)}
-          sub="All posted journal credits"
-          gradient="emerald"
-          icon={<ArrowDownLeft className="h-5 w-5" />}
-        />
+      {/* Row 1: Cash, Bank, Debits, Credits */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <GradientStatCard label="Total Cash" value={v(stats?.total_cash)} sub="Cash on hand" gradient="amber" icon={<Banknote className="h-5 w-5" />} />
+        <GradientStatCard label="Total Bank" value={v(stats?.total_bank)} sub="Bank account balance" gradient="cyan" icon={<Building2 className="h-5 w-5" />} />
+        <GradientStatCard label="Total Debits" value={v(stats?.total_debits)} sub="All posted journal debits" gradient="coral" icon={<ArrowUpRight className="h-5 w-5" />} />
+        <GradientStatCard label="Total Credits" value={v(stats?.total_credits)} sub="All posted journal credits" gradient="emerald" icon={<ArrowDownLeft className="h-5 w-5" />} />
       </div>
 
       {/* Chart + Upcoming appointments */}
