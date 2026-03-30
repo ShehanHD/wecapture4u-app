@@ -248,8 +248,8 @@ async def add_payment(
     notes: Optional[str] = None,
 ) -> InvoicePayment:
     invoice = await get_invoice(db, id=invoice_id)
-    if invoice.status not in ("sent", "partially_paid", "paid"):
-        raise HTTPException(status_code=409, detail="Payments can only be recorded on sent or active invoices.")
+    if invoice.status not in ("draft", "sent", "partially_paid", "paid"):
+        raise HTTPException(status_code=409, detail="Payments can only be recorded on open invoices.")
     payment = InvoicePayment(
         invoice_id=invoice_id,
         amount=amount.quantize(Decimal("0.01")),
