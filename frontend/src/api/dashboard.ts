@@ -30,7 +30,7 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
   const invoices = InvoiceListSchema.parse(invoicesRes.data)
 
   const unpaidInvoicesTotal = invoices
-    .filter(i => i.status !== 'paid' && i.status !== 'draft')
+    .filter(i => i.status !== 'paid')
     .reduce((sum, i) => sum + parseFloat(i.balance_due), 0)
 
   return {
