@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useJob, useUpdateJob, useDeleteJob, useJobStages } from '@/hooks/useJobs'
 import { useInvoices, useAddPayment, useDeletePayment, useCreateJobInvoice } from '@/hooks/useInvoices'
+import { useAccounts } from '@/hooks/useAccounting'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -46,7 +47,8 @@ export function JobDetail() {
   const [deliveryUrl, setDeliveryUrl] = useState('')
   const [payAmount, setPayAmount] = useState('')
   const [payDate, setPayDate] = useState('')
-  const [payMethod, setPayMethod] = useState('')
+  const [payAccountId, setPayAccountId] = useState('')
+  const { data: accounts = [] } = useAccounts({ type: 'asset' })
   const invoice = linkedInvoices?.[0] ?? null
   const invoiceId = invoice?.id ?? ''
   const createInvoice = useCreateJobInvoice(id ?? '')
@@ -67,9 +69,9 @@ export function JobDetail() {
   const appt = job?.appointment ?? null
 
   const handleAddPayment = async () => {
-    if (!invoiceId || !payAmount || !payDate) return
-    await addPayment.mutateAsync({ amount: payAmount, paid_at: payDate, method: payMethod || null })
-    setPayAmount(''); setPayDate(''); setPayMethod(''); setPaymentOpen(false)
+    if (!invoiceId || !payAmount || !payDate || !payAccountId) return
+    await addPayment.mutateAsync({ amount: payAmount, payment_date: payDate, account_id: payAccountId })
+    setPayAmount(''); setPayDate(''); setPayAccountId(''); setPaymentOpen(false)
   }
 
   const SESSION_TIME_LABELS: Record<string, string> = {
@@ -342,13 +344,17 @@ export function JobDetail() {
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Method (optional)</Label>
-                    <Input
-                      value={payMethod}
-                      onChange={e => setPayMethod(e.target.value)}
-                      placeholder="Cash, bank transfer…"
-                      className="bg-muted border text-foreground h-8 text-sm mt-0.5"
-                    />
+                    <Label className="text-xs text-muted-foreground">Account</Label>
+                    <Select value={payAccountId} onValueChange={(v) => setPayAccountId(v ?? '')}>
+                      <SelectTrigger className="bg-muted border text-foreground h-8 text-sm mt-0.5">
+                        <SelectValue placeholder="Select account…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accounts.map(a => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex gap-2 justify-end">
                     <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground"
@@ -380,9 +386,8 @@ export function JobDetail() {
                     <div key={p.id} className="flex items-center justify-between text-xs">
                       <div>
                         <span className="text-foreground">€{p.amount}</span>
-                        {p.method && <span className="text-muted-foreground ml-1">· {p.method}</span>}
                         <span className="text-muted-foreground ml-1">
-                          {format(parseISO(p.paid_at), 'MMM d, yyyy')}
+                          {format(parseISO(p.payment_date), 'MMM d, yyyy')}
                         </span>
                       </div>
                       <button

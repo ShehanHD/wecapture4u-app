@@ -16,7 +16,7 @@ export function AccountingPayments() {
       invoiceId: inv.id,
       clientName: clientNameById[inv.client_id] ?? inv.client_id.slice(0, 8),
     })))
-    .sort((a, b) => b.paid_at.localeCompare(a.paid_at))
+    .sort((a, b) => b.payment_date.localeCompare(a.payment_date))
 
   return (
     <div className="space-y-4">
@@ -37,18 +37,16 @@ export function AccountingPayments() {
                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">Invoice</th>
                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">Client</th>
                 <th className="text-right px-4 py-2 font-medium text-muted-foreground">Amount</th>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">Method</th>
                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">Notes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {payments.map(p => (
                 <tr key={p.id}>
-                  <td className="px-4 py-2 tabular-nums text-muted-foreground">{p.paid_at}</td>
+                  <td className="px-4 py-2 tabular-nums text-muted-foreground">{p.payment_date}</td>
                   <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{p.invoiceId.slice(0, 8)}</td>
                   <td className="px-4 py-2">{p.clientName}</td>
-                  <td className="px-4 py-2 text-right tabular-nums">${p.amount}</td>
-                  <td className="px-4 py-2 text-muted-foreground capitalize">{p.method ?? '—'}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">€{p.amount}</td>
                   <td className="px-4 py-2 text-muted-foreground text-xs">{p.notes ?? '—'}</td>
                 </tr>
               ))}
