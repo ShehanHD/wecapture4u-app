@@ -5,6 +5,7 @@ from typing import Optional
 
 from fastapi import HTTPException
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from datetime import date, datetime, timezone
@@ -62,7 +63,7 @@ async def list_invoices(
     client_id: Optional[uuid.UUID] = None,
     job_id: Optional[uuid.UUID] = None,
 ) -> list[Invoice]:
-    q = select(Invoice)
+    q = select(Invoice).options(selectinload(Invoice.items), selectinload(Invoice.payments))
     if status:
         q = q.where(Invoice.status == status)
     if client_id:
