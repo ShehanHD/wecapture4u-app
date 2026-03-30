@@ -25,6 +25,7 @@ const NAV_LINKS = [
   { to: '/admin/clients', label: 'Clients' },
   { to: '/admin/portfolio', label: 'Portfolio' },
   { to: '/admin/accounting', label: 'Accounting' },
+  { to: '/admin/inbox', label: 'Inbox' },
   { to: '/admin/settings', label: 'Settings' },
 ]
 

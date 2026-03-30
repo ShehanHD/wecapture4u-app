@@ -23,6 +23,7 @@ import { ClientDetail } from '@/pages/admin/ClientDetail'
 import { Profile } from '@/pages/admin/Profile'
 import { Notifications } from '@/pages/admin/Notifications'
 import { Settings } from '@/pages/admin/Settings'
+import { Inbox } from '@/pages/admin/Inbox'
 
 export const router = createBrowserRouter([
   // Public routes
@@ -57,6 +58,7 @@ export const router = createBrowserRouter([
           { path: 'clients', element: <Clients /> },
           { path: 'clients/:id', element: <ClientDetail /> },
           { path: 'accounting', element: <Accounting /> },
+          { path: 'inbox', element: <Inbox /> },
           { path: 'notifications', element: <Notifications /> },
           { path: 'settings', element: <Settings /> },
           { path: 'profile', element: <Profile /> },
