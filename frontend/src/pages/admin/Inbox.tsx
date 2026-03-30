@@ -27,7 +27,7 @@ type Submission = z.infer<typeof SubmissionSchema>
 const PAGE_SIZE = 20
 
 async function fetchSubmissions(page: number) {
-  const res = await api.get('/contact/submissions', { params: { page, page_size: PAGE_SIZE } })
+  const res = await api.get('/api/contact/submissions', { params: { page, page_size: PAGE_SIZE } })
   return ResponseSchema.parse(res.data)
 }
 
