@@ -2,26 +2,24 @@ import { api } from '@/lib/axios'
 import { z } from 'zod'
 
 const DashboardStatsSchema = z.object({
-  total_clients: z.number(),
-  active_jobs: z.number(),
+  total_cash: z.number(),
+  total_bank: z.number(),
+  this_month_revenue: z.number(),
   overdue_balance: z.number(),
   upcoming_balance: z.number(),
+  active_jobs: z.number(),
+  total_jobs: z.number(),
+  this_month_jobs: z.number(),
+  future_jobs: z.number(),
+  total_clients: z.number(),
+  total_albums: z.number(),
+  upcoming_albums: z.number(),
+  ongoing_albums: z.number(),
 })
 
-export interface DashboardStats {
-  totalClients: number
-  activeJobs: number
-  overdueBalance: number
-  upcomingBalance: number
-}
+export type DashboardStats = z.infer<typeof DashboardStatsSchema>
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
   const res = await api.get('/api/dashboard')
-  const data = DashboardStatsSchema.parse(res.data)
-  return {
-    totalClients: data.total_clients,
-    activeJobs: data.active_jobs,
-    overdueBalance: data.overdue_balance,
-    upcomingBalance: data.upcoming_balance,
-  }
+  return DashboardStatsSchema.parse(res.data)
 }
