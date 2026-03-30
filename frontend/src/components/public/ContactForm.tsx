@@ -34,7 +34,7 @@ export function ContactForm({ headline }: Props) {
   return (
     <section id="contact" className="py-24 bg-white">
       <div className="max-w-5xl mx-auto px-6">
-        <div className="grid gap-20 items-start" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-20 items-start">
 
           {/* Left: intro */}
           <div>
