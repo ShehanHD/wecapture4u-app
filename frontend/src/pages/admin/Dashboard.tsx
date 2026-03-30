@@ -41,9 +41,16 @@ export function Dashboard() {
       {/* Hero gradient stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GradientStatCard
-          label="Revenue this month"
-          value="€0"
-          sub="From paid invoices"
+          label="Overdue invoices"
+          value={statsLoading ? '—' : `€${(stats?.overdueBalance ?? 0).toFixed(0)}`}
+          sub="Shoot date passed, unpaid"
+          gradient="coral"
+          icon={<FileWarning className="h-5 w-5" />}
+        />
+        <GradientStatCard
+          label="Upcoming payments"
+          value={statsLoading ? '—' : `€${(stats?.upcomingBalance ?? 0).toFixed(0)}`}
+          sub="Future shoots, balance due"
           gradient="amber"
           icon={<DollarSign className="h-5 w-5" />}
         />
@@ -60,13 +67,6 @@ export function Dashboard() {
           sub="All time"
           gradient="cyan"
           icon={<Users className="h-5 w-5" />}
-        />
-        <GradientStatCard
-          label="Unpaid invoices"
-          value={statsLoading ? '—' : `€${(stats?.unpaidInvoicesTotal ?? 0).toFixed(0)}`}
-          sub="Outstanding balance"
-          gradient="coral"
-          icon={<FileWarning className="h-5 w-5" />}
         />
       </div>
 
