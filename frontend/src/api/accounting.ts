@@ -121,7 +121,9 @@ export interface ExpenseCreatePayload {
 }
 
 export interface ExpenseUpdatePayload {
+  date?: string
   description?: string
+  expense_account_id?: string
   amount?: string
   notes?: string
 }

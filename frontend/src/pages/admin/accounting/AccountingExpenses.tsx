@@ -2,13 +2,13 @@
 import { useState } from 'react'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { useExpenses, useCreateExpense, useDeleteExpense, usePayExpense, useAccounts } from '@/hooks/useAccounting'
+import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense, usePayExpense, useAccounts } from '@/hooks/useAccounting'
 import type { ExpenseOut } from '@/schemas/accounting'
 
 type FilterStatus = 'all' | 'payable' | 'paid'
@@ -18,6 +18,15 @@ export function AccountingExpenses() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [payTarget, setPayTarget] = useState<ExpenseOut | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ExpenseOut | null>(null)
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({
+    date: '',
+    description: '',
+    expense_account_id: '',
+    amount: '',
+    notes: '',
+  })
 
   const [addForm, setAddForm] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -40,6 +49,7 @@ export function AccountingExpenses() {
   const assetAccounts = allAccounts.filter(a => a.type === 'asset' && !a.archived)
 
   const createMutation = useCreateExpense()
+  const updateMutation = useUpdateExpense()
   const deleteMutation = useDeleteExpense()
   const payMutation = usePayExpense()
 
@@ -51,6 +61,27 @@ export function AccountingExpenses() {
       toast.success('Expense added')
     } catch {
       toast.error('Failed to add expense')
+    }
+  }
+
+  function startEdit(exp: ExpenseOut) {
+    setEditingId(exp.id)
+    setEditForm({
+      date: exp.date,
+      description: exp.description,
+      expense_account_id: exp.expense_account_id ?? '',
+      amount: exp.amount,
+      notes: exp.notes ?? '',
+    })
+  }
+
+  async function handleEdit(id: string) {
+    try {
+      await updateMutation.mutateAsync({ id, payload: editForm })
+      setEditingId(null)
+      toast.success('Expense updated')
+    } catch {
+      toast.error('Failed to update expense')
     }
   }
 
@@ -135,37 +166,84 @@ export function AccountingExpenses() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {expenses.map(exp => (
-                <tr key={exp.id}>
-                  <td className="px-4 py-2 tabular-nums text-muted-foreground">{exp.date}</td>
-                  <td className="px-4 py-2">{exp.description}</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{exp.expense_account_name ?? '—'}</td>
-                  <td className="px-4 py-2 text-right tabular-nums">${exp.amount}</td>
-                  <td className="px-4 py-2">
-                    <Badge className={exp.payment_status === 'paid'
-                      ? 'bg-green-500/20 text-green-400 text-xs'
-                      : 'bg-yellow-500/20 text-yellow-400 text-xs'}>
-                      {exp.payment_status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2">
-                    <div className="flex items-center gap-1 justify-end">
-                      {exp.payment_status === 'payable' && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs"
-                          onClick={() => { setPayTarget(exp); setPayForm({ payment_account_id: '', payment_date: new Date().toISOString().split('T')[0] }) }}>
-                          Mark Paid
-                        </Button>
-                      )}
-                      {exp.payment_status === 'payable' && (
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
-                          onClick={() => setDeleteTarget(exp)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {expenses.map(exp => {
+                const isEditing = editingId === exp.id
+                return (
+                  <tr key={exp.id}>
+                    <td className="px-4 py-2 tabular-nums text-muted-foreground">
+                      {isEditing
+                        ? <Input type="date" value={editForm.date} onChange={e => setEditForm(f => ({ ...f, date: e.target.value }))} className="h-7 text-xs w-32" />
+                        : exp.date}
+                    </td>
+                    <td className="px-4 py-2">
+                      {isEditing
+                        ? <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="h-7 text-xs" />
+                        : exp.description}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-muted-foreground">
+                      {isEditing
+                        ? (
+                          <select className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                            value={editForm.expense_account_id} onChange={e => setEditForm(f => ({ ...f, expense_account_id: e.target.value }))}>
+                            <option value="">Account…</option>
+                            {expenseAccounts.map(a => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
+                          </select>
+                        )
+                        : exp.expense_account_name ?? '—'}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {isEditing
+                        ? <Input type="number" step="0.01" value={editForm.amount} onChange={e => setEditForm(f => ({ ...f, amount: e.target.value }))} className="h-7 text-xs w-24 text-right" />
+                        : `$${exp.amount}`}
+                    </td>
+                    <td className="px-4 py-2">
+                      <Badge className={exp.payment_status === 'paid'
+                        ? 'bg-green-500/20 text-green-400 text-xs'
+                        : 'bg-yellow-500/20 text-yellow-400 text-xs'}>
+                        {exp.payment_status}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-1 justify-end">
+                        {isEditing ? (
+                          <>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-green-500"
+                              onClick={() => handleEdit(exp.id)}
+                              disabled={!editForm.description || !editForm.amount || updateMutation.isPending}>
+                              <Check className="h-3 w-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7"
+                              onClick={() => setEditingId(null)}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            {exp.payment_status === 'payable' && (
+                              <Button size="icon" variant="ghost" className="h-7 w-7"
+                                onClick={() => startEdit(exp)}>
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            )}
+                            {exp.payment_status === 'payable' && (
+                              <Button size="sm" variant="outline" className="h-7 text-xs"
+                                onClick={() => { setPayTarget(exp); setPayForm({ payment_account_id: '', payment_date: new Date().toISOString().split('T')[0] }) }}>
+                                Mark Paid
+                              </Button>
+                            )}
+                            {exp.payment_status === 'payable' && (
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
+                                onClick={() => setDeleteTarget(exp)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
