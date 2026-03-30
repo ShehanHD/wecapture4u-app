@@ -347,7 +347,11 @@ export function JobDetail() {
                     <Label className="text-xs text-muted-foreground">Account</Label>
                     <Select value={payAccountId} onValueChange={(v) => setPayAccountId(v ?? '')}>
                       <SelectTrigger className="bg-muted border text-foreground h-8 text-sm mt-0.5">
-                        <SelectValue placeholder="Select account…" />
+                        <SelectValue>
+                          {payAccountId
+                            ? (accounts.find(a => a.id === payAccountId)?.name ?? payAccountId)
+                            : <span className="text-muted-foreground">Select account…</span>}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {accounts.map(a => (
