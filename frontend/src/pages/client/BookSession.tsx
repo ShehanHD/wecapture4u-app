@@ -89,7 +89,12 @@ export function BookSession() {
             onValueChange={(v) => setValue('session_type_id', v)}
           >
             <SelectTrigger className="mt-1 bg-input border text-foreground">
-              <SelectValue placeholder="Select type…" />
+              <SelectValue>
+                {(value: string | null) => {
+                  if (!value || value === '__none__') return 'No preference'
+                  return sessionTypes.find((st) => st.id === value)?.name ?? value
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-popover border text-popover-foreground">
               <SelectItem value="__none__">No preference</SelectItem>
