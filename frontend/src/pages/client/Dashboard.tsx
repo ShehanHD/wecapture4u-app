@@ -1,7 +1,7 @@
 // frontend/src/pages/client/Dashboard.tsx
 import { Link } from 'react-router-dom'
 import { CalendarPlus, ExternalLink } from 'lucide-react'
-import { format, parseISO, isAfter } from 'date-fns'
+import { format, parseISO, isAfter, isBefore } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { useMyJobs } from '@/hooks/useClientPortal'
 import type { ClientJob } from '@/api/clientPortal'
@@ -44,39 +44,60 @@ function JobCard({ job }: { job: ClientJob }) {
 export function ClientDashboard() {
   const { data: jobs = [], isLoading } = useMyJobs()
 
+  const now = new Date()
+
   const upcoming = jobs
-    .filter((j) => isAfter(parseISO(j.appointment_starts_at), new Date()))
+    .filter((j) => isAfter(parseISO(j.appointment_starts_at), now))
     .sort((a, b) => parseISO(a.appointment_starts_at).getTime() - parseISO(b.appointment_starts_at).getTime())
     .slice(0, 3)
+
+  const pending = jobs
+    .filter((j) => isBefore(parseISO(j.appointment_starts_at), now) && !j.delivery_url)
+    .sort((a, b) => parseISO(b.appointment_starts_at).getTime() - parseISO(a.appointment_starts_at).getTime())
+
+  const isEmpty = !isLoading && upcoming.length === 0 && pending.length === 0
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Upcoming Sessions</h2>
-        {isLoading && (
-          <div className="space-y-2">
-            {[0, 1].map((i) => (
-              <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />
-            ))}
-          </div>
-        )}
-        {!isLoading && upcoming.length === 0 && (
-          <div className="rounded-xl bg-card border p-6 text-center space-y-3">
-            <p className="text-muted-foreground text-sm">No upcoming sessions.</p>
-            <Link to="/client/book">
-              <Button size="sm">
-                <CalendarPlus className="h-4 w-4 mr-2" />
-                Book a session
-              </Button>
-            </Link>
-          </div>
-        )}
-        {upcoming.map((job) => (
-          <JobCard key={job.id} job={job} />
-        ))}
-      </section>
+      {isLoading && (
+        <div className="space-y-2">
+          {[0, 1].map((i) => (
+            <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />
+          ))}
+        </div>
+      )}
+
+      {isEmpty && (
+        <div className="rounded-xl bg-card border p-6 text-center space-y-3">
+          <p className="text-muted-foreground text-sm">No upcoming sessions.</p>
+          <Link to="/client/book">
+            <Button size="sm">
+              <CalendarPlus className="h-4 w-4 mr-2" />
+              Book a session
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {!isLoading && upcoming.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Upcoming Sessions</h2>
+          {upcoming.map((job) => (
+            <JobCard key={job.id} job={job} />
+          ))}
+        </section>
+      )}
+
+      {!isLoading && pending.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">In Progress</h2>
+          {pending.map((job) => (
+            <JobCard key={job.id} job={job} />
+          ))}
+        </section>
+      )}
     </div>
   )
 }
