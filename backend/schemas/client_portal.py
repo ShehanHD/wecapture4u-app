@@ -1,15 +1,15 @@
 import uuid
 from datetime import date, datetime
 from typing import Literal, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ClientProfileOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     email: str
     phone: Optional[str]
-
-    model_config = {"from_attributes": True}
 
 
 class ClientProfileUpdate(BaseModel):
