@@ -40,11 +40,11 @@ export function BookSession() {
   const { data: sessionTypes = [] } = useClientSessionTypes()
 
   const onSubmit = async (values: BookingFormValues) => {
-    const sessionTypeId = values.session_type_id === '__none__' ? null : values.session_type_id
+    const resolvedSessionTypeId = values.session_type_id === '__none__' ? null : values.session_type_id
     await createRequest.mutateAsync({
       preferred_date: values.preferred_date,
       time_slot: values.time_slot,
-      session_type_id: sessionTypeId,
+      session_type_id: resolvedSessionTypeId,
       message: values.message || null,
     })
     reset()

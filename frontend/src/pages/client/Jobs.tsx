@@ -22,7 +22,7 @@ export function ClientJobs() {
       )}
 
       <div className="space-y-2">
-        {jobs.map((job) => (
+        {[...jobs].sort((a, b) => parseISO(b.appointment_starts_at).getTime() - parseISO(a.appointment_starts_at).getTime()).map((job) => (
           <Link
             key={job.id}
             to={`/client/jobs/${job.id}`}

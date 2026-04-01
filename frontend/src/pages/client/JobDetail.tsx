@@ -22,8 +22,7 @@ function StageProgress({ stages, currentStageId }: { stages: ClientJobStage[]; c
               <div
                 className="h-2.5 w-2.5 rounded-full flex-shrink-0"
                 style={{
-                  background: isActive ? stage.color : isDone ? stage.color : undefined,
-                  backgroundColor: !isActive && !isDone ? 'hsl(var(--muted))' : undefined,
+                  background: isActive || isDone ? stage.color : 'hsl(var(--muted))',
                   opacity: isDone ? 0.5 : 1,
                 }}
               />

@@ -46,6 +46,7 @@ export function ClientDashboard() {
 
   const upcoming = jobs
     .filter((j) => isAfter(parseISO(j.appointment_starts_at), new Date()))
+    .sort((a, b) => parseISO(a.appointment_starts_at).getTime() - parseISO(b.appointment_starts_at).getTime())
     .slice(0, 3)
 
   return (
