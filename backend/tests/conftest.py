@@ -84,6 +84,8 @@ async def client_record(db_session: AsyncSession, client_user: User) -> Client:
     """Create a Client record linked to client_user."""
     record = Client(
         user_id=client_user.id,
+        name=client_user.full_name,
+        email=client_user.email,
         phone="555-0100",
     )
     db_session.add(record)
