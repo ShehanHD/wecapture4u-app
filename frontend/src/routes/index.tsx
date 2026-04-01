@@ -1,4 +1,3 @@
-import React from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import Landing from '@/pages/public/Landing'
 import Gallery from '@/pages/public/Gallery'
@@ -10,6 +9,14 @@ import BiometricSetup from '@/pages/auth/BiometricSetup'
 import { AdminRoute } from '@/components/auth/AdminRoute'
 import { ClientRoute } from '@/components/auth/ClientRoute'
 import { AdminShell } from '@/components/layout/AdminShell'
+import { ClientShell } from '@/components/layout/ClientShell'
+
+// Client portal pages
+import { ClientDashboard } from '@/pages/client/Dashboard'
+import { ClientJobs } from '@/pages/client/Jobs'
+import { ClientJobDetail } from '@/pages/client/JobDetail'
+import { BookSession } from '@/pages/client/BookSession'
+import { ClientProfile } from '@/pages/client/Profile'
 
 // Admin pages
 import AdminPortfolio from '@/pages/admin/Portfolio'
@@ -58,21 +65,31 @@ export const router = createBrowserRouter([
           { path: 'clients', element: <Clients /> },
           { path: 'clients/:id', element: <ClientDetail /> },
           { path: 'accounting', element: <Accounting /> },
-          { path: 'inbox', element: <Inbox /> },
           { path: 'notifications', element: <Notifications /> },
           { path: 'settings', element: <Settings /> },
           { path: 'profile', element: <Profile /> },
+          { path: 'inbox', element: <Inbox /> },
         ],
       },
     ],
   },
 
-  // Protected client routes
+  // Protected client routes — ClientRoute guard → ClientShell layout
   {
     element: <ClientRoute />,
     children: [
       { path: '/client/biometric/setup', element: <BiometricSetup /> },
-      // Client portal pages added in client portal plan
+      {
+        path: '/client',
+        element: <ClientShell />,
+        children: [
+          { index: true, element: <ClientDashboard /> },
+          { path: 'jobs', element: <ClientJobs /> },
+          { path: 'jobs/:id', element: <ClientJobDetail /> },
+          { path: 'book', element: <BookSession /> },
+          { path: 'profile', element: <ClientProfile /> },
+        ],
+      },
     ],
   },
 
