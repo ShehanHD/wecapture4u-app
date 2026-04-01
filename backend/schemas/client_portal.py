@@ -1,19 +1,17 @@
 import uuid
 from datetime import date, datetime
 from typing import Literal, Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
 
 
 class ClientProfileOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     name: str
     email: str
     phone: Optional[str]
 
 
 class ClientProfileUpdate(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1)
     phone: Optional[str] = None
 
 
