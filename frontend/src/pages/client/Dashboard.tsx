@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { CalendarPlus, ExternalLink } from 'lucide-react'
 import { format, parseISO, isAfter, isBefore } from 'date-fns'
 import { Button } from '@/components/ui/button'
-import { useMyJobs } from '@/hooks/useClientPortal'
-import type { ClientJob } from '@/api/clientPortal'
+import { useMyJobs, useMyBookingRequests } from '@/hooks/useClientPortal'
+import type { ClientJob, ClientBookingRequest } from '@/api/clientPortal'
 
 function JobCard({ job }: { job: ClientJob }) {
   return (
@@ -41,8 +41,44 @@ function JobCard({ job }: { job: ClientJob }) {
   )
 }
 
+const REQUEST_STATUS_STYLES: Record<ClientBookingRequest['status'], string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  confirmed: 'bg-green-100 text-green-800',
+  rejected: 'bg-red-100 text-red-800',
+}
+
+const REQUEST_STATUS_LABELS: Record<ClientBookingRequest['status'], string> = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  rejected: 'Rejected',
+}
+
+function RequestCard({ request }: { request: ClientBookingRequest }) {
+  return (
+    <div className="rounded-xl bg-card border p-4 space-y-1">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-medium text-foreground">
+          {format(parseISO(request.preferred_date), 'MMMM d, yyyy')}
+          {' '}
+          {request.time_slot && <span className="text-muted-foreground font-normal capitalize">({request.time_slot.replace('_', ' ')})</span>}
+        </p>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${REQUEST_STATUS_STYLES[request.status]}`}>
+          {REQUEST_STATUS_LABELS[request.status]}
+        </span>
+      </div>
+      {request.session_type_name && (
+        <p className="text-sm text-muted-foreground">{request.session_type_name}</p>
+      )}
+      {request.admin_notes && (
+        <p className="text-sm text-muted-foreground italic">"{request.admin_notes}"</p>
+      )}
+    </div>
+  )
+}
+
 export function ClientDashboard() {
   const { data: jobs = [], isLoading } = useMyJobs()
+  const { data: bookingRequests = [], isLoading: isLoadingRequests } = useMyBookingRequests()
 
   const now = new Date()
 
@@ -55,13 +91,27 @@ export function ClientDashboard() {
     .filter((j) => isBefore(parseISO(j.appointment_starts_at), now) && !j.delivery_url)
     .sort((a, b) => parseISO(b.appointment_starts_at).getTime() - parseISO(a.appointment_starts_at).getTime())
 
-  const isEmpty = !isLoading && upcoming.length === 0 && pending.length === 0
+  const delivered = jobs
+    .filter((j) => !!j.delivery_url)
+    .sort((a, b) => parseISO(b.appointment_starts_at).getTime() - parseISO(a.appointment_starts_at).getTime())
+
+  const sortedRequests = [...bookingRequests].sort(
+    (a, b) => parseISO(b.created_at).getTime() - parseISO(a.created_at).getTime(),
+  )
+
+  const isEmpty =
+    !isLoading &&
+    !isLoadingRequests &&
+    upcoming.length === 0 &&
+    pending.length === 0 &&
+    delivered.length === 0 &&
+    sortedRequests.length === 0
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
 
-      {isLoading && (
+      {(isLoading || isLoadingRequests) && (
         <div className="space-y-2">
           {[0, 1].map((i) => (
             <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />
@@ -95,6 +145,24 @@ export function ClientDashboard() {
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">In Progress</h2>
           {pending.map((job) => (
             <JobCard key={job.id} job={job} />
+          ))}
+        </section>
+      )}
+
+      {!isLoading && delivered.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Past Sessions</h2>
+          {delivered.map((job) => (
+            <JobCard key={job.id} job={job} />
+          ))}
+        </section>
+      )}
+
+      {!isLoadingRequests && sortedRequests.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Requests Sent</h2>
+          {sortedRequests.map((req) => (
+            <RequestCard key={req.id} request={req} />
           ))}
         </section>
       )}
