@@ -120,12 +120,16 @@ async def create_client(
             await email_svc.send_email(
                 to=email,
                 subject="Your weCapture4U portal account is ready",
-                html=(
-                    f"<p>Hi {name},</p>"
-                    f"<p>Your client portal account has been created.</p>"
-                    f"<p>Email: <strong>{email}</strong><br>"
-                    f"Temporary password: <strong>{temp_password}</strong></p>"
-                    f"<p>Please change your password after logging in.</p>"
+                html=email_svc.build_email_html(
+                    title="Your client portal is ready",
+                    body_html=(
+                        f"<p>Hi {name},</p>"
+                        f"<p>Your weCapture4U client portal account has been created. "
+                        f"Use the details below to sign in:</p>"
+                        f"<p><strong>Email:</strong> {email}<br>"
+                        f"<strong>Temporary password:</strong> {temp_password}</p>"
+                        f"<p style='font-size:12px;color:#778899;'>Please change your password after logging in.</p>"
+                    ),
                 ),
             )
         except Exception:
@@ -227,10 +231,16 @@ async def create_portal_access(
         await email_svc.send_email(
             to=client.email,
             subject="Your weCapture4U portal account is ready",
-            html=(
-                f"<p>Hi {client.name},</p>"
-                f"<p>Your portal account: <strong>{client.email}</strong> / "
-                f"<strong>{temp_password}</strong></p>"
+            html=email_svc.build_email_html(
+                title="Your client portal is ready",
+                body_html=(
+                    f"<p>Hi {client.name},</p>"
+                    f"<p>Your weCapture4U client portal account has been created. "
+                    f"Use the details below to sign in:</p>"
+                    f"<p><strong>Email:</strong> {client.email}<br>"
+                    f"<strong>Temporary password:</strong> {temp_password}</p>"
+                    f"<p style='font-size:12px;color:#778899;'>Please change your password after logging in.</p>"
+                ),
             ),
         )
     except Exception:

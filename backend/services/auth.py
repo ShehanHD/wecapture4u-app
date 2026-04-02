@@ -57,14 +57,20 @@ async def send_password_reset_email(to_email: str, reset_url: str) -> None:
     """Send password reset email. Failures are logged, not raised."""
     from services.email import send_email
     try:
+        from services.email import build_email_html
         await send_email(
             to=to_email,
-            subject="Reset your password",
-            html=f"""
-                <p>Click the link below to reset your password. This link expires in 1 hour.</p>
-                <p><a href="{reset_url}">Reset password</a></p>
-                <p>If you didn't request this, ignore this email.</p>
-            """,
+            subject="Reset your password — weCapture4U",
+            html=build_email_html(
+                title="Reset your password",
+                body_html=(
+                    "<p>We received a request to reset your password. "
+                    "Click the button below — this link expires in <strong>1 hour</strong>.</p>"
+                    "<p style='font-size:12px;color:#778899;'>If you didn't request this, you can safely ignore this email.</p>"
+                ),
+                cta_label="Reset my password",
+                cta_url=reset_url,
+            ),
         )
     except Exception as exc:
         import logging

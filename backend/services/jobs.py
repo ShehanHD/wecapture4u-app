@@ -138,7 +138,15 @@ async def update_job(db: AsyncSession, *, id: uuid.UUID, data: dict) -> Job:
                 await email_svc.send_email(
                     to=client.email,
                     subject=f"Your job '{job_label}' has been updated",
-                    html=f"<p>Hi {client.name},</p><p>Your job <strong>{job_label}</strong> has moved to <strong>{stage_name}</strong>.</p>",
+                    html=email_svc.build_email_html(
+                        title="Your job has been updated",
+                        body_html=(
+                            f"<p>Hi {client.name},</p>"
+                            f"<p>Your job <strong>{job_label}</strong> has moved to "
+                            f"<strong>{stage_name}</strong>.</p>"
+                            f"<p>Log in to your client portal to view the latest status.</p>"
+                        ),
+                    ),
                 )
             except Exception:
                 logger.exception("Failed to send stage change email for job %s", id)
@@ -149,10 +157,15 @@ async def update_job(db: AsyncSession, *, id: uuid.UUID, data: dict) -> Job:
                 await email_svc.send_email(
                     to=client.email,
                     subject=f"Your photos are ready — {job_label}",
-                    html=(
-                        f"<p>Hi {client.name},</p>"
-                        f"<p>Your photos from <strong>{job_label}</strong> are ready.</p>"
-                        f'<p><a href="{new_delivery_url}">View your photos</a></p>'
+                    html=email_svc.build_email_html(
+                        title="Your photos are ready! 🎉",
+                        body_html=(
+                            f"<p>Hi {client.name},</p>"
+                            f"<p>Your photos from <strong>{job_label}</strong> are ready to view. "
+                            f"We hope you love them!</p>"
+                        ),
+                        cta_label="View my photos",
+                        cta_url=new_delivery_url,
                     ),
                 )
             except Exception:
