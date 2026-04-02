@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   DndContext,
@@ -40,7 +40,6 @@ function JobCard({ job }: { job: Job }) {
       style={style}
       className="rounded-lg bg-card border p-3 cursor-default"
     >
-      {/* Header: grip + title + expand toggle */}
       <div className="flex items-center gap-2">
         <span
           {...attributes}
@@ -65,7 +64,6 @@ function JobCard({ job }: { job: Job }) {
         )}
       </div>
 
-      {/* Expandable details */}
       {expanded && (
         <div className="mt-2 pl-6 space-y-1.5">
           {job.client && (
@@ -144,13 +142,10 @@ function KanbanColumn({ stage, jobs }: { stage: JobStage; jobs: Job[] }) {
   )
 }
 
-// --- Kanban Board ---
-export function Jobs() {
-  const { data: stages = [] } = useJobStages()
-  const { data: jobs = [] } = useJobs()
+// --- Kanban Board (per-year) ---
+function KanbanBoard({ stages, jobs }: { stages: JobStage[]; jobs: Job[] }) {
   const updateJob = useUpdateJob()
   const [activeJob, setActiveJob] = useState<Job | null>(null)
-
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const getJobsForStage = useCallback(
@@ -159,26 +154,77 @@ export function Jobs() {
   )
 
   const handleDragStart = (event: DragStartEvent) => {
-    const job = jobs.find(j => j.id === event.active.id)
-    setActiveJob(job ?? null)
+    setActiveJob(jobs.find(j => j.id === event.active.id) ?? null)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveJob(null)
     const { active, over } = event
     if (!over || active.id === over.id) return
-
-    // over.id is either a stage id (column droppable) or a job id (card)
     const targetStage = stages.find(s => s.id === over.id)
     const targetJob = jobs.find(j => j.id === over.id)
     const newStageId = targetStage?.id ?? targetJob?.stage_id
-
     if (!newStageId) return
     const job = jobs.find(j => j.id === active.id)
     if (!job || job.stage_id === newStageId) return
-
     await updateJob.mutateAsync({ id: String(active.id), payload: { stage_id: newStageId } })
   }
+
+  return (
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {stages.map(stage => (
+          <KanbanColumn key={stage.id} stage={stage} jobs={getJobsForStage(stage.id)} />
+        ))}
+      </div>
+      <DragOverlay>
+        {activeJob ? <JobCard job={activeJob} /> : null}
+      </DragOverlay>
+    </DndContext>
+  )
+}
+
+// --- Year Section ---
+function YearSection({ year, defaultOpen, count, children }: {
+  year: number
+  defaultOpen: boolean
+  count: number
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 w-full text-left py-2 px-1 group"
+      >
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
+        <span className="text-sm font-semibold text-foreground">{year}</span>
+        <span className="text-xs text-muted-foreground">({count})</span>
+      </button>
+      {open && <div className="mt-1">{children}</div>}
+    </div>
+  )
+}
+
+// --- Jobs Page ---
+export function Jobs() {
+  const { data: stages = [] } = useJobStages()
+  const { data: jobs = [] } = useJobs()
+  const currentYear = new Date().getFullYear()
+
+  const jobsByYear = useMemo(() => {
+    const map = new Map<number, Job[]>()
+    for (const job of jobs) {
+      const year = job.appointment?.starts_at
+        ? parseISO(job.appointment.starts_at).getFullYear()
+        : currentYear
+      map.set(year, [...(map.get(year) ?? []), job])
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b - a)
+      .map(([year, yearJobs]) => ({ year, jobs: yearJobs }))
+  }, [jobs, currentYear])
 
   return (
     <div className="space-y-6">
@@ -189,16 +235,13 @@ export function Jobs() {
         <h1 className="text-2xl font-semibold text-foreground">Jobs</h1>
       </div>
 
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {stages.map(stage => (
-            <KanbanColumn key={stage.id} stage={stage} jobs={getJobsForStage(stage.id)} />
-          ))}
-        </div>
-        <DragOverlay>
-          {activeJob ? <JobCard job={activeJob} /> : null}
-        </DragOverlay>
-      </DndContext>
+      <div className="space-y-2">
+        {jobsByYear.map(({ year, jobs: yearJobs }) => (
+          <YearSection key={year} year={year} defaultOpen={year === currentYear} count={yearJobs.length}>
+            <KanbanBoard stages={stages} jobs={yearJobs} />
+          </YearSection>
+        ))}
+      </div>
     </div>
   )
 }

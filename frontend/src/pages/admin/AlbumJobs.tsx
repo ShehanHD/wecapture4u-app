@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -129,35 +129,88 @@ function AlbumKanbanColumn({ stage, jobs }: { stage: AlbumStage; jobs: Job[] }) 
   )
 }
 
-export function AlbumJobs() {
-  const { data: albumStages = [] } = useAlbumStages()
-  const { data: jobs = [] } = useJobs()
+function AlbumKanbanBoard({ stages, jobs }: { stages: AlbumStage[]; jobs: Job[] }) {
   const updateJob = useUpdateJob()
   const [activeJob, setActiveJob] = useState<Job | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
-  const albumJobs = jobs.filter(j => j.album_stage_id != null)
   const getJobsForStage = useCallback(
-    (stageId: string) => albumJobs.filter(j => j.album_stage_id === stageId),
-    [albumJobs]
+    (stageId: string) => jobs.filter(j => j.album_stage_id === stageId),
+    [jobs]
   )
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveJob(albumJobs.find(j => j.id === event.active.id) ?? null)
+    setActiveJob(jobs.find(j => j.id === event.active.id) ?? null)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveJob(null)
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const targetStage = albumStages.find(s => s.id === over.id)
-    const targetJob = albumJobs.find(j => j.id === over.id)
+    const targetStage = stages.find(s => s.id === over.id)
+    const targetJob = jobs.find(j => j.id === over.id)
     const newStageId = targetStage?.id ?? targetJob?.album_stage_id
     if (!newStageId) return
-    const job = albumJobs.find(j => j.id === active.id)
+    const job = jobs.find(j => j.id === active.id)
     if (!job || job.album_stage_id === newStageId) return
     await updateJob.mutateAsync({ id: String(active.id), payload: { album_stage_id: newStageId } })
   }
+
+  return (
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {stages.map(stage => (
+          <AlbumKanbanColumn key={stage.id} stage={stage} jobs={getJobsForStage(stage.id)} />
+        ))}
+      </div>
+      <DragOverlay>
+        {activeJob ? <JobCard job={activeJob} /> : null}
+      </DragOverlay>
+    </DndContext>
+  )
+}
+
+function YearSection({ year, defaultOpen, count, children }: {
+  year: number
+  defaultOpen: boolean
+  count: number
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 w-full text-left py-2 px-1"
+      >
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
+        <span className="text-sm font-semibold text-foreground">{year}</span>
+        <span className="text-xs text-muted-foreground">({count})</span>
+      </button>
+      {open && <div className="mt-1">{children}</div>}
+    </div>
+  )
+}
+
+export function AlbumJobs() {
+  const { data: albumStages = [] } = useAlbumStages()
+  const { data: jobs = [] } = useJobs()
+  const currentYear = new Date().getFullYear()
+
+  const albumJobs = useMemo(() => jobs.filter(j => j.album_stage_id != null), [jobs])
+
+  const jobsByYear = useMemo(() => {
+    const map = new Map<number, Job[]>()
+    for (const job of albumJobs) {
+      const year = job.appointment?.starts_at
+        ? parseISO(job.appointment.starts_at).getFullYear()
+        : currentYear
+      map.set(year, [...(map.get(year) ?? []), job])
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b - a)
+      .map(([year, yearJobs]) => ({ year, jobs: yearJobs }))
+  }, [albumJobs, currentYear])
 
   return (
     <div className="space-y-6">
@@ -168,16 +221,13 @@ export function AlbumJobs() {
         <h1 className="text-2xl font-semibold text-foreground">Albums</h1>
       </div>
 
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {albumStages.map(stage => (
-            <AlbumKanbanColumn key={stage.id} stage={stage} jobs={getJobsForStage(stage.id)} />
-          ))}
-        </div>
-        <DragOverlay>
-          {activeJob ? <JobCard job={activeJob} /> : null}
-        </DragOverlay>
-      </DndContext>
+      <div className="space-y-2">
+        {jobsByYear.map(({ year, jobs: yearJobs }) => (
+          <YearSection key={year} year={year} defaultOpen={year === currentYear} count={yearJobs.length}>
+            <AlbumKanbanBoard stages={albumStages} jobs={yearJobs} />
+          </YearSection>
+        ))}
+      </div>
     </div>
   )
 }

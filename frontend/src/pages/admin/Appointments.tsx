@@ -1,9 +1,9 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Calendar, dateFnsLocalizer, type View, type ToolbarProps } from 'react-big-calendar'
 import { format, parse, startOfWeek, getDay, parseISO, addHours, formatDistanceToNow } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import { Plus, CheckCircle2, XCircle, CalendarDays, X, CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, CheckCircle2, XCircle, CalendarDays, X, CalendarPlus, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -841,6 +841,163 @@ function RequestsTab({ onConfirm }: { onConfirm: (r: BookingRequest) => void }) 
   )
 }
 
+const APPT_TABLE_COLS = 8
+
+function AppointmentListView({
+  appointments,
+  isLoading,
+  onEdit,
+  onDelete,
+}: {
+  appointments: Appointment[]
+  isLoading: boolean
+  onEdit: (a: Appointment) => void
+  onDelete: (a: Appointment) => void
+}) {
+  const currentYear = new Date().getFullYear()
+
+  const apptsByYear = useMemo(() => {
+    const map = new Map<number, Appointment[]>()
+    for (const a of appointments) {
+      const year = parseISO(a.starts_at).getFullYear()
+      map.set(year, [...(map.get(year) ?? []), a])
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b - a)
+      .map(([year, yearAppts]) => ({ year, appointments: yearAppts }))
+  }, [appointments])
+
+  const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
+
+  const initDone = useRef(false)
+  useEffect(() => {
+    if (!initDone.current && apptsByYear.length > 0) {
+      initDone.current = true
+      const otherYears = apptsByYear.map(g => g.year).filter(y => y !== currentYear)
+      setCollapsedYears(new Set(otherYears))
+    }
+  }, [apptsByYear, currentYear])
+
+  const toggleYear = useCallback((year: number) => {
+    setCollapsedYears(prev => {
+      const next = new Set(prev)
+      next.has(year) ? next.delete(year) : next.add(year)
+      return next
+    })
+  }, [])
+
+  return (
+    <div className="rounded-xl bg-card border overflow-hidden">
+      {isLoading ? (
+        <table className="w-full text-sm">
+          <tbody>{Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={APPT_TABLE_COLS} />)}</tbody>
+        </table>
+      ) : appointments.length === 0 ? (
+        <p className="p-6 text-sm text-muted-foreground">No appointments yet.</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead className="border-b border">
+            <tr className="text-left">
+              <th className="px-4 py-3 text-muted-foreground font-medium text-center">Title</th>
+              <th className="px-4 py-3 text-muted-foreground font-medium text-center">Date</th>
+              <th className="px-4 py-3 text-muted-foreground font-medium text-center">Status</th>
+              <th className="px-4 py-3 text-muted-foreground font-medium text-center">Session type</th>
+              <th className="px-4 py-3 text-muted-foreground font-medium text-center">Price</th>
+              <th className="px-4 py-3 text-muted-foreground font-medium text-center">Deposit</th>
+              <th className="px-4 py-3 text-muted-foreground font-medium text-center">Contract</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {apptsByYear.map(({ year, appointments: yearAppts }) => {
+              const collapsed = collapsedYears.has(year)
+              return (
+                <>
+                  <tr
+                    key={`year-${year}`}
+                    className="cursor-pointer hover:bg-muted/30 bg-muted/10"
+                    onClick={() => toggleYear(year)}
+                  >
+                    <td colSpan={APPT_TABLE_COLS} className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+                        <span className="text-xs font-semibold text-foreground">{year}</span>
+                        <span className="text-xs text-muted-foreground">({yearAppts.length})</span>
+                      </div>
+                    </td>
+                  </tr>
+                  {!collapsed && yearAppts.map(a => (
+                    <tr
+                      key={a.id}
+                      className="hover:bg-muted/50 cursor-pointer"
+                      onClick={() => onEdit(a)}
+                    >
+                      <td className="px-4 py-3 text-center">
+                        <p className="text-foreground font-medium">{a.title}</p>
+                        {a.location && <p className="text-xs text-muted-foreground mt-0.5">{a.location}</p>}
+                      </td>
+                      <td className="px-4 py-3 text-foreground/80 whitespace-nowrap text-center">
+                        {format(parseISO(a.starts_at), 'MMM d, yyyy')}
+                        {a.session_time && (
+                          <span className="ml-1.5 text-muted-foreground capitalize">· {a.session_time}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <StatusBadge status={a.status} />
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-center">
+                        {a.session_types.length > 0
+                          ? a.session_types.map(st => st.name).join(', ')
+                          : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-foreground/80 text-center">
+                        {Number(a.price) > 0 ? `€${a.price}` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex justify-center">
+                          {a.deposit_paid
+                            ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex justify-center">
+                          {a.contract_signed
+                            ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-6">
+                          {a.status === 'confirmed' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openInCalendar(a) }}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                              title="Add to Calendar"
+                            >
+                              <CalendarPlus className="h-4 w-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(a) }}
+                            className="text-xs text-transparent bg-gradient-to-r from-rose-400 to-pink-500 bg-clip-text hover:opacity-80"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
 export function Appointments() {
   const [searchParams, setSearchParams] = useSearchParams()
   const prefillClientId = searchParams.get('client_id')
@@ -984,94 +1141,12 @@ export function Appointments() {
           />
         </div>
       ) : (
-        <div className="rounded-xl bg-card border overflow-hidden">
-          {isLoading ? (
-            <table className="w-full text-sm">
-              <tbody>{Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={6} />)}</tbody>
-            </table>
-          ) : appointments.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground">No appointments yet.</p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="border-b border">
-                <tr className="text-left">
-                  <th className="px-4 py-3 text-muted-foreground font-medium text-center">Title</th>
-                  <th className="px-4 py-3 text-muted-foreground font-medium text-center">Date</th>
-                  <th className="px-4 py-3 text-muted-foreground font-medium text-center">Status</th>
-                  <th className="px-4 py-3 text-muted-foreground font-medium text-center">Session type</th>
-                  <th className="px-4 py-3 text-muted-foreground font-medium text-center">Price</th>
-                  <th className="px-4 py-3 text-muted-foreground font-medium text-center">Deposit</th>
-                  <th className="px-4 py-3 text-muted-foreground font-medium text-center">Contract</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {appointments.map(a => (
-                  <tr
-                    key={a.id}
-                    className="hover:bg-muted/50 cursor-pointer"
-                    onClick={() => openEdit(a)}
-                  >
-                    <td className="px-4 py-3 text-center">
-                      <p className="text-foreground font-medium">{a.title}</p>
-                      {a.location && <p className="text-xs text-muted-foreground mt-0.5">{a.location}</p>}
-                    </td>
-                    <td className="px-4 py-3 text-foreground/80 whitespace-nowrap text-center">
-                      {format(parseISO(a.starts_at), 'MMM d, yyyy')}
-                      {a.session_time && (
-                        <span className="ml-1.5 text-muted-foreground capitalize">· {a.session_time}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <StatusBadge status={a.status} />
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-center">
-                      {a.session_types.length > 0
-                        ? a.session_types.map(st => st.name).join(', ')
-                        : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-foreground/80 text-center">
-                      {Number(a.price) > 0 ? `€${a.price}` : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex justify-center">
-                        {a.deposit_paid
-                          ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                          : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex justify-center">
-                        {a.contract_signed
-                          ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                          : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-6">
-                        {a.status === 'confirmed' && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); openInCalendar(a) }}
-                            className="text-muted-foreground hover:text-foreground transition-colors"
-                            title="Add to Calendar"
-                          >
-                            <CalendarPlus className="h-4 w-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(a) }}
-                          className="text-xs text-transparent bg-gradient-to-r from-rose-400 to-pink-500 bg-clip-text hover:opacity-80"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <AppointmentListView
+          appointments={appointments}
+          isLoading={isLoading}
+          onEdit={openEdit}
+          onDelete={(a) => setDeleteTarget(a)}
+        />
       )}
       </>
       ) : (
