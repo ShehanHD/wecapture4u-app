@@ -1,15 +1,17 @@
+// frontend/src/pages/public/Landing.tsx
 import { Helmet } from 'react-helmet-async'
-import { useHeroPhotos, useCategories, usePublicSettings } from '../../hooks/usePortfolio'
-import { HeroCarousel } from '../../components/public/HeroCarousel'
-import { CategoryGrid } from '../../components/public/CategoryGrid'
-import { AboutSection } from '../../components/public/AboutSection'
-import { ContactForm } from '../../components/public/ContactForm'
+import { usePublicSettings } from '../../hooks/usePortfolio'
 import { PublicNav } from '../../components/layout/PublicNav'
+import { HeroSection } from '../../components/public/HeroSection'
+import { WaveDivider } from '../../components/public/WaveDivider'
+import { GallerySection } from '../../components/public/GallerySection'
+import { AboutSection } from '../../components/public/AboutSection'
+import { StatsSection } from '../../components/public/StatsSection'
+import { InstagramStrip } from '../../components/public/InstagramStrip'
+import { ContactSection } from '../../components/public/ContactSection'
 import { PublicFooter } from '../../components/layout/PublicFooter'
 
 export default function Landing() {
-  const { data: heroPhotos = [] } = useHeroPhotos()
-  const { data: categories = [] } = useCategories()
   const { data: settings } = usePublicSettings()
 
   const title =
@@ -35,8 +37,10 @@ export default function Landing() {
       </Helmet>
 
       <PublicNav />
-      <HeroCarousel photos={heroPhotos} tagline={settings?.tagline} />
-      <CategoryGrid categories={categories} />
+      <HeroSection tagline={settings?.tagline} />
+      <WaveDivider fromColor="#0a0e2e" toColor="#f8f9ff" direction="down" />
+      <GallerySection />
+      <WaveDivider fromColor="#f8f9ff" toColor="#0a0e2e" direction="up" />
       <AboutSection
         adminName={settings?.admin_name}
         adminAvatarUrl={settings?.admin_avatar_url}
@@ -44,8 +48,18 @@ export default function Landing() {
         instagramUrl={settings?.instagram_url}
         facebookUrl={settings?.facebook_url}
       />
-      <ContactForm headline={settings?.contact_headline} />
-      <PublicFooter adminName={settings?.admin_name} />
+      <WaveDivider fromColor="#0a0e2e" toColor="#f8f9ff" direction="down" />
+      <StatsSection />
+      <WaveDivider fromColor="#f8f9ff" toColor="#0a0e2e" direction="up" />
+      <InstagramStrip />
+      <WaveDivider fromColor="#0a0e2e" toColor="#f8f9ff" direction="down" />
+      <ContactSection headline={settings?.contact_headline} />
+      <WaveDivider fromColor="#f8f9ff" toColor="#060810" direction="up" />
+      <PublicFooter
+        adminName={settings?.admin_name}
+        instagramUrl={settings?.instagram_url}
+        facebookUrl={settings?.facebook_url}
+      />
     </>
   )
 }
