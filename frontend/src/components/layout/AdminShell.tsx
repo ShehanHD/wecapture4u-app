@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  BarChart2, Bell, Briefcase, CalendarDays, ChevronLeft, ChevronRight,
+  BarChart2, Bell, BookImage, Briefcase, CalendarDays, ChevronLeft, ChevronRight,
   Image, Inbox, LayoutDashboard, LogOut, Menu, Moon, Settings2, Sun, User, Users, X,
 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -27,6 +27,7 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
       { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
       { to: '/admin/appointments', label: 'Appointments', icon: CalendarDays },
       { to: '/admin/jobs', label: 'Jobs', icon: Briefcase },
+      { to: '/admin/albums', label: 'Albums', icon: BookImage },
       { to: '/admin/clients', label: 'Clients', icon: Users },
     ],
   },

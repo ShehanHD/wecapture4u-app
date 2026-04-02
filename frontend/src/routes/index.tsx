@@ -24,6 +24,7 @@ import { Dashboard } from '@/pages/admin/Dashboard'
 import { Appointments } from '@/pages/admin/Appointments'
 import { Accounting } from '@/pages/admin/Accounting'
 import { Jobs } from '@/pages/admin/Jobs'
+import { AlbumJobs } from '@/pages/admin/AlbumJobs'
 import { JobDetail } from '@/pages/admin/JobDetail'
 import { Clients } from '@/pages/admin/Clients'
 import { ClientDetail } from '@/pages/admin/ClientDetail'
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
           { path: 'portfolio', element: <AdminPortfolio /> },
           { path: 'jobs', element: <Jobs /> },
           { path: 'jobs/:id', element: <JobDetail /> },
+          { path: 'albums', element: <AlbumJobs /> },
           { path: 'clients', element: <Clients /> },
           { path: 'clients/:id', element: <ClientDetail /> },
           { path: 'accounting', element: <Accounting /> },
