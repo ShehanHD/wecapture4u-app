@@ -23,7 +23,9 @@ export function ContactForm({ headline }: Props) {
     try {
       await submitMutation.mutateAsync(data)
       setSubmitted(true)
-    } catch {}
+    } catch {
+      // Error is handled via submitMutation.isError
+    }
   }
 
   const inputStyle = {

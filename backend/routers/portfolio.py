@@ -109,6 +109,7 @@ async def submit_contact(db: DbDep, data: ContactSubmissionCreate):
                 "subject": f"New contact: {data.name}",
                 "html": (
                     f"<p><strong>From:</strong> {data.name} ({data.email})</p>"
+                    f"{f'<p><strong>Phone:</strong> {data.phone}</p>' if data.phone else ''}"
                     f"<p>{data.message}</p>"
                 ),
             })
