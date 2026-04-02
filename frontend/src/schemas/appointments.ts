@@ -8,6 +8,7 @@ export const SessionSlotSchema = z.object({
   session_type_id: z.string().uuid(),
   date: z.string(),           // "YYYY-MM-DD"
   time_slot: z.enum(VALID_TIME_SLOTS),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
 })
 
 export type SessionSlot = z.infer<typeof SessionSlotSchema>

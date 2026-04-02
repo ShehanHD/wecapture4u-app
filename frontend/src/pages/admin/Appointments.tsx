@@ -37,6 +37,7 @@ const SessionSlotFormSchema = z.object({
   session_type_id: z.string().uuid('Select a session type'),
   date: z.string().min(1, 'Date is required'),
   time_slot: z.enum(['morning', 'afternoon', 'evening', 'all_day']),
+  time: z.string().optional(),
 })
 
 const appointmentFormSchema = z.object({
@@ -129,6 +130,7 @@ interface AppointmentModalProps {
 function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: AppointmentModalProps) {
   const { data: sessionTypes = [] } = useSessionTypes()
   const { data: existingClient } = useClient(appointment?.client_id ?? prefill?.client_id ?? '')
+  const { data: allAppointments = [] } = useAppointments()
   const createMutation = useCreateAppointment()
   const updateMutation = useUpdateAppointment()
 
@@ -151,15 +153,16 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
                 session_type_id: s.session_type_id,
                 date: s.date,
                 time_slot: s.time_slot as 'morning' | 'afternoon' | 'evening' | 'all_day',
+                time: s.time ?? undefined,
               }))
-            : [{ session_type_id: '', date: '', time_slot: 'morning' as const }],
+            : [{ session_type_id: '', date: '', time_slot: 'morning' as const, time: undefined }],
           location: appointment.location,
           status: appointment.status,
           notes: appointment.notes,
         }
       : {
           status: 'pending',
-          session_slots: [{ session_type_id: '', date: '', time_slot: 'morning' as const }],
+          session_slots: [{ session_type_id: '', date: '', time_slot: 'morning' as const, time: undefined }],
         },
   })
 
@@ -179,6 +182,13 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
 
   const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
+  function deriveTimeSlot(time: string): 'morning' | 'afternoon' | 'evening' {
+    const h = parseInt(time.split(':')[0], 10)
+    if (h < 12) return 'morning'
+    if (h < 17) return 'afternoon'
+    return 'evening'
+  }
+
   const getAvailableDays = (sessionTypeId: string): number[] => {
     const st = sessionTypes.find(s => s.id === sessionTypeId)
     return st?.available_days ?? []
@@ -195,8 +205,9 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
               session_type_id: s.session_type_id,
               date: s.date,
               time_slot: s.time_slot as 'morning' | 'afternoon' | 'evening' | 'all_day',
+              time: s.time ?? undefined,
             }))
-          : [{ session_type_id: '', date: '', time_slot: 'morning' as const }],
+          : [{ session_type_id: '', date: '', time_slot: 'morning' as const, time: undefined }],
         location: appointment.location ?? undefined,
         status: appointment.status,
         addon_album: appointment.addons.includes('album'),
@@ -211,7 +222,7 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
     } else {
       reset({
         status: 'pending',
-        session_slots: [{ session_type_id: '', date: '', time_slot: 'morning' as const }],
+        session_slots: [{ session_type_id: '', date: '', time_slot: 'morning' as const, time: undefined }],
         addon_album: false,
         addon_thank_you_card: false,
         addon_enlarged_photos: false,
@@ -379,81 +390,119 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
               const slotDate = watch(`session_slots.${index}.date`)
               const availDays = getAvailableDays(slotTypeId)
               const dateAllowed = isDateAllowed(slotDate, availDays)
+              const slotTime = watch(`session_slots.${index}.time`) ?? ''
+              const slotTimeSlot = watch(`session_slots.${index}.time_slot`)
+
+              const overlappingAppts = slotDate && slotTimeSlot
+                ? allAppointments.filter(a =>
+                    a.id !== appointment?.id &&
+                    a.session_slots.some(s => s.date === slotDate && s.time_slot === slotTimeSlot)
+                  )
+                : []
 
               return (
-                <div key={field.id} className="flex flex-wrap gap-2 items-start p-3 rounded-lg border border-border bg-muted/30">
-                  {/* Session type */}
-                  <div className="flex-1 min-w-[160px]">
-                    <Select
-                      value={watch(`session_slots.${index}.session_type_id`) || ''}
-                      onValueChange={(v) => setValue(`session_slots.${index}.session_type_id`, v as string, { shouldValidate: true })}
-                    >
-                      <SelectTrigger className="bg-input border text-foreground h-9 text-sm">
-                        <SelectValue>
-                          {(value: string | null) => {
-                            if (!value) return <span className="text-muted-foreground">Select session type</span>
-                            return sessionTypes.find((st) => st.id === value)?.name ?? value
-                          }}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border text-popover-foreground">
-                        {sessionTypes.map(st => (
-                          <SelectItem key={st.id} value={st.id}>{st.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.session_slots?.[index]?.session_type_id && (
-                      <p className="text-xs text-red-400 mt-1">{errors.session_slots[index]?.session_type_id?.message}</p>
+                <div key={field.id}>
+                  <div className="flex flex-wrap gap-2 items-start p-3 rounded-lg border border-border bg-muted/30">
+                    {/* Session type */}
+                    <div className="flex-1 min-w-[160px]">
+                      <Select
+                        value={watch(`session_slots.${index}.session_type_id`) || ''}
+                        onValueChange={(v) => setValue(`session_slots.${index}.session_type_id`, v as string, { shouldValidate: true })}
+                      >
+                        <SelectTrigger className="bg-input border text-foreground h-9 text-sm">
+                          <SelectValue>
+                            {(value: string | null) => {
+                              if (!value) return <span className="text-muted-foreground">Select session type</span>
+                              return sessionTypes.find((st) => st.id === value)?.name ?? value
+                            }}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border text-popover-foreground">
+                          {sessionTypes.map(st => (
+                            <SelectItem key={st.id} value={st.id}>{st.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.session_slots?.[index]?.session_type_id && (
+                        <p className="text-xs text-red-400 mt-1">{errors.session_slots[index]?.session_type_id?.message}</p>
+                      )}
+                    </div>
+
+                    {/* Date */}
+                    <div className="flex-1 min-w-[140px]">
+                      <Input
+                        type="date"
+                        {...register(`session_slots.${index}.date`)}
+                        className="bg-input border text-foreground h-9 text-sm"
+                      />
+                      {slotDate && !dateAllowed && (
+                        <p className="text-xs text-red-400 mt-1">
+                          Not available on {DAY_NAMES[getDay(parseISO(slotDate)) === 0 ? 6 : getDay(parseISO(slotDate)) - 1]}.
+                          Available: {availDays.map(d => DAY_NAMES[d].slice(0, 3)).join(', ')}
+                        </p>
+                      )}
+                      {errors.session_slots?.[index]?.date && (
+                        <p className="text-xs text-red-400 mt-1">{errors.session_slots[index]?.date?.message}</p>
+                      )}
+                    </div>
+
+                    {/* Precise time (optional) */}
+                    <div className="w-[120px]">
+                      <Input
+                        type="time"
+                        value={slotTime}
+                        onChange={(e) => {
+                          const t = e.target.value
+                          setValue(`session_slots.${index}.time`, t || undefined)
+                          if (t) {
+                            setValue(`session_slots.${index}.time_slot`, deriveTimeSlot(t))
+                          }
+                        }}
+                        className="bg-input border text-foreground h-9 text-sm"
+                      />
+                    </div>
+
+                    {/* Time of day */}
+                    {!slotTime ? (
+                      <div className="w-[130px]">
+                        <Select
+                          value={slotTimeSlot}
+                          onValueChange={(v) => setValue(`session_slots.${index}.time_slot`, v as 'morning' | 'afternoon' | 'evening' | 'all_day')}
+                        >
+                          <SelectTrigger className="bg-input border text-foreground h-9 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border text-popover-foreground">
+                            <SelectItem value="morning">Morning</SelectItem>
+                            <SelectItem value="afternoon">Afternoon</SelectItem>
+                            <SelectItem value="evening">Evening</SelectItem>
+                            <SelectItem value="all_day">All Day</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div className="w-[130px] h-9 flex items-center px-2 rounded-md border border-border bg-muted/30 text-sm text-muted-foreground capitalize">
+                        {deriveTimeSlot(slotTime)}
+                      </div>
+                    )}
+
+                    {/* Remove button */}
+                    {slotFields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive h-9 px-2"
+                        onClick={() => removeSlot(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-
-                  {/* Date */}
-                  <div className="flex-1 min-w-[140px]">
-                    <Input
-                      type="date"
-                      {...register(`session_slots.${index}.date`)}
-                      className="bg-input border text-foreground h-9 text-sm"
-                    />
-                    {slotDate && !dateAllowed && (
-                      <p className="text-xs text-red-400 mt-1">
-                        Not available on {DAY_NAMES[getDay(parseISO(slotDate)) === 0 ? 6 : getDay(parseISO(slotDate)) - 1]}.
-                        Available: {availDays.map(d => DAY_NAMES[d].slice(0, 3)).join(', ')}
-                      </p>
-                    )}
-                    {errors.session_slots?.[index]?.date && (
-                      <p className="text-xs text-red-400 mt-1">{errors.session_slots[index]?.date?.message}</p>
-                    )}
-                  </div>
-
-                  {/* Time of day */}
-                  <div className="w-[130px]">
-                    <Select
-                      value={watch(`session_slots.${index}.time_slot`)}
-                      onValueChange={(v) => setValue(`session_slots.${index}.time_slot`, v as 'morning' | 'afternoon' | 'evening' | 'all_day')}
-                    >
-                      <SelectTrigger className="bg-input border text-foreground h-9 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border text-popover-foreground">
-                        <SelectItem value="morning">Morning</SelectItem>
-                        <SelectItem value="afternoon">Afternoon</SelectItem>
-                        <SelectItem value="evening">Evening</SelectItem>
-                        <SelectItem value="all_day">All Day</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Remove button */}
-                  {slotFields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive h-9 px-2"
-                      onClick={() => removeSlot(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                  {overlappingAppts.length > 0 && (
+                    <p className="text-xs text-yellow-500 mt-1 px-1">
+                      ⚠ Overlaps with: {overlappingAppts.map(a => `"${a.title}"`).join(', ')} ({slotTimeSlot}, {slotDate})
+                    </p>
                   )}
                 </div>
               )
@@ -465,7 +514,7 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
               size="sm"
               onClick={() => {
                 const firstDate = watch('session_slots.0.date') ?? ''
-                appendSlot({ session_type_id: '', date: firstDate, time_slot: 'morning' })
+                appendSlot({ session_type_id: '', date: firstDate, time_slot: 'morning', time: undefined })
               }}
             >
               <Plus className="h-4 w-4 mr-1" />
