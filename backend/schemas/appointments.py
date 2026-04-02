@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime, date as date_type
 from decimal import Decimal
@@ -12,6 +13,16 @@ class SessionSlot(BaseModel):
     session_type_id: uuid.UUID
     date: date_type
     time_slot: Literal["morning", "afternoon", "evening", "all_day"]
+    time: Optional[str] = None
+
+    @field_validator("time")
+    @classmethod
+    def time_format(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if not re.match(r"^([01]\d|2[0-3]):[0-5]\d$", v):
+            raise ValueError("time must be HH:MM (00:00–23:59)")
+        return v
 
 
 class AppointmentCreate(BaseModel):

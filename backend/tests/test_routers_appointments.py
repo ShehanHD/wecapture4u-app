@@ -141,3 +141,113 @@ async def test_update_appointment_recomputes_slots(test_client, admin_auth_heade
     assert data["starts_at"].startswith("2026-09-03")
     # session_type_ids derived (no duplicates)
     assert len(data["session_type_ids"]) == 2
+
+
+@pytest.mark.asyncio
+async def test_create_appointment_with_precise_time(test_client, admin_auth_headers, db_session):
+    client = await _make_client(db_session, "TimeTest")
+    st = await _make_session_type(db_session, "Portrait")
+
+    resp = await test_client.post(
+        "/api/appointments",
+        json={
+            "client_id": str(client.id),
+            "title": "10am Portrait",
+            "session_slots": [
+                {
+                    "session_type_id": str(st.id),
+                    "date": "2026-08-10",
+                    "time": "10:30",
+                    "time_slot": "morning",
+                }
+            ],
+        },
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["starts_at"].startswith("2026-08-10T10:30")
+    assert data["session_slots"][0]["time_slot"] == "morning"
+    assert data["session_slots"][0]["time"] == "10:30"
+
+
+@pytest.mark.asyncio
+async def test_time_slot_derived_from_time(test_client, admin_auth_headers, db_session):
+    """Verify derivation: morning <12, afternoon 12-16, evening >=17."""
+    client = await _make_client(db_session, "Derive")
+    st = await _make_session_type(db_session, "Wedding")
+
+    cases = [
+        ("09:00", "morning"),
+        ("12:00", "afternoon"),
+        ("16:59", "afternoon"),
+        ("17:00", "evening"),
+        ("23:30", "evening"),
+    ]
+    for time_str, expected_slot in cases:
+        resp = await test_client.post(
+            "/api/appointments",
+            json={
+                "client_id": str(client.id),
+                "title": f"Session at {time_str}",
+                "session_slots": [
+                    {
+                        "session_type_id": str(st.id),
+                        "date": "2026-09-01",
+                        "time": time_str,
+                        "time_slot": "all_day",  # should be overridden
+                    }
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == 201, f"Failed for {time_str}: {resp.json()}"
+        data = resp.json()
+        assert data["session_slots"][0]["time_slot"] == expected_slot, (
+            f"time={time_str}: expected {expected_slot}, got {data['session_slots'][0]['time_slot']}"
+        )
+
+
+@pytest.mark.asyncio
+async def test_starts_at_without_time_is_midnight(test_client, admin_auth_headers, db_session):
+    """When no time is given, starts_at stays at midnight (existing behaviour)."""
+    client = await _make_client(db_session, "NoTime")
+    st = await _make_session_type(db_session)
+
+    resp = await test_client.post(
+        "/api/appointments",
+        json={
+            "client_id": str(client.id),
+            "title": "No time",
+            "session_slots": [
+                {"session_type_id": str(st.id), "date": "2026-08-15", "time_slot": "afternoon"}
+            ],
+        },
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 201
+    assert resp.json()["starts_at"].startswith("2026-08-15T00:00")
+
+
+@pytest.mark.asyncio
+async def test_invalid_time_format_rejected(test_client, admin_auth_headers, db_session):
+    client = await _make_client(db_session, "BadTime")
+    st = await _make_session_type(db_session)
+
+    resp = await test_client.post(
+        "/api/appointments",
+        json={
+            "client_id": str(client.id),
+            "title": "Bad time",
+            "session_slots": [
+                {
+                    "session_type_id": str(st.id),
+                    "date": "2026-08-15",
+                    "time": "25:00",
+                    "time_slot": "morning",
+                }
+            ],
+        },
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 422

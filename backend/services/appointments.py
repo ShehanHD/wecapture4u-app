@@ -14,18 +14,29 @@ logger = logging.getLogger(__name__)
 
 
 def _compute_starts_at(slots: list[dict]) -> datetime:
-    """Return the earliest slot date as a UTC midnight datetime."""
+    """Return the earliest slot date+time as a UTC datetime."""
     if not slots:
         return datetime.now(tz=timezone.utc)
-    dates = sorted(slot["date"] for slot in slots)
-    d = dates[0]  # "YYYY-MM-DD" string
-    return datetime.fromisoformat(f"{d}T00:00:00+00:00")
+    earliest = sorted(slots, key=lambda s: s["date"])[0]
+    date_str = earliest["date"]
+    time_str = earliest.get("time") or "00:00"
+    return datetime.fromisoformat(f"{date_str}T{time_str}:00+00:00")
 
 
 def _compute_session_type_ids(slots: list[dict]) -> list[uuid.UUID]:
     # Use dict.fromkeys to deduplicate while preserving insertion order
     seen = dict.fromkeys(uuid.UUID(str(slot["session_type_id"])) for slot in slots)
     return list(seen.keys())
+
+
+def _derive_time_slot(time: str) -> str:
+    """Derive morning/afternoon/evening from HH:MM."""
+    h = int(time.split(":")[0])
+    if h < 12:
+        return "morning"
+    if h < 17:
+        return "afternoon"
+    return "evening"
 
 
 def _slots_to_dicts(slots: list) -> list[dict]:
@@ -175,6 +186,10 @@ async def get_appointment_orm(db: AsyncSession, *, id: uuid.UUID) -> Appointment
 async def create_appointment(db: AsyncSession, *, data: dict) -> AppointmentOut:
     slots_raw = data.pop("session_slots", [])
     slots_dicts = _slots_to_dicts(slots_raw)
+    # Derive time_slot from precise time when present
+    for slot in slots_dicts:
+        if slot.get("time"):
+            slot["time_slot"] = _derive_time_slot(slot["time"])
     data["session_slots"] = slots_dicts
     data["starts_at"] = _compute_starts_at(slots_dicts)
     data["session_type_ids"] = _compute_session_type_ids(slots_dicts)
@@ -202,6 +217,10 @@ async def update_appointment(
 
     if "session_slots" in data and data["session_slots"] is not None:
         slots_dicts = _slots_to_dicts(data["session_slots"])
+        # Derive time_slot from precise time when present
+        for slot in slots_dicts:
+            if slot.get("time"):
+                slot["time_slot"] = _derive_time_slot(slot["time"])
         appt.session_slots = slots_dicts
         appt.starts_at = _compute_starts_at(slots_dicts)
         appt.session_type_ids = _compute_session_type_ids(slots_dicts)
