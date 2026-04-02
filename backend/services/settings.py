@@ -49,20 +49,33 @@ async def list_session_types(db: AsyncSession) -> list[SessionType]:
     return list(result.scalars().all())
 
 
-async def create_session_type(db: AsyncSession, *, name: str) -> SessionType:
-    st = SessionType(name=name)
+async def create_session_type(
+    db: AsyncSession, *, name: str, available_days: list[int] | None = None
+) -> SessionType:
+    st = SessionType(name=name, available_days=available_days or [])
     db.add(st)
     await db.flush()
+    await db.refresh(st)
     return st
 
 
-async def update_session_type(db: AsyncSession, *, id: uuid.UUID, name: str) -> SessionType:
+async def update_session_type(
+    db: AsyncSession,
+    *,
+    id: uuid.UUID,
+    name: str | None = None,
+    available_days: list[int] | None = None,
+) -> SessionType:
     result = await db.execute(select(SessionType).where(SessionType.id == id))
     st = result.scalar_one_or_none()
     if st is None:
         raise HTTPException(status_code=404, detail="Session type not found")
-    st.name = name
+    if name is not None:
+        st.name = name
+    if available_days is not None:
+        st.available_days = available_days
     await db.flush()
+    await db.refresh(st)
     return st
 
 

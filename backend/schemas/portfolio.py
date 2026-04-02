@@ -41,6 +41,7 @@ class CategoryWithPhotosOut(CategoryOut):
 class ContactSubmissionCreate(BaseModel):
     name: str
     email: EmailStr
+    phone: Optional[str] = None
     message: str
 
     @field_validator("name")
@@ -50,6 +51,16 @@ class ContactSubmissionCreate(BaseModel):
         if not v or len(v) > 200:
             raise ValueError("name must be 1–200 characters")
         return v
+
+    @field_validator("phone")
+    @classmethod
+    def phone_length(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip()
+        if len(v) > 30:
+            raise ValueError("phone must be 30 characters or fewer")
+        return v or None
 
     @field_validator("message")
     @classmethod
@@ -64,6 +75,7 @@ class ContactSubmissionOut(BaseModel):
     id: UUID
     name: str
     email: str
+    phone: Optional[str] = None
     message: str
     created_at: datetime
     model_config = {"from_attributes": True}
@@ -86,6 +98,9 @@ class AboutSettingsOut(BaseModel):
     facebook_url: Optional[str] = None
     contact_headline: Optional[str] = None
     contact_email: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    og_image_url: Optional[str] = None
 
 
 class AboutSettingsUpdate(BaseModel):
@@ -95,6 +110,8 @@ class AboutSettingsUpdate(BaseModel):
     facebook_url: Optional[str] = None
     contact_headline: Optional[str] = None
     contact_email: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
 
     @field_validator("contact_email")
     @classmethod

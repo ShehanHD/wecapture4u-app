@@ -2,6 +2,7 @@ import uuid
 from datetime import date, datetime
 from typing import Literal, Optional
 from pydantic import BaseModel
+from schemas.appointments import SessionSlot
 
 
 class BookingRequestOut(BaseModel):
@@ -11,6 +12,7 @@ class BookingRequestOut(BaseModel):
     preferred_date: date
     time_slot: Literal["morning", "afternoon", "evening", "all_day"]
     session_type_id: Optional[uuid.UUID]
+    session_slots: list[SessionSlot]
     addons: list[str]
     message: Optional[str]
     status: Literal["pending", "confirmed", "rejected"]

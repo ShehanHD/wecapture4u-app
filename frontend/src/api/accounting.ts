@@ -121,7 +121,13 @@ export interface ExpenseCreatePayload {
 }
 
 export interface ExpenseUpdatePayload {
+<<<<<<< HEAD
   description?: string
+=======
+  date?: string
+  description?: string
+  expense_account_id?: string
+>>>>>>> main
   amount?: string
   notes?: string
 }
@@ -169,6 +175,7 @@ export async function fetchReport(
   params: Record<string, string>,
 ): Promise<unknown> {
   const { data } = await api.get(`/api/reports/${type}`, { params })
+<<<<<<< HEAD
   // Reports have varying shapes — spec uses z.unknown(). Validate it's at least an object.
   if (typeof data !== 'object' || data === null) {
     throw new Error(`Unexpected report response for ${type}`)
@@ -182,9 +189,20 @@ export async function downloadReportCsv(type: ReportType, params: Record<string,
     responseType: 'blob',
   })
   const url = URL.createObjectURL(data as Blob)
+=======
+  return data
+}
+
+export function downloadReportCsv(type: ReportType, params: Record<string, string>): void {
+  const qs = new URLSearchParams({ ...params, format: 'csv' }).toString()
+  const url = `${api.defaults.baseURL ?? ''}/api/reports/${type}?${qs}`
+>>>>>>> main
   const a = document.createElement('a')
   a.href = url
   a.download = `${type}.csv`
   a.click()
+<<<<<<< HEAD
   URL.revokeObjectURL(url)
+=======
+>>>>>>> main
 }

@@ -170,7 +170,11 @@ async def test_trial_balance(test_client, admin_auth_headers, db_session):
     assert rev_row["debit_balance"] == "0.00"
 
 
+<<<<<<< HEAD
 # ─── Cash Flow ────────────────────────────────────────────────────────────
+=======
+# ─── Cash Flow ────────────────────────────────────────────────────────────────
+>>>>>>> main
 
 @pytest.mark.asyncio
 async def test_cash_flow(test_client, admin_auth_headers, db_session):

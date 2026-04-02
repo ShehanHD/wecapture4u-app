@@ -11,17 +11,6 @@ export const JobStageSchema = z.object({
 export type JobStage = z.infer<typeof JobStageSchema>
 export const JobStageListSchema = z.array(JobStageSchema)
 
-export const AlbumStageSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  color: z.string(),
-  position: z.number().int(),
-  is_terminal: z.boolean(),
-  created_at: z.string(),
-})
-export type AlbumStage = z.infer<typeof AlbumStageSchema>
-export const AlbumStageListSchema = z.array(AlbumStageSchema)
-
 const ClientSummarySchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -66,14 +55,11 @@ export const JobSchema = z.object({
   stage_id: z.string().uuid(),
   stage: StageSummarySchema.nullable().optional(),
   delivery_url: z.string().nullable(),
-  album_stage_id: z.string().uuid().nullable(),
-  album_stage: z.object({ id: z.string().uuid(), name: z.string(), color: z.string() }).nullable().optional(),
   created_at: z.string(),
 })
 export type Job = z.infer<typeof JobSchema>
 export const JobListSchema = z.array(JobSchema)
 
-export const JobDetailSchema = JobSchema.extend({
-  album_stages: AlbumStageListSchema.optional().default([]),
-})
-export type JobDetail = z.infer<typeof JobDetailSchema>
+// JobDetailSchema is now identical to JobSchema
+export const JobDetailSchema = JobSchema
+export type JobDetail = Job

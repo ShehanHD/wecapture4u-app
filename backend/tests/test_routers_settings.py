@@ -53,3 +53,32 @@ async def test_delete_session_type(test_client: AsyncClient, admin_auth_headers:
     )
     # No appointments reference it yet — should succeed
     assert resp.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_session_type_available_days(test_client: AsyncClient, admin_auth_headers: dict):
+    resp = await test_client.post(
+        "/api/session-types",
+        json={"name": "Newborn", "available_days": [0, 2, 4]},  # Mon, Wed, Fri
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["available_days"] == [0, 2, 4]
+
+    # Update available_days only
+    resp2 = await test_client.patch(
+        f"/api/session-types/{data['id']}",
+        json={"available_days": [5, 6]},  # Sat, Sun
+        headers=admin_auth_headers,
+    )
+    assert resp2.status_code == 200
+    assert resp2.json()["available_days"] == [5, 6]
+    assert resp2.json()["name"] == "Newborn"  # name preserved after partial update
+
+    # List returns available_days
+    resp3 = await test_client.get("/api/session-types", headers=admin_auth_headers)
+    assert resp3.status_code == 200
+    match = next((t for t in resp3.json() if t["id"] == data["id"]), None)
+    assert match is not None
+    assert match["available_days"] == [5, 6]

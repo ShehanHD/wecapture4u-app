@@ -26,7 +26,7 @@ class JournalLineOut(BaseModel):
 class JournalEntryCreate(BaseModel):
     date: date
     description: str = Field(min_length=1)
-    lines: list[JournalLineCreate] = Field(min_length=1)
+    lines: list[JournalLineCreate] = Field(default_factory=list)
 
 
 class JournalEntryUpdate(BaseModel):

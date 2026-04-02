@@ -20,6 +20,15 @@ Admin = Annotated[object, Depends(require_admin)]
 
 
 def _to_out(req: BookingRequest, client_name: str) -> BookingRequestOut:
+    from schemas.appointments import SessionSlot
+    slots = [
+        SessionSlot(
+            session_type_id=s["session_type_id"],
+            date=s["date"],
+            time_slot=s["time_slot"],
+        )
+        for s in (req.session_slots or [])
+    ]
     return BookingRequestOut(
         id=req.id,
         client_id=req.client_id,
@@ -27,6 +36,7 @@ def _to_out(req: BookingRequest, client_name: str) -> BookingRequestOut:
         preferred_date=req.preferred_date,
         time_slot=req.time_slot,
         session_type_id=req.session_type_id,
+        session_slots=slots,
         addons=req.addons or [],
         message=req.message,
         status=req.status,

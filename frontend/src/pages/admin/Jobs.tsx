@@ -13,9 +13,8 @@ import {
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Clock, ChevronDown, Kanban } from 'lucide-react'
-import { useJobs, useJobStages, useUpdateJob, useAlbumStages } from '@/hooks/useJobs'
-import type { Job, JobStage, AlbumStage } from '@/schemas/jobs'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { useJobs, useJobStages, useUpdateJob } from '@/hooks/useJobs'
+import type { Job, JobStage } from '@/schemas/jobs'
 import { format, parseISO } from 'date-fns'
 
 // --- Sortable Job Card ---
@@ -94,8 +93,10 @@ function JobCard({ job }: { job: Job }) {
 }
 
 // --- Droppable Kanban Column ---
+const AUTO_COLLAPSE_STAGES = ['Archived', 'Delivered']
+
 function KanbanColumn({ stage, jobs }: { stage: JobStage; jobs: Job[] }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => AUTO_COLLAPSE_STAGES.includes(stage.name))
   const { setNodeRef, isOver } = useDroppable({ id: stage.id })
 
   if (collapsed) {
@@ -140,94 +141,6 @@ function KanbanColumn({ stage, jobs }: { stage: JobStage; jobs: Job[] }) {
         </SortableContext>
       </div>
     </div>
-  )
-}
-
-// --- Droppable Album Kanban Column ---
-function AlbumKanbanColumn({ stage, jobs }: { stage: AlbumStage; jobs: Job[] }) {
-  const [collapsed, setCollapsed] = useState(false)
-  const { setNodeRef, isOver } = useDroppable({ id: stage.id })
-
-  if (collapsed) {
-    return (
-      <div
-        ref={setNodeRef}
-        className="flex-shrink-0 w-10 rounded-xl bg-card border flex flex-col items-center py-3 gap-2 cursor-pointer transition-colors hover:bg-muted/20"
-        style={{ borderTop: `3px solid ${stage.color}` }}
-        onClick={() => setCollapsed(false)}
-      >
-        <span className="text-xs text-muted-foreground font-medium [writing-mode:vertical-rl] rotate-180">
-          {stage.name}
-        </span>
-        <span className="text-xs text-muted-foreground/60">{jobs.length}</span>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex-1 min-w-56 rounded-xl bg-card border flex flex-col">
-      <div
-        className="px-4 py-3 rounded-t-xl flex items-center gap-2 cursor-pointer select-none hover:bg-muted/40 transition-colors"
-        style={{ borderTop: `3px solid ${stage.color}` }}
-        onClick={() => setCollapsed(true)}
-      >
-        <span className="text-sm font-medium text-foreground">{stage.name}</span>
-        <span className="ml-auto text-xs text-muted-foreground">{jobs.length}</span>
-        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60" />
-      </div>
-      <div
-        ref={setNodeRef}
-        className={`p-2 space-y-2 min-h-[120px] flex-1 rounded-b-xl transition-colors ${isOver ? 'bg-muted/40' : ''}`}
-      >
-        <SortableContext items={jobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
-          {jobs.map(job => <JobCard key={job.id} job={job} />)}
-        </SortableContext>
-      </div>
-    </div>
-  )
-}
-
-// --- Album Kanban Board ---
-function AlbumKanban({ jobs }: { jobs: Job[] }) {
-  const { data: albumStages = [] } = useAlbumStages()
-  const updateJob = useUpdateJob()
-  const [activeJob, setActiveJob] = useState<Job | null>(null)
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
-
-  const albumJobs = jobs.filter(j => j.album_stage_id != null)
-  const getJobsForStage = useCallback(
-    (stageId: string) => albumJobs.filter(j => j.album_stage_id === stageId),
-    [albumJobs]
-  )
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveJob(albumJobs.find(j => j.id === event.active.id) ?? null)
-  }
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    setActiveJob(null)
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const targetStage = albumStages.find(s => s.id === over.id)
-    const targetJob = albumJobs.find(j => j.id === over.id)
-    const newStageId = targetStage?.id ?? targetJob?.album_stage_id
-    if (!newStageId) return
-    const job = albumJobs.find(j => j.id === active.id)
-    if (!job || job.album_stage_id === newStageId) return
-    await updateJob.mutateAsync({ id: String(active.id), payload: { album_stage_id: newStageId } })
-  }
-
-  return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {albumStages.map(stage => (
-          <AlbumKanbanColumn key={stage.id} stage={stage} jobs={getJobsForStage(stage.id)} />
-        ))}
-      </div>
-      <DragOverlay>
-        {activeJob ? <JobCard job={activeJob} /> : null}
-      </DragOverlay>
-    </DndContext>
   )
 }
 
@@ -276,29 +189,21 @@ export function Jobs() {
         <h1 className="text-2xl font-semibold text-foreground">Jobs</h1>
       </div>
 
-      <Tabs defaultValue="work">
-        <TabsList>
-          <TabsTrigger value="work">Work</TabsTrigger>
-          <TabsTrigger value="albums">Albums</TabsTrigger>
-        </TabsList>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {stages.map(stage => (
+            <KanbanColumn
+              key={stage.id}
+              stage={stage}
+              jobs={getJobsForStage(stage.id)}
+            />
+          ))}
+        </div>
 
-        <TabsContent value="work" className="mt-4">
-          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="flex gap-4 overflow-x-auto pb-4">
-              {stages.map(stage => (
-                <KanbanColumn key={stage.id} stage={stage} jobs={getJobsForStage(stage.id)} />
-              ))}
-            </div>
-            <DragOverlay>
-              {activeJob ? <JobCard job={activeJob} /> : null}
-            </DragOverlay>
-          </DndContext>
-        </TabsContent>
-
-        <TabsContent value="albums" className="mt-4">
-          <AlbumKanban jobs={jobs} />
-        </TabsContent>
-      </Tabs>
+        <DragOverlay>
+          {activeJob && <JobCard job={activeJob} />}
+        </DragOverlay>
+      </DndContext>
     </div>
   )
 }

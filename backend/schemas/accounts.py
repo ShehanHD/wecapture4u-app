@@ -38,6 +38,7 @@ class AccountLedgerLineOut(BaseModel):
     date: date
     description: str
     line_description: Optional[str]
+    reference_type: Optional[str]
     debit: Decimal
     credit: Decimal
     running_balance: Decimal

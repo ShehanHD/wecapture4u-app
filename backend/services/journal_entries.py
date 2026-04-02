@@ -77,9 +77,6 @@ async def create_entry(
     description: str,
     lines: list,
 ) -> JournalEntry:
-    if not lines:
-        raise HTTPException(status_code=422, detail="Journal entry must have at least one line.")
-
     entry = JournalEntry(
         date=date,
         description=description,

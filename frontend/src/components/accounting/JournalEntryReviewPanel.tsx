@@ -22,10 +22,26 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export function JournalEntryReviewPanel({ entry, open, onClose }: Props) {
+<<<<<<< HEAD
   const [editLines, setEditLines] = useState<LineInput[] | null>(null)
   const [voidOpen, setVoidOpen] = useState(false)
   const { data: accounts = [] } = useAccounts()
 
+=======
+  // Track edit lines alongside the entry they belong to — avoids useEffect reset
+  const [editState, setEditState] = useState<{ entryId: string; lines: LineInput[] } | null>(null)
+  const [voidConfirmOpen, setVoidConfirmOpen] = useState(false)
+  const [isBalanced, setIsBalanced] = useState(false)
+  const { data: accounts = [] } = useAccounts()
+
+  // Derived: editLines are only valid for the current entry
+  const editLines = editState !== null && editState.entryId === entry?.id ? editState.lines : null
+
+  function setEditLines(lines: LineInput[] | null) {
+    setEditState(lines && entry ? { entryId: entry.id, lines } : null)
+  }
+
+>>>>>>> main
   const postMutation = usePostJournalEntry(entry?.id ?? '')
   const voidMutation = useVoidJournalEntry(entry?.id ?? '')
   const updateMutation = useUpdateJournalEntry(entry?.id ?? '')
@@ -37,16 +53,23 @@ export function JournalEntryReviewPanel({ entry, open, onClose }: Props) {
   const isEditing = editLines !== null && isDraft
 
   const displayLines = editLines ?? entry.lines.map(l => ({
+<<<<<<< HEAD
+=======
+    id: l.id,
+>>>>>>> main
     account_id: l.account_id,
     debit: l.debit,
     credit: l.credit,
     description: l.description ?? '',
   }))
 
+<<<<<<< HEAD
   const totalDebit = displayLines.reduce((s, l) => s + parseFloat(l.debit || '0'), 0)
   const totalCredit = displayLines.reduce((s, l) => s + parseFloat(l.credit || '0'), 0)
   const balanced = Math.abs(totalDebit - totalCredit) < 0.001
 
+=======
+>>>>>>> main
   async function handlePost() {
     try {
       await postMutation.mutateAsync()
@@ -121,6 +144,10 @@ export function JournalEntryReviewPanel({ entry, open, onClose }: Props) {
             editable={isEditing}
             accounts={accounts}
             onChange={setEditLines}
+<<<<<<< HEAD
+=======
+            onBalanceChange={setIsBalanced}
+>>>>>>> main
           />
         </div>
 
@@ -140,12 +167,17 @@ export function JournalEntryReviewPanel({ entry, open, onClose }: Props) {
               <Button size="sm" onClick={handleSaveDraft} disabled={updateMutation.isPending}>
                 Save Draft
               </Button>
+<<<<<<< HEAD
               <Button size="sm" variant="default" onClick={handleSaveAndPost} disabled={!balanced || updateMutation.isPending || postMutation.isPending}>
+=======
+              <Button size="sm" variant="default" onClick={handleSaveAndPost} disabled={!isBalanced || updateMutation.isPending || postMutation.isPending}>
+>>>>>>> main
                 Save & Post
               </Button>
             </>
           )}
           {isPosted && (
+<<<<<<< HEAD
             <>
               <Button size="sm" variant="destructive" disabled={voidMutation.isPending} onClick={() => setVoidOpen(true)}>
                 Void
@@ -160,12 +192,30 @@ export function JournalEntryReviewPanel({ entry, open, onClose }: Props) {
                 onConfirm={handleVoid}
               />
             </>
+=======
+            <Button size="sm" variant="destructive" disabled={voidMutation.isPending} onClick={() => setVoidConfirmOpen(true)}>
+              Void
+            </Button>
+>>>>>>> main
           )}
           <Button size="sm" variant="ghost" onClick={onClose} className="ml-auto">
             Close
           </Button>
         </div>
       </div>
+<<<<<<< HEAD
+=======
+
+      <ConfirmDialog
+        open={voidConfirmOpen}
+        onOpenChange={setVoidConfirmOpen}
+        title="Void journal entry"
+        description="This will create a reversing entry. The original entry cannot be edited after voiding."
+        confirmLabel="Void"
+        destructive
+        onConfirm={handleVoid}
+      />
+>>>>>>> main
     </>
   )
 }

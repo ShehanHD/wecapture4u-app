@@ -221,3 +221,117 @@ async def test_create_job_without_album_addon_no_album_stage(test_client, admin_
     )
     assert resp.status_code == 201
     assert resp.json()["album_stage_id"] is None
+
+
+# ─── Auto-assign via appointment confirmation ─────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_confirm_appointment_with_album_sets_album_stage(test_client, admin_auth_headers, db_session):
+    """Confirming an appointment with album addon auto-creates job with album_stage_id set."""
+    from sqlalchemy import select
+    client = Client(name="Emma", email=f"emma_{uuid4().hex[:6]}@test.com", tags=[])
+    db_session.add(client)
+    await db_session.flush()
+
+    resp = await test_client.post(
+        "/api/appointments",
+        json={
+            "client_id": str(client.id),
+            "title": "Emma Wedding",
+            "starts_at": "2026-09-01T10:00:00Z",
+            "status": "confirmed",
+            "addons": ["album"],
+            "price": 1200,
+        },
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 201
+    appt_id = resp.json()["id"]
+
+    linked_job = await db_session.scalar(
+        select(Job).where(Job.appointment_id == appt_id)
+    )
+    assert linked_job is not None
+    assert linked_job.album_stage_id is not None
+
+
+@pytest.mark.asyncio
+async def test_update_appointment_add_album_sets_album_stage(test_client, admin_auth_headers, db_session):
+    """Adding album addon to a confirmed appointment sets album_stage_id on the linked job."""
+    from sqlalchemy import select
+    client = Client(name="Fiona", email=f"fiona_{uuid4().hex[:6]}@test.com", tags=[])
+    db_session.add(client)
+    await db_session.flush()
+
+    # Create confirmed appointment without album
+    create_resp = await test_client.post(
+        "/api/appointments",
+        json={
+            "client_id": str(client.id),
+            "title": "Fiona Portrait",
+            "starts_at": "2026-10-01T10:00:00Z",
+            "status": "confirmed",
+            "addons": [],
+            "price": 500,
+        },
+        headers=admin_auth_headers,
+    )
+    assert create_resp.status_code == 201
+    appt_id = create_resp.json()["id"]
+
+    linked_job = await db_session.scalar(select(Job).where(Job.appointment_id == appt_id))
+    assert linked_job is not None
+    assert linked_job.album_stage_id is None
+
+    # Now add album addon
+    patch_resp = await test_client.patch(
+        f"/api/appointments/{appt_id}",
+        json={"addons": ["album"]},
+        headers=admin_auth_headers,
+    )
+    assert patch_resp.status_code == 200
+
+    db_session.expire(linked_job)
+    await db_session.refresh(linked_job)
+    assert linked_job.album_stage_id is not None
+
+
+@pytest.mark.asyncio
+async def test_update_appointment_remove_album_clears_album_stage(test_client, admin_auth_headers, db_session):
+    """Removing album addon from a confirmed appointment clears album_stage_id on the linked job."""
+    from sqlalchemy import select
+    client = Client(name="Grace", email=f"grace_{uuid4().hex[:6]}@test.com", tags=[])
+    db_session.add(client)
+    await db_session.flush()
+
+    # Create confirmed appointment with album
+    create_resp = await test_client.post(
+        "/api/appointments",
+        json={
+            "client_id": str(client.id),
+            "title": "Grace Wedding",
+            "starts_at": "2026-11-01T10:00:00Z",
+            "status": "confirmed",
+            "addons": ["album"],
+            "price": 800,
+        },
+        headers=admin_auth_headers,
+    )
+    assert create_resp.status_code == 201
+    appt_id = create_resp.json()["id"]
+
+    linked_job = await db_session.scalar(select(Job).where(Job.appointment_id == appt_id))
+    assert linked_job is not None
+    assert linked_job.album_stage_id is not None
+
+    # Remove album addon
+    patch_resp = await test_client.patch(
+        f"/api/appointments/{appt_id}",
+        json={"addons": []},
+        headers=admin_auth_headers,
+    )
+    assert patch_resp.status_code == 200
+
+    db_session.expire(linked_job)
+    await db_session.refresh(linked_job)
+    assert linked_job.album_stage_id is None
