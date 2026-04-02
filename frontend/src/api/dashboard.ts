@@ -1,41 +1,27 @@
 import { api } from '@/lib/axios'
 import { z } from 'zod'
 
-const ClientCountSchema = z.array(z.object({ id: z.string() }))
-const InvoiceListSchema = z.array(z.object({
-  id: z.string(),
-  status: z.string(),
-  balance_due: z.string(),
-}))
-const JobListSchema = z.array(z.object({
-  id: z.string(),
-  stage_id: z.string(),
-}))
+const DashboardStatsSchema = z.object({
+  total_cash: z.number(),
+  total_bank: z.number(),
+  total_liabilities: z.number(),
+  total_receivables: z.number(),
+  this_month_revenue: z.number(),
+  overdue_balance: z.number(),
+  upcoming_balance: z.number(),
+  active_jobs: z.number(),
+  total_jobs: z.number(),
+  this_month_jobs: z.number(),
+  future_jobs: z.number(),
+  total_clients: z.number(),
+  total_albums: z.number(),
+  upcoming_albums: z.number(),
+  ongoing_albums: z.number(),
+})
 
-export interface DashboardStats {
-  totalClients: number
-  activeJobs: number
-  unpaidInvoicesTotal: number
-}
+export type DashboardStats = z.infer<typeof DashboardStatsSchema>
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
-  const [clientsRes, jobsRes, invoicesRes] = await Promise.all([
-    api.get('/api/clients'),
-    api.get('/api/jobs'),
-    api.get('/api/invoices'),
-  ])
-
-  const clients = ClientCountSchema.parse(clientsRes.data)
-  const jobs = JobListSchema.parse(jobsRes.data)
-  const invoices = InvoiceListSchema.parse(invoicesRes.data)
-
-  const unpaidInvoicesTotal = invoices
-    .filter(i => i.status !== 'paid' && i.status !== 'draft')
-    .reduce((sum, i) => sum + parseFloat(i.balance_due), 0)
-
-  return {
-    totalClients: clients.length,
-    activeJobs: jobs.length,
-    unpaidInvoicesTotal,
-  }
+  const res = await api.get('/api/dashboard')
+  return DashboardStatsSchema.parse(res.data)
 }
