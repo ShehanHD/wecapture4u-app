@@ -1,9 +1,14 @@
+<<<<<<< HEAD
+=======
 // frontend/src/pages/admin/accounting/AccountingOverview.tsx
+>>>>>>> main
 import { useQuery } from '@tanstack/react-query'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { fetchReport } from '@/api/accounting'
 import { useJournalEntries } from '@/hooks/useAccounting'
 
+<<<<<<< HEAD
+=======
 function asStringRecord(val: unknown): Record<string, string> {
   if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
     return val as Record<string, string>
@@ -11,6 +16,7 @@ function asStringRecord(val: unknown): Record<string, string> {
   return {}
 }
 
+>>>>>>> main
 function fmt(n: string | number | undefined): string {
   if (n === undefined) return '—'
   return `$${parseFloat(String(n)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -56,7 +62,11 @@ export function AccountingOverview() {
         Array.from({ length: monthCount }, async (_, i) => {
           const start = toISO(new Date(currentYear, i, 1))
           const end = toISO(new Date(currentYear, i + 1, 0))
+<<<<<<< HEAD
+          const pl = await fetchReport('pl', { start_date: start, end_date: end }) as Record<string, string>
+=======
           const pl = asStringRecord(await fetchReport('pl', { start_date: start, end_date: end }))
+>>>>>>> main
           return {
             month: new Date(currentYear, i).toLocaleString('default', { month: 'short' }),
             revenue: parseFloat(pl.total_revenue ?? '0'),
@@ -71,9 +81,15 @@ export function AccountingOverview() {
   const { data: recentEntries = [] } = useJournalEntries({ status: 'posted' })
   const last5 = recentEntries.slice(0, 5)
 
+<<<<<<< HEAD
+  const cur = currentPL as Record<string, string> | undefined
+  const pri = priorPL as Record<string, string> | undefined
+  const ar = arAging as Record<string, string> | undefined
+=======
   const cur = asStringRecord(currentPL)
   const pri = asStringRecord(priorPL)
   const ar = asStringRecord(arAging)
+>>>>>>> main
 
   const revenue = parseFloat(cur?.total_revenue ?? '0')
   const expenses = parseFloat(cur?.total_expenses ?? '0')
@@ -129,9 +145,13 @@ export function AccountingOverview() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
+<<<<<<< HEAD
+            <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">Loading chart…</div>
+=======
             <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
               Loading chart…
             </div>
+>>>>>>> main
           )}
         </div>
 
