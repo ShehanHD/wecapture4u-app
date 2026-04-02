@@ -1,9 +1,6 @@
 // frontend/src/schemas/accounting.ts
 import { z } from 'zod'
-<<<<<<< HEAD
-=======
 import { numericString } from '@/lib/zod'
->>>>>>> main
 
 // ─── Accounts ─────────────────────────────────────────────────────────────────
 
@@ -23,21 +20,6 @@ export const AccountOutSchema = z.object({
 export type AccountOut = z.infer<typeof AccountOutSchema>
 
 export const AccountLedgerLineSchema = z.object({
-<<<<<<< HEAD
-  date: z.string(),
-  description: z.string(),
-  reference_type: z.string().nullable(),
-  debit: z.string(),
-  credit: z.string(),
-  running_balance: z.string(),
-})
-
-export const AccountLedgerOutSchema = z.object({
-  account: AccountOutSchema,
-  opening_balance: z.string(),
-  lines: z.array(AccountLedgerLineSchema),
-  closing_balance: z.string(),
-=======
   journal_entry_id: z.string().uuid(),
   date: z.string(),
   description: z.string(),
@@ -55,7 +37,6 @@ export const AccountLedgerOutSchema = z.object({
   opening_balance: numericString,
   closing_balance: numericString,
   lines: z.array(AccountLedgerLineSchema),
->>>>>>> main
 })
 export type AccountLedgerOut = z.infer<typeof AccountLedgerOutSchema>
 
@@ -72,61 +53,34 @@ export const JournalLineOutSchema = z.object({
 })
 export type JournalLineOut = z.infer<typeof JournalLineOutSchema>
 
-<<<<<<< HEAD
-=======
 export const JournalEntryStatusSchema = z.enum(['draft', 'posted', 'voided'])
 
->>>>>>> main
 export const JournalEntryOutSchema = z.object({
   id: z.string().uuid(),
   date: z.string(),
   description: z.string(),
   reference_type: z.string().nullable(),
-<<<<<<< HEAD
-  reference_id: z.string().nullable(),
-  status: z.enum(['draft', 'posted', 'voided']),
-=======
   reference_id: z.string().uuid().nullable(),
   status: JournalEntryStatusSchema,
->>>>>>> main
   created_by: z.string(),
   void_of: z.string().uuid().nullable(),
   lines: z.array(JournalLineOutSchema),
 })
 export type JournalEntryOut = z.infer<typeof JournalEntryOutSchema>
 
-<<<<<<< HEAD
-// List item omits lines (for list views)
-export const JournalEntryListItemSchema = JournalEntryOutSchema.omit({ lines: true }).extend({
-  line_count: z.number(),
-=======
 export const JournalEntryListItemSchema = JournalEntryOutSchema.omit({ lines: true }).extend({
   line_count: z.number().optional(),
->>>>>>> main
 })
 export type JournalEntryListItem = z.infer<typeof JournalEntryListItemSchema>
 
 // ─── Expenses ─────────────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
-=======
 export const ExpensePaymentStatusSchema = z.enum(['paid', 'payable'])
 
->>>>>>> main
 export const ExpenseOutSchema = z.object({
   id: z.string().uuid(),
   date: z.string(),
   description: z.string(),
-<<<<<<< HEAD
-  amount: z.string(),
-  expense_account_id: z.string().uuid(),
-  expense_account_name: z.string(),
-  payment_status: z.enum(['payable', 'paid']),
-  payment_account_id: z.string().uuid().nullable(),
-  payment_date: z.string().nullable(),
-  notes: z.string().nullable(),
-  journal_entry_id: z.string().uuid().nullable(),
-=======
   expense_account_id: z.string().uuid(),
   expense_account_name: z.string().nullable(),
   amount: z.string(),
@@ -135,6 +89,5 @@ export const ExpenseOutSchema = z.object({
   receipt_url: z.string().nullable(),
   notes: z.string().nullable(),
   created_at: z.string(),
->>>>>>> main
 })
 export type ExpenseOut = z.infer<typeof ExpenseOutSchema>

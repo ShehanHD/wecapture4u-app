@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 // frontend/src/pages/admin/accounting/AccountingJournal.tsx
->>>>>>> main
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
@@ -19,15 +16,11 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 const REF_LABELS: Record<string, string> = {
-<<<<<<< HEAD
-  invoice: 'Invoice', expense: 'Expense', payment: 'Payment', deposit: 'Deposit', manual: 'Manual',
-=======
   invoice: 'Invoice',
   expense: 'Expense',
   payment: 'Payment',
   deposit: 'Deposit',
   manual: 'Manual',
->>>>>>> main
 }
 
 type StatusFilter = 'all' | 'draft' | 'posted' | 'voided'
@@ -55,15 +48,11 @@ export function AccountingJournal() {
   async function handleNewEntry() {
     const today = new Date().toISOString().split('T')[0]
     try {
-<<<<<<< HEAD
-      const entry = await createMutation.mutateAsync({ date: today, description: 'New journal entry', lines: [] })
-=======
       const entry = await createMutation.mutateAsync({
         date: today,
         description: 'New journal entry',
         lines: [],
       })
->>>>>>> main
       const full = await fetchJournalEntry(entry.id)
       setPanelEntry(full)
       setPanelOpen(true)
@@ -77,9 +66,6 @@ export function AccountingJournal() {
       <div className="flex items-center justify-between">
         <div className="flex gap-1">
           {(['all', 'draft', 'posted', 'voided'] as StatusFilter[]).map(s => (
-<<<<<<< HEAD
-            <Button key={s} size="sm" variant={statusFilter === s ? 'default' : 'ghost'} onClick={() => setStatusFilter(s)} className="capitalize text-xs h-7">{s}</Button>
-=======
             <Button
               key={s}
               size="sm"
@@ -89,7 +75,6 @@ export function AccountingJournal() {
             >
               {s}
             </Button>
->>>>>>> main
           ))}
         </div>
         <Button size="sm" onClick={handleNewEntry} disabled={createMutation.isPending}>
@@ -114,15 +99,11 @@ export function AccountingJournal() {
             </thead>
             <tbody className="divide-y divide-border">
               {entries.map(entry => (
-<<<<<<< HEAD
-                <tr key={entry.id} className="cursor-pointer hover:bg-muted/20 transition-colors" onClick={() => handleOpenEntry(entry.id)}>
-=======
                 <tr
                   key={entry.id}
                   className="cursor-pointer hover:bg-muted/20 transition-colors"
                   onClick={() => handleOpenEntry(entry.id)}
                 >
->>>>>>> main
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">{entry.date}</td>
                   <td className="px-4 py-2">{entry.description}</td>
                   <td className="px-4 py-2 text-xs text-muted-foreground">

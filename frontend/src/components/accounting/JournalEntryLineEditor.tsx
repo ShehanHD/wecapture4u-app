@@ -1,18 +1,12 @@
 // frontend/src/components/accounting/JournalEntryLineEditor.tsx
-<<<<<<< HEAD
-=======
 import { useEffect } from 'react'
->>>>>>> main
 import { X, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { AccountOut, JournalLineOut } from '@/schemas/accounting'
 
 export interface LineInput {
-<<<<<<< HEAD
-=======
   id: string
->>>>>>> main
   account_id: string
   debit: string
   credit: string
@@ -24,32 +18,22 @@ interface Props {
   editable: boolean
   accounts?: AccountOut[]
   onChange?: (lines: LineInput[]) => void
-<<<<<<< HEAD
-=======
   onBalanceChange?: (balanced: boolean) => void
->>>>>>> main
 }
 
 function isJournalLineOut(line: JournalLineOut | LineInput): line is JournalLineOut {
   return 'account_name' in line
 }
 
-<<<<<<< HEAD
-export function JournalEntryLineEditor({ lines, editable, accounts = [], onChange }: Props) {
-=======
 export function JournalEntryLineEditor({ lines, editable, accounts = [], onChange, onBalanceChange }: Props) {
->>>>>>> main
   const totalDebit = lines.reduce((s, l) => s + parseFloat(l.debit || '0'), 0)
   const totalCredit = lines.reduce((s, l) => s + parseFloat(l.credit || '0'), 0)
   const balanced = Math.abs(totalDebit - totalCredit) < 0.001
 
-<<<<<<< HEAD
-=======
   useEffect(() => {
     onBalanceChange?.(balanced)
   }, [balanced, onBalanceChange])
 
->>>>>>> main
   function updateLine(index: number, field: keyof LineInput, value: string) {
     const updated = (lines as LineInput[]).map((l, i) =>
       i === index ? { ...l, [field]: value } : l
@@ -58,11 +42,7 @@ export function JournalEntryLineEditor({ lines, editable, accounts = [], onChang
   }
 
   function addLine() {
-<<<<<<< HEAD
-    onChange?.([...(lines as LineInput[]), { account_id: '', debit: '0.00', credit: '0.00', description: '' }])
-=======
     onChange?.([...(lines as LineInput[]), { id: crypto.randomUUID(), account_id: '', debit: '0.00', credit: '0.00', description: '' }])
->>>>>>> main
   }
 
   function removeLine(index: number) {
@@ -79,11 +59,7 @@ export function JournalEntryLineEditor({ lines, editable, accounts = [], onChang
       </div>
 
       {lines.map((line, i) => (
-<<<<<<< HEAD
-        <div key={i} className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 items-center">
-=======
         <div key={isJournalLineOut(line) ? line.id : line.id} className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 items-center">
->>>>>>> main
           {editable ? (
             <select
               className="h-8 rounded-md border border-input bg-background px-2 text-sm"

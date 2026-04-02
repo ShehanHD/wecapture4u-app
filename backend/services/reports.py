@@ -17,13 +17,6 @@ from models.journal import JournalEntry, JournalLine
 
 # ─── shared helpers ───────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
-def _fmt(value: Decimal) -> str:
-    """Format a Decimal to always show exactly 2 decimal places."""
-    return f"{value:.2f}"
-
-=======
->>>>>>> main
 async def _account_balances(
     db: AsyncSession,
     account_types: list[str] | None = None,
@@ -117,19 +110,11 @@ async def get_pl(db: AsyncSession, start_date: date, end_date: date) -> dict:
     return {
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
-<<<<<<< HEAD
-        "revenue_by_account": {k: str(v) for k, v in revenue_by_account.items()},
-        "total_revenue": str(total_revenue),
-        "expenses_by_account": {k: str(v) for k, v in expenses_by_account.items()},
-        "total_expenses": str(total_expenses),
-        "net_profit": str(total_revenue - total_expenses),
-=======
         "revenue_by_account": {k: f"{v:.2f}" for k, v in revenue_by_account.items()},
         "total_revenue": f"{total_revenue:.2f}",
         "expenses_by_account": {k: f"{v:.2f}" for k, v in expenses_by_account.items()},
         "total_expenses": f"{total_expenses:.2f}",
         "net_profit": f"{total_revenue - total_expenses:.2f}",
->>>>>>> main
     }
 
 
@@ -159,11 +144,7 @@ async def get_balance_sheet(db: AsyncSession, as_of_date: date) -> dict:
         entry = {
             "code": row["account"].code,
             "name": row["account"].name,
-<<<<<<< HEAD
-            "balance": str(balance),
-=======
             "balance": f"{balance:.2f}",
->>>>>>> main
         }
         t = row["account"].type
         if t == "asset":
@@ -179,19 +160,11 @@ async def get_balance_sheet(db: AsyncSession, as_of_date: date) -> dict:
     return {
         "as_of_date": as_of_date.isoformat(),
         "assets": assets,
-<<<<<<< HEAD
-        "total_assets": str(total_assets),
-        "liabilities": liabilities,
-        "total_liabilities": str(total_liabilities),
-        "equity": equity,
-        "total_equity": str(total_equity),
-=======
         "total_assets": f"{total_assets:.2f}",
         "liabilities": liabilities,
         "total_liabilities": f"{total_liabilities:.2f}",
         "equity": equity,
         "total_equity": f"{total_equity:.2f}",
->>>>>>> main
         "balanced": abs(total_assets - (total_liabilities + total_equity)) < Decimal("0.01"),
     }
 
@@ -206,11 +179,7 @@ def balance_sheet_to_csv(bs: dict) -> str:
         rows.append([e["code"], e["name"], "Equity", e["balance"]])
     rows.append(["", "Total Assets", "", bs["total_assets"]])
     rows.append(["", "Total Liabilities + Equity", "",
-<<<<<<< HEAD
-                 str(Decimal(bs["total_liabilities"]) + Decimal(bs["total_equity"]))])
-=======
                  f"{Decimal(bs['total_liabilities']) + Decimal(bs['total_equity']):.2f}"])
->>>>>>> main
     return _rows_to_csv(["Code", "Name", "Type", "Balance"], rows)
 
 
@@ -230,24 +199,14 @@ async def get_trial_balance(db: AsyncSession, as_of_date: date) -> dict:
         tb_rows.append({
             "code": row["account"].code,
             "name": row["account"].name,
-<<<<<<< HEAD
-            "debit_balance": _fmt(debit_bal),
-            "credit_balance": _fmt(credit_bal),
-=======
             "debit_balance": f"{debit_bal:.2f}",
             "credit_balance": f"{credit_bal:.2f}",
->>>>>>> main
         })
     return {
         "as_of_date": as_of_date.isoformat(),
         "rows": tb_rows,
-<<<<<<< HEAD
-        "total_debit": str(total_debit),
-        "total_credit": str(total_credit),
-=======
         "total_debit": f"{total_debit:.2f}",
         "total_credit": f"{total_credit:.2f}",
->>>>>>> main
         "balanced": abs(total_debit - total_credit) < Decimal("0.01"),
     }
 
@@ -265,10 +224,6 @@ async def get_cash_flow(db: AsyncSession, start_date: date, end_date: date) -> d
     Direct method cash flow:
     - Cash in:  invoice payments received in the period (InvoicePayment.payment_date)
     - Cash out: paid expenses incurred in the period (Expense.date where payment_status='paid')
-<<<<<<< HEAD
-    Note: Expense.date is used as the cash-out date since Expense has no separate payment_date column.
-=======
->>>>>>> main
     """
     cash_in = Decimal(str(await db.scalar(
         select(func.coalesce(func.sum(InvoicePayment.amount), Decimal("0"))).where(
@@ -286,15 +241,9 @@ async def get_cash_flow(db: AsyncSession, start_date: date, end_date: date) -> d
     return {
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
-<<<<<<< HEAD
-        "cash_collected": str(cash_in),
-        "cash_spent": str(cash_out),
-        "net_change": str(cash_in - cash_out),
-=======
         "cash_collected": f"{cash_in:.2f}",
         "cash_spent": f"{cash_out:.2f}",
         "net_change": f"{cash_in - cash_out:.2f}",
->>>>>>> main
     }
 
 
@@ -331,17 +280,10 @@ async def get_tax_summary(db: AsyncSession, start_date: date, end_date: date) ->
     return {
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
-<<<<<<< HEAD
-        "taxable_revenue": str(taxable_revenue),
-        "deductible_expenses": {k: str(v) for k, v in deductible_expenses.items()},
-        "total_deductible_expenses": str(total_deductible),
-        "net_taxable_income": str(taxable_revenue - total_deductible),
-=======
         "taxable_revenue": f"{taxable_revenue:.2f}",
         "deductible_expenses": {k: f"{v:.2f}" for k, v in deductible_expenses.items()},
         "total_deductible_expenses": f"{total_deductible:.2f}",
         "net_taxable_income": f"{taxable_revenue - total_deductible:.2f}",
->>>>>>> main
     }
 
 
@@ -358,11 +300,6 @@ def tax_summary_to_csv(ts: dict) -> str:
 async def get_ar_aging(db: AsyncSession, as_of_date: date) -> dict:
     """
     Group outstanding invoices (status=sent/partially_paid, balance_due>0) by days overdue.
-<<<<<<< HEAD
-    Days overdue = (as_of_date - due_date). Uses due_date if set, else invoice created_at.date().
-    Buckets: current (≤0), 1_30 (1-30), 31_60 (31-60), 61_90 (61-90), over_90 (>90).
-=======
->>>>>>> main
     """
     q = (
         select(Invoice, Client)
@@ -378,25 +315,17 @@ async def get_ar_aging(db: AsyncSession, as_of_date: date) -> dict:
         "current": [], "1_30": [], "31_60": [], "61_90": [], "over_90": []
     }
     for invoice, client in result.all():
-<<<<<<< HEAD
-        reference_date = invoice.due_date or invoice.created_at.date()
-=======
         if invoice.due_date is not None:
             reference_date = invoice.due_date
         elif invoice.created_at is not None:
             reference_date = invoice.created_at.date()
         else:
             reference_date = date.today()
->>>>>>> main
         days_overdue = (as_of_date - reference_date).days
         entry = {
             "invoice_id": str(invoice.id),
             "client_name": client.name,
-<<<<<<< HEAD
-            "balance": _fmt(Decimal(str(invoice.balance_due))),
-=======
             "balance": f"{Decimal(str(invoice.balance_due)):.2f}",
->>>>>>> main
             "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
             "days_overdue": days_overdue,
         }

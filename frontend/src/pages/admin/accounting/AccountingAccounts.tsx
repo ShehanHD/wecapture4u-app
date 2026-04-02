@@ -1,24 +1,14 @@
-<<<<<<< HEAD
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react'
-=======
 // frontend/src/pages/admin/accounting/AccountingAccounts.tsx
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Check, X, BookOpen } from 'lucide-react'
->>>>>>> main
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-<<<<<<< HEAD
-import { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } from '@/hooks/useAccounting'
-=======
 import { AccountLedgerPanel } from '@/components/accounting/AccountLedgerPanel'
 import { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } from '@/hooks/useAccounting'
 import { SkeletonRow } from '@/components/ui/skeleton'
->>>>>>> main
 import type { AccountOut } from '@/schemas/accounting'
 
 const TYPE_COLORS: Record<string, string> = {
@@ -41,12 +31,8 @@ export function AccountingAccounts() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
-<<<<<<< HEAD
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
-=======
   const [deleteTarget, setDeleteTarget] = useState<AccountOut | null>(null)
   const [ledgerAccount, setLedgerAccount] = useState<AccountOut | null>(null)
->>>>>>> main
   const [newForm, setNewForm] = useState<NewAccountForm>({
     code: '', name: '', type: 'asset', normal_balance: 'debit',
   })
@@ -85,11 +71,7 @@ export function AccountingAccounts() {
   async function handleDelete(id: string) {
     try {
       await deleteMutation.mutateAsync(id)
-<<<<<<< HEAD
-      setDeleteConfirmId(null)
-=======
       setDeleteTarget(null)
->>>>>>> main
       toast.success('Account deleted')
     } catch {
       toast.error('Failed to delete account — it may be in use')
@@ -126,14 +108,6 @@ export function AccountingAccounts() {
         <div className="rounded-lg border border-border bg-card/50 p-4 space-y-3">
           <h3 className="text-sm font-medium">New Account</h3>
           <div className="grid grid-cols-2 gap-3">
-<<<<<<< HEAD
-            <Input placeholder="Code (e.g. 4100)" value={newForm.code} onChange={e => setNewForm(f => ({ ...f, code: e.target.value }))} />
-            <Input placeholder="Account name" value={newForm.name} onChange={e => setNewForm(f => ({ ...f, name: e.target.value }))} />
-            <select
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-              value={newForm.type}
-              onChange={e => setNewForm(f => ({ ...f, type: e.target.value, normal_balance: typeNormalBalance[e.target.value] ?? 'debit' }))}
-=======
             <Input
               placeholder="Code (e.g. 4100)"
               value={newForm.code}
@@ -152,7 +126,6 @@ export function AccountingAccounts() {
                 type: e.target.value,
                 normal_balance: typeNormalBalance[e.target.value] ?? 'debit',
               }))}
->>>>>>> main
             >
               <option value="asset">Asset</option>
               <option value="liability">Liability</option>
@@ -170,28 +143,20 @@ export function AccountingAccounts() {
             </select>
           </div>
           <div className="flex gap-2">
-<<<<<<< HEAD
-            <Button size="sm" onClick={handleCreate} disabled={!newForm.code || !newForm.name || createMutation.isPending}>Save</Button>
-=======
             <Button size="sm" onClick={handleCreate} disabled={!newForm.code || !newForm.name || createMutation.isPending}>
               Save
             </Button>
->>>>>>> main
             <Button size="sm" variant="ghost" onClick={() => setShowAddForm(false)}>Cancel</Button>
           </div>
         </div>
       )}
 
       {isLoading ? (
-<<<<<<< HEAD
-        <p className="text-sm text-muted-foreground">Loading…</p>
-=======
         <div className="rounded-lg border border-border overflow-hidden">
           <table className="w-full text-sm">
             <tbody>{Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} cols={5} />)}</tbody>
           </table>
         </div>
->>>>>>> main
       ) : (
         <div className="rounded-lg border border-border overflow-hidden">
           <table className="w-full text-sm">
@@ -211,11 +176,6 @@ export function AccountingAccounts() {
                   <td className="px-4 py-2">
                     {editingId === acct.id ? (
                       <div className="flex items-center gap-2">
-<<<<<<< HEAD
-                        <Input className="h-7 text-sm" value={editName} onChange={e => setEditName(e.target.value)} autoFocus />
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleUpdate(acct.id)}><Check className="h-3 w-3" /></Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingId(null)}><X className="h-3 w-3" /></Button>
-=======
                         <Input
                           className="h-7 text-sm"
                           value={editName}
@@ -228,7 +188,6 @@ export function AccountingAccounts() {
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingId(null)}>
                           <X className="h-3 w-3" />
                         </Button>
->>>>>>> main
                       </div>
                     ) : (
                       <span>
@@ -243,10 +202,6 @@ export function AccountingAccounts() {
                   <td className="px-4 py-2 text-xs text-muted-foreground capitalize">{acct.normal_balance}</td>
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1 justify-end">
-<<<<<<< HEAD
-                      {!acct.is_system && editingId !== acct.id && (
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditingId(acct.id); setEditName(acct.name) }}>
-=======
                       {editingId !== acct.id && (
                         <Button
                           size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground"
@@ -260,33 +215,21 @@ export function AccountingAccounts() {
                           size="icon" variant="ghost" className="h-7 w-7"
                           onClick={() => { setEditingId(acct.id); setEditName(acct.name) }}
                         >
->>>>>>> main
                           <Pencil className="h-3 w-3" />
                         </Button>
                       )}
                       {!acct.is_system && (
-<<<<<<< HEAD
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground" onClick={() => handleArchive(acct)}>
-=======
                         <Button
                           size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground"
                           onClick={() => handleArchive(acct)}
                         >
->>>>>>> main
                           {acct.archived ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                         </Button>
                       )}
                       {!acct.is_system && (
                         <Button
-<<<<<<< HEAD
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-destructive"
-                          onClick={() => setDeleteConfirmId(acct.id)}
-=======
                           size="icon" variant="ghost" className="h-7 w-7 text-destructive"
                           onClick={() => setDeleteTarget(acct)}
->>>>>>> main
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -301,15 +244,6 @@ export function AccountingAccounts() {
       )}
 
       <ConfirmDialog
-<<<<<<< HEAD
-        open={deleteConfirmId !== null}
-        onOpenChange={open => { if (!open) setDeleteConfirmId(null) }}
-        title="Delete account"
-        description="This will permanently delete the account. This cannot be undone."
-        confirmLabel="Delete"
-        destructive
-        onConfirm={() => { if (deleteConfirmId) void handleDelete(deleteConfirmId) }}
-=======
         open={!!deleteTarget}
         onOpenChange={open => { if (!open) setDeleteTarget(null) }}
         title="Delete account"
@@ -320,7 +254,6 @@ export function AccountingAccounts() {
       <AccountLedgerPanel
         account={ledgerAccount}
         onClose={() => setLedgerAccount(null)}
->>>>>>> main
       />
     </div>
   )
