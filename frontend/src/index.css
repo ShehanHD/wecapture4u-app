@@ -61,6 +61,17 @@
     --sidebar-accent-foreground: #1d1d1f;
     --sidebar-border: #d2d2d7;
     --sidebar-ring: rgba(139, 92, 246, 0.4);
+
+    /* ── Public site palette ─────────────────────────── */
+    --pub-navy:      #0a0e2e;
+    --pub-navy-deep: #060810;
+    --pub-navy-mid:  #1a3468;
+    --pub-accent:    #4d79ff;
+    --pub-accent-lt: #7aa5ff;
+    --pub-light:     #f8f9ff;
+    --pub-card:      #ffffff;
+    --pub-border:    #e0e8ff;
+    --pub-muted:     #778899;
   }
 
   .dark {
