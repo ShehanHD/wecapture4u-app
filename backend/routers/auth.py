@@ -9,7 +9,9 @@ from webauthn import verify_registration_response, verify_authentication_respons
 from webauthn.helpers.exceptions import InvalidCBORData, InvalidAuthenticatorDataStructure
 
 from database import get_db
-from models.user import User, PasswordResetToken
+from models.user import User, PasswordResetToken, UserRole
+from models.client import Client
+from models.email_verification import EmailVerificationToken
 from models.auth import RefreshToken, WebAuthnCredential
 from schemas.auth import (
     LoginRequest, TokenResponse, RefreshRequest,
@@ -17,7 +19,9 @@ from schemas.auth import (
     WebAuthnDeviceCheckResponse, WebAuthnCredentialResponse,
     WebAuthnAuthenticateOptionsRequest, WebAuthnRegisterVerifyRequest,
     WebAuthnAuthenticateVerifyRequest,
+    RegisterRequest, ResendVerificationRequest,
 )
+from services.registration import issue_verification_token, send_verification_email
 from services.auth import (
     verify_password, create_access_token, generate_opaque_token,
     hash_token, refresh_token_expiry, send_password_reset_email, hash_password,
@@ -38,6 +42,11 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)) -> Token
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     if not user.is_active:
+        if user.role == UserRole.client:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Please verify your email before signing in.",
+            )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your account has been deactivated. Contact support.",
@@ -169,6 +178,100 @@ async def reset_password(body: ResetPasswordRequest, db: AsyncSession = Depends(
 
     return {"message": "Password updated successfully."}
 
+
+@router.post("/register", status_code=status.HTTP_202_ACCEPTED)
+async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)) -> dict:
+    """Public self-registration. Always returns 202 (no email enumeration)."""
+    result = await db.execute(select(User).where(User.email == body.email))
+    existing = result.scalar_one_or_none()
+
+    if existing:
+        if existing.is_active:
+            # Already verified — silent no-op
+            return {"message": "If that email is new, a verification link has been sent."}
+        # Unverified — resend a fresh token
+        raw_token = await issue_verification_token(existing.id, db)
+        await db.commit()
+        await send_verification_email(existing.email, raw_token)
+        return {"message": "If that email is new, a verification link has been sent."}
+
+    user = User(
+        email=body.email,
+        hashed_password=hash_password(body.password),
+        role=UserRole.client,
+        full_name=body.full_name,
+        phone=body.phone,
+        is_active=False,
+    )
+    db.add(user)
+    await db.flush()  # get user.id
+
+    client = Client(
+        user_id=user.id,
+        name=body.full_name,
+        email=body.email,
+        phone=body.phone,
+    )
+    db.add(client)
+
+    raw_token = await issue_verification_token(user.id, db)
+    await db.commit()
+    await send_verification_email(body.email, raw_token)
+    return {"message": "If that email is new, a verification link has been sent."}
+
+
+@router.get("/verify-email", status_code=status.HTTP_200_OK)
+async def verify_email(token: str, db: AsyncSession = Depends(get_db)) -> dict:
+    """Verify a client's email using the token from the verification link."""
+    token_hash = hash_token(token)
+    now = datetime.now(timezone.utc)
+
+    result = await db.execute(
+        select(EmailVerificationToken).where(
+            EmailVerificationToken.token_hash == token_hash,
+        )
+    )
+    stored = result.scalar_one_or_none()
+
+    if stored is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or already used verification link.",
+        )
+
+    if stored.expires_at < now:
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="Verification link has expired.",
+        )
+
+    if stored.used_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or already used verification link.",
+        )
+
+    await db.execute(
+        update(User).where(User.id == stored.user_id).values(is_active=True)
+    )
+    stored.used_at = now
+    await db.commit()
+
+    return {"message": "Email verified. You can now sign in."}
+
+
+@router.post("/resend-verification", status_code=status.HTTP_202_ACCEPTED)
+async def resend_verification(body: ResendVerificationRequest, db: AsyncSession = Depends(get_db)) -> dict:
+    """Resend verification email. Always returns 202 (no email enumeration)."""
+    result = await db.execute(select(User).where(User.email == body.email))
+    user = result.scalar_one_or_none()
+
+    if user and not user.is_active:
+        raw_token = await issue_verification_token(user.id, db)
+        await db.commit()
+        await send_verification_email(user.email, raw_token)
+
+    return {"message": "If that email is pending verification, a new link has been sent."}
 
 
 class ChallengeStore:
