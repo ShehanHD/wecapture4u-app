@@ -1,8 +1,11 @@
 from __future__ import annotations
+import logging
 from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, UploadFile
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import delete as sqldel, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -108,8 +111,8 @@ async def submit_contact(db: DbDep, data: ContactSubmissionCreate):
                     f"<p>{data.message}</p>"
                 ),
             )
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.error("Failed to send contact form notification email: %s", exc)
     return {"id": str(sub.id)}
 
 

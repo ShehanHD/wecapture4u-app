@@ -26,7 +26,7 @@ async def test_create_notification_inserts_row():
 
 
 @pytest.mark.asyncio
-async def test_create_notification_calls_resend_when_send_email_true():
+async def test_create_notification_sends_email_when_send_email_true():
     db = AsyncMock(spec=AsyncSession)
 
     with patch("services.email.send_email", new_callable=AsyncMock) as mock_send:

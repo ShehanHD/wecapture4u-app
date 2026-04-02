@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     CLIENT_REFRESH_TOKEN_EXPIRE_HOURS: int = 24
     SMTP_HOST: str = "smtp.hostinger.com"
     SMTP_PORT: int = 465
-    SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
+    SMTP_USER: str
+    SMTP_PASSWORD: str
     SMTP_FROM_EMAIL: str = "noreply@wecapture4u.com"
     SUPABASE_URL: str
     SUPABASE_SERVICE_KEY: str
