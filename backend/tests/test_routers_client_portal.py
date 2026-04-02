@@ -299,6 +299,7 @@ async def test_list_booking_requests(
         client_id=client_record.id,
         preferred_date=date(2026, 9, 1),
         time_slot="afternoon",
+        session_slots=[],
     )
     db_session.add(req)
     await db_session.flush()

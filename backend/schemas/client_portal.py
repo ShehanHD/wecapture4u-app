@@ -75,5 +75,5 @@ class ClientBookingRequestSlotCreate(BaseModel):
 
 
 class ClientBookingRequestCreate(BaseModel):
-    session_slots: list[ClientBookingRequestSlotCreate]
+    session_slots: list[ClientBookingRequestSlotCreate] = Field(min_length=1)
     message: Optional[str] = None
