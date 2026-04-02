@@ -230,7 +230,6 @@ async def list_contact_submissions(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
-    import asyncio
     from sqlalchemy import func
     q = (
         select(ContactSubmission)
@@ -238,10 +237,8 @@ async def list_contact_submissions(
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
-    items_result, total_result = await asyncio.gather(
-        db.execute(q),
-        db.execute(select(func.count()).select_from(ContactSubmission)),
-    )
+    items_result = await db.execute(q)
+    total_result = await db.execute(select(func.count()).select_from(ContactSubmission))
     items = items_result.scalars().all()
     total = total_result.scalar_one()
     return {
