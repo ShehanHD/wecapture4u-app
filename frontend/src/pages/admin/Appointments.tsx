@@ -722,8 +722,6 @@ function RequestsTab({ onConfirm }: { onConfirm: (r: BookingRequest) => void }) 
 
   const FILTERS = ['pending', 'confirmed', 'rejected'] as const
 
-  if (isLoading) return null
-
   return (
     <div className="space-y-4">
       {/* Status filter */}
@@ -741,7 +739,13 @@ function RequestsTab({ onConfirm }: { onConfirm: (r: BookingRequest) => void }) 
 
       {/* Table */}
       <div className="rounded-xl bg-card border overflow-hidden">
-        {requests.length === 0 ? (
+        {isLoading ? (
+          <div className="p-6 space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-10 rounded-lg bg-muted animate-pulse" />
+            ))}
+          </div>
+        ) : requests.length === 0 ? (
           <p className="p-6 text-sm text-center text-muted-foreground">No {statusFilter} requests.</p>
         ) : (
           <table className="w-full text-sm">
