@@ -94,7 +94,7 @@ function JobCard({ job }: { job: Job }) {
 }
 
 // --- Droppable Kanban Column ---
-const AUTO_COLLAPSE_STAGES = ['Archived', 'Delivered', 'Arrived']
+const AUTO_COLLAPSE_STAGES = ['Archived', 'Delivered', 'Arrived', 'Dispatched']
 
 function KanbanColumn({ stage, jobs }: { stage: JobStage; jobs: Job[] }) {
   const [collapsed, setCollapsed] = useState(() => AUTO_COLLAPSE_STAGES.includes(stage.name))
