@@ -23,10 +23,12 @@ class AppSettingsUpdate(BaseModel):
 
 class SessionTypeCreate(BaseModel):
     name: str
+    available_days: list[int] = []
 
 
 class SessionTypeUpdate(BaseModel):
-    name: str
+    name: Optional[str] = None
+    available_days: Optional[list[int]] = None
 
 
 class SessionTypeOut(BaseModel):
@@ -34,4 +36,5 @@ class SessionTypeOut(BaseModel):
 
     id: uuid.UUID
     name: str
+    available_days: list[int]
     created_at: datetime

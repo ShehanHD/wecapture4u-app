@@ -34,6 +34,9 @@ async def get_about_settings(db: DbDep, admin: AdminDep):
         facebook_url=settings.facebook_url,
         contact_headline=settings.contact_headline,
         contact_email=settings.contact_email,
+        meta_title=settings.meta_title,
+        meta_description=settings.meta_description,
+        og_image_url=settings.og_image_url,
     )
 
 
@@ -77,12 +80,16 @@ async def list_session_types(db: DbDep):
 
 @router.post("/session-types", response_model=SessionTypeOut, status_code=201)
 async def create_session_type(body: SessionTypeCreate, db: DbDep, _: AdminDep):
-    return await settings_svc.create_session_type(db, name=body.name)
+    return await settings_svc.create_session_type(
+        db, name=body.name, available_days=body.available_days
+    )
 
 
 @router.patch("/session-types/{id}", response_model=SessionTypeOut)
 async def update_session_type(id: uuid.UUID, body: SessionTypeUpdate, db: DbDep, _: AdminDep):
-    return await settings_svc.update_session_type(db, id=id, name=body.name)
+    return await settings_svc.update_session_type(
+        db, id=id, name=body.name, available_days=body.available_days
+    )
 
 
 @router.delete("/session-types/{id}", status_code=204)
