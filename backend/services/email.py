@@ -29,7 +29,7 @@ def build_email_html(
     cta_section = ""
     if cta_label and cta_url:
         cta_section = f"""
-      <mj-section padding="8px 0 24px">
+      <mj-section background-color="#ffffff" padding="8px 0 24px">
         <mj-column>
           <mj-button
             href="{cta_url}"
@@ -62,15 +62,12 @@ def build_email_html(
     <!-- Logo header -->
     <mj-section padding="32px 0 16px">
       <mj-column>
-        <mj-text
+        <mj-image
+          src="https://wecapture4u.com/logo.png"
+          alt="weCapture4U"
+          width="160px"
           align="center"
-          font-size="22px"
-          font-weight="800"
-          color="#0a0e2e"
-          letter-spacing="-0.02em"
-        >
-          weCapture4U
-        </mj-text>
+        />
       </mj-column>
     </mj-section>
 
