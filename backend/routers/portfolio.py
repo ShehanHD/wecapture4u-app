@@ -1,5 +1,4 @@
 from __future__ import annotations
-import os
 from typing import Annotated, Optional
 from uuid import UUID
 
@@ -22,12 +21,11 @@ from schemas.portfolio import (
     PublicSettingsOut,
 )
 import services.portfolio as portfolio_svc
+from services.email import send_email
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
 DbDep = Annotated[AsyncSession, Depends(get_db)]
 AdminDep = Annotated[object, Depends(require_admin)]
-
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 
 # ─── PUBLIC ENDPOINTS ─────────────────────────────────────────────────────────
 
@@ -90,7 +88,6 @@ async def submit_contact(db: DbDep, data: ContactSubmissionCreate):
     await db.commit()
     # Send email notification (best-effort — never block the response)
     try:
-        import resend
         settings_result = await db.execute(select(AppSettings))
         settings = settings_result.scalar_one_or_none()
         admin_result = await db.execute(
@@ -101,18 +98,16 @@ async def submit_contact(db: DbDep, data: ContactSubmissionCreate):
             (settings.contact_email if settings and settings.contact_email else None)
             or (admin.email if admin else None)
         )
-        if recipient and RESEND_API_KEY:
-            resend.api_key = RESEND_API_KEY
-            resend.Emails.send({
-                "from": "no-reply@wecapture4u.com",
-                "to": recipient,
-                "subject": f"New contact: {data.name}",
-                "html": (
+        if recipient:
+            await send_email(
+                to=recipient,
+                subject=f"New contact: {data.name}",
+                html=(
                     f"<p><strong>From:</strong> {data.name} ({data.email})</p>"
                     f"{f'<p><strong>Phone:</strong> {data.phone}</p>' if data.phone else ''}"
                     f"<p>{data.message}</p>"
                 ),
-            })
+            )
     except Exception:
         pass
     return {"id": str(sub.id)}
