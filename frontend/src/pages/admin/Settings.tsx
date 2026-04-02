@@ -26,6 +26,7 @@ import {
 } from '@/hooks/useSettings'
 import type { JobStage, AlbumStage } from '@/schemas/jobs'
 import type { StagePositionItem } from '@/api/jobs'
+import type { AppSettings } from '@/schemas/settings'
 
 // ─── Sortable stage row ───────────────────────────────────────────────────────
 
@@ -55,6 +56,7 @@ function SortableStageRow({
   useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!editing) setName(stage.name)
   }, [stage.name, editing])
 
@@ -180,6 +182,7 @@ function SortableAlbumStageRow({
   useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!editing) setName(stage.name)
   }, [stage.name, editing])
 
@@ -455,7 +458,9 @@ function AlbumStagesTab() {
 
 // ─── Session Types tab ───────────────────────────────────────────────────────
 
-function SessionTypeRow({ id, name }: { id: string; name: string }) {
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+function SessionTypeRow({ id, name, available_days }: { id: string; name: string; available_days: number[] }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(name)
   const update = useUpdateSessionType()
@@ -463,10 +468,7 @@ function SessionTypeRow({ id, name }: { id: string; name: string }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
-
-  useEffect(() => {
-    if (!editing) setValue(name)
-  }, [name, editing])
+  useEffect(() => { if (!editing) setValue(name) }, [name, editing])
 
   const save = () => {
     if (value.trim() && value !== name) {
@@ -480,34 +482,69 @@ function SessionTypeRow({ id, name }: { id: string; name: string }) {
     if (e.key === 'Escape') { setValue(name); setEditing(false) }
   }
 
+  const toggleDay = (day: number) => {
+    const next = available_days.includes(day)
+      ? available_days.filter((d) => d !== day)
+      : [...available_days, day].sort((a, b) => a - b)
+    update.mutate({ id, available_days: next })
+  }
+
   return (
-    <li className="flex items-center gap-2 py-2 border-b border-border last:border-0">
-      {editing ? (
-        <Input
-          ref={inputRef}
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          onBlur={save}
-          onKeyDown={handleKeyDown}
-          className="h-7 text-sm flex-1"
-        />
-      ) : (
-        <button
-          type="button"
-          className="flex-1 text-left text-sm hover:underline bg-transparent"
-          onClick={() => setEditing(true)}
+    <li className="py-3 border-b border-border last:border-0 space-y-2">
+      <div className="flex items-center gap-2">
+        {editing ? (
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onBlur={save}
+            onKeyDown={handleKeyDown}
+            className="h-7 text-sm flex-1 rounded border border-input bg-input px-2"
+          />
+        ) : (
+          <button
+            type="button"
+            className="flex-1 text-left text-sm hover:underline bg-transparent"
+            onClick={() => setEditing(true)}
+          >
+            {name}
+          </button>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive"
+          onClick={() => del.mutate(id)}
         >
-          {name}
-        </button>
-      )}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-destructive hover:text-destructive"
-        onClick={() => del.mutate(id)}
-      >
-        <Trash2 className="w-4 h-4" />
-      </Button>
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+      <div className="flex gap-1 flex-wrap">
+        {DAY_LABELS.map((label, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => toggleDay(idx)}
+            className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+              available_days.length === 0 || available_days.includes(idx)
+                ? 'bg-brand-solid text-white border-transparent'
+                : 'bg-transparent text-muted-foreground border-border'
+            }`}
+            title={available_days.length === 0 ? 'All days (click to restrict)' : undefined}
+          >
+            {label}
+          </button>
+        ))}
+        {available_days.length > 0 && (
+          <button
+            type="button"
+            onClick={() => update.mutate({ id, available_days: [] })}
+            className="text-xs px-2 py-0.5 text-muted-foreground hover:text-foreground"
+          >
+            Clear
+          </button>
+        )}
+      </div>
     </li>
   )
 }
@@ -526,7 +563,7 @@ function SessionTypesTab() {
     <div className="space-y-4">
       <ul>
         {types.map(t => (
-          <SessionTypeRow key={t.id} id={t.id} name={t.name} />
+          <SessionTypeRow key={t.id} id={t.id} name={t.name} available_days={t.available_days} />
         ))}
       </ul>
       <div className="flex gap-2 pt-2">
@@ -570,12 +607,9 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
 
 // ─── Tax tab ─────────────────────────────────────────────────────────────────
 
-function TaxTab() {
-  const { data: settings } = useAppSettings()
+function TaxTabContent({ settings }: { settings: AppSettings }) {
   const update = useUpdateSettings()
-  const [taxRate, setTaxRate] = useState(settings?.tax_rate ?? '0')
-
-  useEffect(() => { setTaxRate(settings?.tax_rate ?? '0') }, [settings?.tax_rate])
+  const [taxRate, setTaxRate] = useState(settings.tax_rate)
 
   return (
     <div className="space-y-6 max-w-sm">
@@ -585,8 +619,8 @@ function TaxTab() {
           <p className="text-xs text-muted-foreground">Adds a tax line to all invoices</p>
         </div>
         <Toggle
-          checked={settings?.tax_enabled ?? false}
-          onChange={() => update.mutate({ tax_enabled: !settings?.tax_enabled })}
+          checked={settings.tax_enabled}
+          onChange={() => update.mutate({ tax_enabled: !settings.tax_enabled })}
         />
       </div>
 
@@ -598,7 +632,7 @@ function TaxTab() {
           max="100"
           step="0.01"
           value={taxRate}
-          disabled={!settings?.tax_enabled}
+          disabled={!settings.tax_enabled}
           onChange={e => setTaxRate(e.target.value)}
           onBlur={() => update.mutate({ tax_rate: taxRate })}
           className="w-32"
@@ -606,6 +640,12 @@ function TaxTab() {
       </div>
     </div>
   )
+}
+
+function TaxTab() {
+  const { data: settings } = useAppSettings()
+  if (!settings) return null
+  return <TaxTabContent settings={settings} />
 }
 
 // ─── PDF Invoices tab ─────────────────────────────────────────────────────────
