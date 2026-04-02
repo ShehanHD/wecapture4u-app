@@ -1,11 +1,13 @@
-// frontend/src/pages/admin/Inbox.tsx
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
-import { Mail, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Mail, ChevronLeft, ChevronRight, UserPlus, CalendarPlus, ExternalLink, Check } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '@/lib/axios'
 import { Button } from '@/components/ui/button'
+import { ClientSchema } from '@/schemas/clients'
+import { toast } from 'sonner'
 
 const SubmissionSchema = z.object({
   id: z.string(),
@@ -32,16 +34,36 @@ async function fetchSubmissions(page: number) {
   return ResponseSchema.parse(res.data)
 }
 
+async function createClientFromSubmission(s: Submission) {
+  const { data } = await api.post('/api/clients', { name: s.name, email: s.email, phone: s.phone ?? undefined })
+  return ClientSchema.parse(data)
+}
+
 export function Inbox() {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<Submission | null>(null)
+  // Track created clients per submission id
+  const [createdClients, setCreatedClients] = useState<Record<string, string>>({}) // submissionId -> clientId
+  const navigate = useNavigate()
+  const qc = useQueryClient()
 
   const { data, isLoading } = useQuery({
     queryKey: ['contact-submissions', page],
     queryFn: () => fetchSubmissions(page),
   })
 
+  const createClient = useMutation({
+    mutationFn: (s: Submission) => createClientFromSubmission(s),
+    onSuccess: (client, s) => {
+      setCreatedClients(prev => ({ ...prev, [s.id]: client.id }))
+      qc.invalidateQueries({ queryKey: ['clients'] })
+      toast.success(`Client "${client.name}" created`)
+    },
+    onError: () => toast.error('Failed to create client — email may already exist'),
+  })
+
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 1
+  const selectedClientId = selected ? createdClients[selected.id] : undefined
 
   return (
     <div className="space-y-6">
@@ -91,21 +113,11 @@ export function Inbox() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-              <Button
-                size="sm" variant="ghost"
-                disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
-              >
+              <Button size="sm" variant="ghost" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-xs text-muted-foreground">
-                {page} / {totalPages}
-              </span>
-              <Button
-                size="sm" variant="ghost"
-                disabled={page === totalPages}
-                onClick={() => setPage(p => p + 1)}
-              >
+              <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
+              <Button size="sm" variant="ghost" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -116,6 +128,7 @@ export function Inbox() {
         <div className="lg:col-span-2">
           {selected ? (
             <div className="rounded-lg border border-border bg-card p-6 space-y-5">
+              {/* Header */}
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-base font-semibold text-foreground">{selected.name}</h2>
@@ -125,17 +138,23 @@ export function Inbox() {
                   >
                     {selected.email}
                   </a>
+                  {selected.phone && (
+                    <p className="text-sm text-muted-foreground">{selected.phone}</p>
+                  )}
                 </div>
                 <span className="text-xs text-muted-foreground shrink-0">
                   {formatDistanceToNow(new Date(selected.created_at), { addSuffix: true })}
                 </span>
               </div>
 
+              {/* Message */}
               <div className="border-t border-border pt-5">
                 <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{selected.message}</p>
               </div>
 
-              <div className="pt-2">
+              {/* Actions */}
+              <div className="border-t border-border pt-4 flex flex-wrap gap-2">
+                {/* Reply */}
                 <a
                   href={`mailto:${selected.email}?subject=Re: Your enquiry`}
                   className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg bg-brand-subtle text-brand-solid hover:opacity-80 transition-opacity"
@@ -143,6 +162,42 @@ export function Inbox() {
                   <Mail className="h-4 w-4" />
                   Reply by email
                 </a>
+
+                {/* Create client */}
+                {selectedClientId ? (
+                  <Link
+                    to={`/admin/clients/${selectedClientId}`}
+                    className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:opacity-80 transition-opacity"
+                  >
+                    <Check className="h-4 w-4" />
+                    View client
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={createClient.isPending}
+                    onClick={() => createClient.mutate(selected)}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Create client
+                  </Button>
+                )}
+
+                {/* Book appointment — only available once client exists */}
+                {selectedClientId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => navigate(`/admin/appointments?client_id=${selectedClientId}`)}
+                  >
+                    <CalendarPlus className="h-4 w-4" />
+                    Book appointment
+                  </Button>
+                )}
               </div>
             </div>
           ) : (

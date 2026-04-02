@@ -24,6 +24,7 @@ import type { Appointment } from '@/schemas/appointments'
 import type { Client } from '@/schemas/clients'
 import type { BookingRequest } from '@/schemas/bookingRequests'
 import { SkeletonRow } from '@/components/ui/skeleton'
+import { useSearchParams } from 'react-router-dom'
 
 const localizer = dateFnsLocalizer({
   format,
@@ -841,10 +842,13 @@ function RequestsTab({ onConfirm }: { onConfirm: (r: BookingRequest) => void }) 
 }
 
 export function Appointments() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const prefillClientId = searchParams.get('client_id')
+
   const [view, setView] = useState<'calendar' | 'list'>('calendar')
   const [calendarView, setCalendarView] = useState<View>('month')
   const [calendarDate, setCalendarDate] = useState(new Date())
-  const [modalOpen, setModalOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(() => !!prefillClientId)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Appointment | null>(null)
 
@@ -1076,9 +1080,9 @@ export function Appointments() {
 
       <AppointmentModal
         open={modalOpen}
-        onClose={() => { setModalOpen(false); setConfirmingRequest(null) }}
+        onClose={() => { setModalOpen(false); setConfirmingRequest(null); setSearchParams({}) }}
         appointment={editingAppointment}
-        prefill={requestPrefill}
+        prefill={requestPrefill ?? (prefillClientId ? { client_id: prefillClientId } : undefined)}
         onCreated={confirmingRequest ? handleAppointmentCreated : undefined}
         onDelete={(a) => setDeleteTarget(a)}
       />
