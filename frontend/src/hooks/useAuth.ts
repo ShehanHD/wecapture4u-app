@@ -1,9 +1,11 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { auth } from '@/lib/auth'
 import apiClient from '@/lib/axios'
 import { queryClient } from '@/lib/queryClient'
+import { registerClient, verifyEmail, resendVerification, type RegisterPayload } from '@/api/auth'
 
 export function useAuth() {
   const navigate = useNavigate()
@@ -60,4 +62,26 @@ export function useAuth() {
     loginWithBiometric,
     registerBiometric,
   }
+}
+
+export function useRegister() {
+  return useMutation({
+    mutationFn: (data: RegisterPayload) => registerClient(data),
+  })
+}
+
+export function useVerifyEmail(token: string | null) {
+  return useQuery({
+    queryKey: ['verify-email', token],
+    queryFn: () => verifyEmail(token!),
+    enabled: !!token,
+    retry: false,
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (email: string) => resendVerification(email),
+  })
 }
