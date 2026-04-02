@@ -86,6 +86,7 @@ export function Inbox() {
       qc.invalidateQueries({ queryKey: ['contact-submissions'] })
       if (selected && checkedIds.has(selected.id)) setSelected(null)
       setCheckedIds(new Set())
+      setConfirmBatchDelete(false)
       toast.success(`Deleted ${checkedIds.size} submission${checkedIds.size !== 1 ? 's' : ''}`)
     },
     onError: () => toast.error('Failed to delete submissions'),
