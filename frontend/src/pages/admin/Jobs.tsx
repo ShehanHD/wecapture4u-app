@@ -147,7 +147,7 @@ function KanbanColumn({ stage, jobs }: { stage: JobStage; jobs: Job[] }) {
 
 // --- Droppable Album Kanban Column ---
 function AlbumKanbanColumn({ stage, jobs }: { stage: AlbumStage; jobs: Job[] }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => AUTO_COLLAPSE_STAGES.includes(stage.name))
   const { setNodeRef, isOver } = useDroppable({ id: stage.id })
 
   if (collapsed) {
