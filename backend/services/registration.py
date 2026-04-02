@@ -39,17 +39,14 @@ async def send_verification_email(to_email: str, raw_token: str) -> None:
     """Send the email-verification link. Failures are logged, not raised."""
     frontend_url = settings.ALLOWED_ORIGINS.split(",")[0].strip() if settings.ALLOWED_ORIGINS else "http://localhost:5173"
     verify_url = f"{frontend_url}/client/verify-email?token={raw_token}"
-    try:
-        await send_email(
-            to=to_email,
-            subject="Verify your email — weCapture4U",
-            html=f"""
-                <p>Thanks for registering with weCapture4U!</p>
-                <p>Please verify your email address by clicking the link below.
-                   This link expires in 24 hours.</p>
-                <p><a href="{verify_url}">Verify my email</a></p>
-                <p>If you didn't create an account, you can safely ignore this email.</p>
-            """,
-        )
-    except Exception as exc:
-        logger.error("Failed to send verification email to %s: %s", to_email, exc)
+    await send_email(
+        to=to_email,
+        subject="Verify your email — weCapture4U",
+        html=f"""
+            <p>Thanks for registering with weCapture4U!</p>
+            <p>Please verify your email address by clicking the link below.
+               This link expires in 24 hours.</p>
+            <p><a href="{verify_url}">Verify my email</a></p>
+            <p>If you didn't create an account, you can safely ignore this email.</p>
+        """,
+    )
