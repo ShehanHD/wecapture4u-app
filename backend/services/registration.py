@@ -5,6 +5,7 @@ for the client self-registration flow.
 from __future__ import annotations
 
 import logging
+import uuid
 from datetime import datetime, timezone, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 VERIFICATION_TOKEN_TTL_HOURS = 24
 
 
-async def issue_verification_token(user_id, db: AsyncSession) -> str:
+async def issue_verification_token(user_id: uuid.UUID, db: AsyncSession) -> str:
     """Delete any existing tokens for user, create a fresh one, return the raw token."""
     await db.execute(
         delete(EmailVerificationToken).where(EmailVerificationToken.user_id == user_id)
