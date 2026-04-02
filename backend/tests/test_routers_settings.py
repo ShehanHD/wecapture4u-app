@@ -74,6 +74,7 @@ async def test_session_type_available_days(test_client: AsyncClient, admin_auth_
     )
     assert resp2.status_code == 200
     assert resp2.json()["available_days"] == [5, 6]
+    assert resp2.json()["name"] == "Newborn"  # name preserved after partial update
 
     # List returns available_days
     resp3 = await test_client.get("/api/session-types", headers=admin_auth_headers)

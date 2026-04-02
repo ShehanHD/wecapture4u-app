@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AppSettingsOut(BaseModel):
@@ -23,12 +23,26 @@ class AppSettingsUpdate(BaseModel):
 
 class SessionTypeCreate(BaseModel):
     name: str
-    available_days: list[int] = []
+    available_days: list[int] = Field(default_factory=list)
+
+    @field_validator("available_days")
+    @classmethod
+    def validate_day_range(cls, v: list[int]) -> list[int]:
+        if any(d < 0 or d > 6 for d in v):
+            raise ValueError("available_days values must be 0-6 (0=Monday, 6=Sunday)")
+        return v
 
 
 class SessionTypeUpdate(BaseModel):
     name: Optional[str] = None
     available_days: Optional[list[int]] = None
+
+    @field_validator("available_days")
+    @classmethod
+    def validate_day_range(cls, v: Optional[list[int]]) -> Optional[list[int]]:
+        if v is not None and any(d < 0 or d > 6 for d in v):
+            raise ValueError("available_days values must be 0-6 (0=Monday, 6=Sunday)")
+        return v
 
 
 class SessionTypeOut(BaseModel):
