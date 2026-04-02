@@ -22,7 +22,7 @@ export const AppointmentSchema = z.object({
   client_id: z.string().uuid(),
   session_slots: z.array(SessionSlotSchema),
   session_type_ids: z.array(z.string().uuid()),   // derived, kept for calendar
-  session_time: z.enum(['morning', 'afternoon', 'evening']).nullable(),  // legacy
+  session_time: z.string().nullable(),  // legacy
   session_types: z.array(SessionTypeSummarySchema),
   title: z.string(),
   starts_at: z.string(),
