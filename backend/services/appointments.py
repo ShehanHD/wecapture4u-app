@@ -1,6 +1,6 @@
 import uuid
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import HTTPException
@@ -11,6 +11,35 @@ from models.session_type import SessionType
 from schemas.appointments import AppointmentOut, SessionTypeSummary
 
 logger = logging.getLogger(__name__)
+
+
+def _compute_starts_at(slots: list[dict]) -> datetime:
+    """Return the earliest slot date as a UTC midnight datetime."""
+    if not slots:
+        return datetime.now(tz=timezone.utc)
+    dates = sorted(slot["date"] for slot in slots)
+    d = dates[0]  # "YYYY-MM-DD" string
+    return datetime.fromisoformat(f"{d}T00:00:00+00:00")
+
+
+def _compute_session_type_ids(slots: list[dict]) -> list[uuid.UUID]:
+    return [uuid.UUID(str(slot["session_type_id"])) for slot in slots]
+
+
+def _slots_to_dicts(slots: list) -> list[dict]:
+    """Convert SessionSlot pydantic models or dicts to JSON-serialisable dicts."""
+    result = []
+    for s in slots:
+        if hasattr(s, "model_dump"):
+            d = s.model_dump()
+            d["session_type_id"] = str(d["session_type_id"])
+            d["date"] = str(d["date"])
+        else:
+            d = dict(s)
+            d["session_type_id"] = str(d["session_type_id"])
+            d["date"] = str(d["date"])
+        result.append(d)
+    return result
 
 
 async def _auto_create_job(db: AsyncSession, appt: "Appointment") -> None:
@@ -96,6 +125,8 @@ async def _resolve_session_types(db: AsyncSession, ids: list[uuid.UUID]) -> list
 
 async def _to_out(db: AsyncSession, appt: Appointment) -> AppointmentOut:
     out = AppointmentOut.model_validate(appt)
+    from schemas.appointments import SessionSlot
+    out.session_slots = [SessionSlot.model_validate(s) for s in (appt.session_slots or [])]
     out.session_types = await _resolve_session_types(db, appt.session_type_ids or [])
     return out
 
@@ -140,6 +171,15 @@ async def get_appointment_orm(db: AsyncSession, *, id: uuid.UUID) -> Appointment
 
 
 async def create_appointment(db: AsyncSession, *, data: dict) -> AppointmentOut:
+    slots_raw = data.pop("session_slots", [])
+    slots_dicts = _slots_to_dicts(slots_raw)
+    data["session_slots"] = slots_dicts
+    data["starts_at"] = _compute_starts_at(slots_dicts)
+    data["session_type_ids"] = _compute_session_type_ids(slots_dicts)
+    # Remove legacy fields that may come from old clients
+    data.pop("session_time", None)
+    data.pop("ends_at", None)
+
     appt = Appointment(**data)
     db.add(appt)
     await db.flush()
@@ -157,6 +197,12 @@ async def update_appointment(
     previous_status = appt.status
     new_status = data.get("status")
     old_addons = set(appt.addons or [])
+
+    if "session_slots" in data and data["session_slots"] is not None:
+        slots_dicts = _slots_to_dicts(data["session_slots"])
+        data["session_slots"] = slots_dicts
+        data["starts_at"] = _compute_starts_at(slots_dicts)
+        data["session_type_ids"] = _compute_session_type_ids(slots_dicts)
 
     for key, value in data.items():
         if value is not None:

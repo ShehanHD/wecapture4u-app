@@ -1,22 +1,23 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date as date_type
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, ConfigDict, field_validator
 
 VALID_STATUSES = {"pending", "confirmed", "cancelled"}
 VALID_ADDONS = {"album", "thank_you_card", "enlarged_photos"}
 
 
-VALID_SESSION_TIMES = {"morning", "afternoon", "evening"}
+class SessionSlot(BaseModel):
+    session_type_id: uuid.UUID
+    date: date_type
+    time_slot: Literal["morning", "afternoon", "evening", "all_day"]
+
 
 class AppointmentCreate(BaseModel):
     client_id: uuid.UUID
-    session_type_ids: list[uuid.UUID] = []
-    session_time: Optional[str] = None
     title: str
-    starts_at: datetime
-    ends_at: Optional[datetime] = None
+    session_slots: list[SessionSlot] = []
     location: Optional[str] = None
     status: str = "pending"
     addons: list[str] = []
@@ -26,13 +27,6 @@ class AppointmentCreate(BaseModel):
     contract_signed: bool = False
     price: Decimal = Decimal("0")
     notes: Optional[str] = None
-
-    @field_validator("session_time")
-    @classmethod
-    def session_time_must_be_valid(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in VALID_SESSION_TIMES:
-            raise ValueError(f"session_time must be one of {VALID_SESSION_TIMES}")
-        return v
 
     @field_validator("status")
     @classmethod
@@ -51,11 +45,8 @@ class AppointmentCreate(BaseModel):
 
 
 class AppointmentUpdate(BaseModel):
-    session_type_ids: Optional[list[uuid.UUID]] = None
-    session_time: Optional[str] = None
+    session_slots: Optional[list[SessionSlot]] = None
     title: Optional[str] = None
-    starts_at: Optional[datetime] = None
-    ends_at: Optional[datetime] = None
     location: Optional[str] = None
     status: Optional[str] = None
     addons: Optional[list[str]] = None
@@ -85,8 +76,9 @@ class AppointmentOut(BaseModel):
 
     id: uuid.UUID
     client_id: uuid.UUID
-    session_type_ids: list[uuid.UUID]
-    session_time: Optional[str]
+    session_slots: list[SessionSlot]
+    session_type_ids: list[uuid.UUID]       # derived from slots, kept for calendar compat
+    session_time: Optional[str]             # kept nullable for legacy rows
     session_types: list[SessionTypeSummary] = []  # resolved by service
     title: str
     starts_at: datetime

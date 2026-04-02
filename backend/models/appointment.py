@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, Boolean, Numeric, ForeignKey, DateTime, Enum as SAEnum
+from sqlalchemy import Column, String, Text, Boolean, Numeric, ForeignKey, DateTime, Enum as SAEnum, JSON
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -12,6 +12,7 @@ class Appointment(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id", ondelete="RESTRICT"), nullable=False)
     session_type_ids = Column(ARRAY(UUID(as_uuid=True)), nullable=False, server_default="{}")
+    session_slots = Column(JSON, nullable=False, server_default="'[]'::jsonb")
     session_time = Column(String, nullable=True)  # 'morning' | 'afternoon' | 'evening'
     title = Column(String, nullable=False)
     starts_at = Column(DateTime(timezone=True), nullable=False)
