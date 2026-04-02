@@ -380,9 +380,8 @@ export function JobDetail() {
                     <div key={p.id} className="flex items-center justify-between text-xs">
                       <div>
                         <span className="text-foreground">€{p.amount}</span>
-                        {p.method && <span className="text-muted-foreground ml-1">· {p.method}</span>}
                         <span className="text-muted-foreground ml-1">
-                          {format(parseISO(p.paid_at), 'MMM d, yyyy')}
+                          {format(parseISO(p.payment_date), 'MMM d, yyyy')}
                         </span>
                       </div>
                       <button

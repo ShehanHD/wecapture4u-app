@@ -4,8 +4,8 @@ export const PaymentSchema = z.object({
   id: z.string().uuid(),
   invoice_id: z.string().uuid(),
   amount: z.string(),
-  paid_at: z.string(),
-  method: z.string().nullable(),
+  payment_date: z.string(),
+  account_id: z.string().uuid(),
   notes: z.string().nullable(),
   created_at: z.string(),
 })
