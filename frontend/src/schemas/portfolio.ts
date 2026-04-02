@@ -60,6 +60,7 @@ export type AboutSettings = z.infer<typeof AboutSettingsSchema>
 export const ContactFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
   email: z.string().email('Invalid email address').max(254),
+  phone: z.string().max(30).optional(),
   message: z.string().min(1, 'Message is required').max(5000),
 })
 export type ContactForm = z.infer<typeof ContactFormSchema>
