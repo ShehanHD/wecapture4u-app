@@ -35,6 +35,13 @@ class AppointmentCreate(BaseModel):
             raise ValueError(f"status must be one of {VALID_STATUSES}")
         return v
 
+    @field_validator("session_slots")
+    @classmethod
+    def session_slots_not_empty(cls, v: list) -> list:
+        if len(v) == 0:
+            raise ValueError("At least one session slot is required")
+        return v
+
     @field_validator("addons")
     @classmethod
     def addons_must_be_valid(cls, v: list[str]) -> list[str]:
