@@ -132,14 +132,17 @@ Notable column: `appointments.session_type_ids` is a `UUID[]` array (multi-selec
 ```
 DATABASE_URL
 JWT_SECRET_KEY
-RESEND_API_KEY
-RESEND_FROM_EMAIL
+SMTP_HOST           # smtp.hostinger.com
+SMTP_PORT           # 465
+SMTP_USER           # noreply@wecapture4u.com
+SMTP_PASSWORD
+SMTP_FROM_EMAIL     # noreply@wecapture4u.com
 SUPABASE_URL
 SUPABASE_SERVICE_KEY
 WEBAUTHN_RP_ID
 WEBAUTHN_RP_NAME
-ALLOWED_ORIGINS        # comma-separated, e.g. https://wecapture4u.com
-ENVIRONMENT            # development | production
+ALLOWED_ORIGINS     # comma-separated, e.g. https://wecapture4u.com
+ENVIRONMENT         # development | production
 ```
 
 See `backend/.env.example` for a full template.
