@@ -4,9 +4,6 @@ import { z } from 'zod'
 import { Link } from 'react-router-dom'
 import { Camera, Fingerprint } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useState } from 'react'
 import apiClient from '@/lib/axios'
 
@@ -76,84 +73,190 @@ export default function AdminLogin() {
     }
   }
 
+  const inputStyle = {
+    width: '100%',
+    border: '1.5px solid #e0e8ff',
+    borderRadius: 10,
+    background: '#f8f9ff',
+    padding: '11px 14px',
+    fontSize: 14,
+    color: '#0a0e2e',
+    outline: 'none',
+    boxSizing: 'border-box' as const,
+  }
+
+  const dividerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    margin: '4px 0',
+  }
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-card border border-border rounded-2xl shadow-lg p-8">
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-br shadow-lg mb-4">
-            <Camera className="h-7 w-7 text-black" />
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#0a0e2e',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 400,
+          background: '#fff',
+          borderRadius: 20,
+          padding: '40px 32px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 52,
+              height: 52,
+              borderRadius: 14,
+              background: '#0a0e2e',
+              marginBottom: 12,
+            }}
+          >
+            <Camera style={{ width: 26, height: 26, color: '#fff' }} />
           </div>
-          <h1 className="text-xl font-bold text-brand">weCapture4U</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to your account</p>
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#0a0e2e' }}>weCapture4U</p>
+          <p style={{ fontSize: 13, color: '#778899', marginTop: 4 }}>Sign in to your account</p>
         </div>
 
-        <div className="space-y-4">
-          <Button
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Direct biometric */}
+          <button
             type="button"
-            variant="outline"
-            className="w-full h-11 rounded-xl"
             onClick={handleDirectBiometric}
             disabled={directBiometricLoading}
+            style={{
+              width: '100%',
+              border: '1.5px solid #e0e8ff',
+              borderRadius: 10,
+              background: '#f8f9ff',
+              color: '#0a0e2e',
+              fontWeight: 600,
+              fontSize: 14,
+              padding: '11px 14px',
+              cursor: directBiometricLoading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
           >
-            <Fingerprint className="w-4 h-4 mr-2" />
+            <Fingerprint style={{ width: 16, height: 16 }} />
             {directBiometricLoading ? 'Verifying…' : 'Use Face ID / Fingerprint'}
-          </Button>
+          </button>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground">or sign in with email</span>
-            <div className="flex-1 h-px bg-border" />
+          {/* Divider */}
+          <div style={dividerStyle}>
+            <div style={{ flex: 1, height: 1, background: '#e0e8ff' }} />
+            <span style={{ fontSize: 12, color: '#778899' }}>or sign in with email</span>
+            <div style={{ flex: 1, height: 1, background: '#e0e8ff' }} />
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="email">Email</Label>
-            <Input
+          {/* Email */}
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#0a0e2e', display: 'block', marginBottom: 6 }}>
+              Email
+            </label>
+            <input
               id="email"
               type="email"
+              style={inputStyle}
               {...register('email')}
               onBlur={checkBiometric}
             />
-            {errors.email && <p className="text-red-400 text-sm">{errors.email.message}</p>}
+            {errors.email && <p style={{ color: '#e53e3e', fontSize: 12, marginTop: 4 }}>{errors.email.message}</p>}
           </div>
 
           {hasBiometric && (
             <>
-              <Button
+              <button
                 type="button"
-                className="w-full h-10 rounded-xl"
                 onClick={handleBiometric}
                 disabled={biometricLoading}
+                style={{
+                  width: '100%',
+                  background: '#4d79ff',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  padding: '11px 14px',
+                  borderRadius: 10,
+                  border: 'none',
+                  cursor: biometricLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                }}
               >
-                <Fingerprint className="w-4 h-4 mr-2" />
+                <Fingerprint style={{ width: 16, height: 16 }} />
                 {biometricLoading ? 'Verifying…' : 'Use Face ID / Fingerprint'}
-              </Button>
+              </button>
 
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">or use password</span>
-                <div className="flex-1 h-px bg-border" />
+              <div style={dividerStyle}>
+                <div style={{ flex: 1, height: 1, background: '#e0e8ff' }} />
+                <span style={{ fontSize: 12, color: '#778899' }}>or use password</span>
+                <div style={{ flex: 1, height: 1, background: '#e0e8ff' }} />
               </div>
             </>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register('password')} />
-              {errors.password && <p className="text-red-400 text-sm">{errors.password.message}</p>}
+          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#0a0e2e', display: 'block', marginBottom: 6 }}>
+                Password
+              </label>
+              <input id="password" type="password" style={inputStyle} {...register('password')} />
+              {errors.password && <p style={{ color: '#e53e3e', fontSize: 12, marginTop: 4 }}>{errors.password.message}</p>}
             </div>
 
-            {error && <p className="text-red-400 text-sm">{error}</p>}
+            {error && <p style={{ color: '#e53e3e', fontSize: 13, textAlign: 'center' }}>{error}</p>}
 
-            <Button type="submit" className="w-full h-10 rounded-xl" disabled={isSubmitting}>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              style={{
+                width: '100%',
+                background: '#4d79ff',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 15,
+                padding: 14,
+                borderRadius: 10,
+                border: 'none',
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                opacity: isSubmitting ? 0.6 : 1,
+              }}
+            >
               {isSubmitting ? 'Signing in…' : 'Sign In'}
-            </Button>
+            </button>
           </form>
         </div>
 
-        <Link to="/forgot-password" className="block text-center text-sm text-muted hover:text-primary mt-4">
+        <Link
+          to="/forgot-password"
+          style={{ display: 'block', textAlign: 'center', marginTop: 20, fontSize: 13, color: '#4d79ff' }}
+        >
           Forgot password?
         </Link>
+
+        <div style={{ textAlign: 'center', marginTop: 16 }}>
+          <a href="/" style={{ fontSize: 12, color: '#778899' }}>← Back to site</a>
+        </div>
       </div>
     </div>
   )
