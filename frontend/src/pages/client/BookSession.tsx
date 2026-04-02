@@ -87,6 +87,8 @@ export function BookSession() {
             const slotDate = watchedSlots[index]?.date ?? ''
             const availDays = getAvailableDays(slotTypeId)
             const dateAllowed = isDateAllowed(slotDate, availDays)
+            const rawDay = slotDate ? getDay(parseISO(slotDate)) : 0
+            const dayIdx = rawDay === 0 ? 6 : rawDay - 1
 
             return (
               <div key={field.id} className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
@@ -117,7 +119,7 @@ export function BookSession() {
                     />
                     {slotDate && !dateAllowed && (
                       <p className="text-xs text-red-400">
-                        Not available on {DAY_NAMES[getDay(parseISO(slotDate)) === 0 ? 6 : getDay(parseISO(slotDate)) - 1]}.
+                        Not available on {DAY_NAMES[dayIdx]}.
                         {availDays.length > 0 && ` Available: ${availDays.map(d => DAY_NAMES[d].slice(0, 3)).join(', ')}`}
                       </p>
                     )}
