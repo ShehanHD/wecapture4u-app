@@ -1,93 +1,88 @@
-import { useEffect, useState } from 'react'
-
+// frontend/src/components/layout/PublicNav.tsx
 export function PublicNav() {
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 80)
-    window.addEventListener('scroll', handler)
-    return () => window.removeEventListener('scroll', handler)
-  }, [])
-
-  const navClass = `fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${
-    scrolled || menuOpen ? 'bg-[#0c0c0c] border-b border-white/10' : 'bg-transparent'
-  }`
-
-  const links = [
-    { href: '#portfolio', label: 'Portfolio' },
-    { href: '#about', label: 'About' },
-    { href: '#contact', label: 'Contact' },
-  ]
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   return (
-    <nav className={navClass}>
-      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="/" className="text-brand-solid font-bold tracking-wide">
+    <nav
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        background: 'rgba(10,14,46,0.92)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(77,121,255,0.15)',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: '0 auto',
+          padding: '0 16px',
+          height: 60,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {/* Logo */}
+        <a
+          href="/"
+          style={{ fontWeight: 800, fontSize: 18, color: '#fff', textDecoration: 'none' }}
+        >
           weCapture4U
         </a>
 
-        {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-8">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="text-sm text-gray-300 hover:text-white transition-colors"
-            >
-              {l.label}
-            </a>
-          ))}
-          <a href="/client/login" className="text-sm text-gray-300 hover:text-white">
-            Login
-          </a>
-          <a
-            href="#contact"
-            className="bg-brand-solid hover:opacity-80 text-black text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+        {/* Centre nav links — hidden on very small screens */}
+        <div
+          className="hidden-xs"
+          style={{ display: 'flex', gap: 32, alignItems: 'center' }}
+        >
+          <button
+            onClick={() => scrollTo('gallery')}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#aac0ff',
+              fontSize: 14,
+            }}
           >
-            Book Now
-          </a>
+            Gallery
+          </button>
+          <button
+            onClick={() => scrollTo('about')}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#aac0ff',
+              fontSize: 14,
+            }}
+          >
+            About
+          </button>
         </div>
 
-        {/* Mobile hamburger */}
+        {/* Right CTA */}
         <button
-          className="md:hidden text-white text-2xl"
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => scrollTo('contact')}
+          style={{
+            border: '1.5px solid rgba(77,121,255,0.4)',
+            background: 'none',
+            color: '#7aa5ff',
+            fontSize: 13,
+            fontWeight: 600,
+            padding: '7px 16px',
+            borderRadius: 8,
+            cursor: 'pointer',
+          }}
         >
-          {menuOpen ? '✕' : '☰'}
+          Contact Us
         </button>
       </div>
-
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-[#0c0c0c] border-t border-white/10 px-4 py-4 space-y-4">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="block text-gray-300 hover:text-white"
-              onClick={() => setMenuOpen(false)}
-            >
-              {l.label}
-            </a>
-          ))}
-          <a
-            href="/client/login"
-            className="block text-gray-300 hover:text-white"
-            onClick={() => setMenuOpen(false)}
-          >
-            Login
-          </a>
-          <a
-            href="#contact"
-            className="block bg-brand-solid text-black font-semibold px-4 py-2 rounded-lg text-center"
-            onClick={() => setMenuOpen(false)}
-          >
-            Book Now
-          </a>
-        </div>
-      )}
     </nav>
   )
 }
