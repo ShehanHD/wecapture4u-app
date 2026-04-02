@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   fetchJobs, fetchJob, createJob, updateJob, deleteJob,
-  fetchJobStages, reorderJobStages, deleteJobStage,
+  fetchJobStages, createJobStage, updateJobStage, reorderJobStages, deleteJobStage,
   fetchAlbumStages, createAlbumStage, updateAlbumStage, reorderAlbumStages, deleteAlbumStage,
   type Job, type JobCreatePayload, type JobUpdatePayload, type StagePositionItem,
   type AlbumStageCreatePayload, type AlbumStageUpdatePayload, type AlbumStagePositionItem,
@@ -60,6 +60,25 @@ export function useDeleteJob() {
 
 export function useJobStages() {
   return useQuery({ queryKey: ['job-stages'], queryFn: fetchJobStages })
+}
+
+export function useCreateJobStage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: createJobStage,
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['job-stages'] }); toast.success('Stage created') },
+    onError: () => toast.error('Failed to create stage'),
+  })
+}
+
+export function useUpdateJobStage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { name?: string; color?: string; is_terminal?: boolean } }) =>
+      updateJobStage(id, payload),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['job-stages'] }); toast.success('Stage updated') },
+    onError: () => toast.error('Failed to update stage'),
+  })
 }
 
 export function useReorderJobStages() {
