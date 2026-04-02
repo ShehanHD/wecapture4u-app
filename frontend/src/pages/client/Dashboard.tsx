@@ -4,7 +4,7 @@ import { CalendarPlus, ExternalLink } from 'lucide-react'
 import { format, parseISO, isAfter, isBefore } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { useMyJobs, useMyBookingRequests } from '@/hooks/useClientPortal'
-import type { ClientJob, ClientBookingRequest } from '@/api/clientPortal'
+import type { ClientJob, ClientBookingRequest } from '@/schemas/clientPortal'
 
 function JobCard({ job }: { job: ClientJob }) {
   return (
@@ -55,20 +55,22 @@ const REQUEST_STATUS_LABELS: Record<ClientBookingRequest['status'], string> = {
 
 function RequestCard({ request }: { request: ClientBookingRequest }) {
   return (
-    <div className="rounded-xl bg-card border p-4 space-y-1">
+    <div className="rounded-xl bg-card border p-4 space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <p className="font-medium text-foreground">
-          {format(parseISO(request.preferred_date), 'MMMM d, yyyy')}
-          {' '}
-          {request.time_slot && <span className="text-muted-foreground font-normal capitalize">({request.time_slot.replace('_', ' ')})</span>}
+        <p className="font-medium text-foreground text-sm">
+          {request.session_slots.length > 0
+            ? request.session_slots.map(s => s.session_type_name ?? 'Session').join(' + ')
+            : 'Booking request'}
         </p>
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${REQUEST_STATUS_STYLES[request.status]}`}>
           {REQUEST_STATUS_LABELS[request.status]}
         </span>
       </div>
-      {request.session_type_name && (
-        <p className="text-sm text-muted-foreground">{request.session_type_name}</p>
-      )}
+      {request.session_slots.map((slot, i) => (
+        <p key={i} className="text-xs text-muted-foreground">
+          {slot.date} — {slot.time_slot.replace('_', ' ')}
+        </p>
+      ))}
       {request.admin_notes && (
         <p className="text-sm text-muted-foreground italic">"{request.admin_notes}"</p>
       )}
