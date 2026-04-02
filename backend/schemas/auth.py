@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
 import uuid
 from datetime import datetime
 
@@ -80,3 +80,15 @@ class WebAuthnAuthenticateVerifyRequest(BaseModel):
     rawId: str
     response: dict
     type: str
+
+
+# --- Registration ---
+class RegisterRequest(BaseModel):
+    full_name: str = Field(min_length=1, max_length=200)
+    email: EmailStr
+    phone: str = Field(min_length=1, max_length=30)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
