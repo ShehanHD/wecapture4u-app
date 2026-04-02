@@ -114,6 +114,11 @@ export default function ClientLogin() {
           Forgot password?
         </Link>
 
+        <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#778899' }}>
+          Don't have an account?{' '}
+          <Link to="/client/register" style={{ color: '#4d79ff' }}>Register</Link>
+        </p>
+
         <div style={{ textAlign: 'center', marginTop: 16 }}>
           <a href="/" style={{ fontSize: 12, color: '#778899' }}>← Back to site</a>
         </div>

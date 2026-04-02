@@ -3,6 +3,8 @@ import Landing from '@/pages/public/Landing'
 import Gallery from '@/pages/public/Gallery'
 import AdminLogin from '@/pages/auth/AdminLogin'
 import ClientLogin from '@/pages/auth/ClientLogin'
+import ClientRegister from '@/pages/auth/ClientRegister'
+import VerifyEmail from '@/pages/auth/VerifyEmail'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
 import ResetPassword from '@/pages/auth/ResetPassword'
 import BiometricSetup from '@/pages/auth/BiometricSetup'
@@ -45,6 +47,8 @@ export const router = createBrowserRouter([
 
   // Client auth routes
   { path: '/client/login', element: <ClientLogin /> },
+  { path: '/client/register', element: <ClientRegister /> },
+  { path: '/client/verify-email', element: <VerifyEmail /> },
   { path: '/client/forgot-password', element: <ForgotPassword /> },
   { path: '/client/reset-password', element: <ResetPassword /> },
 
