@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, Text, ForeignKey, DateTime, Date, Enum as SAEnum
+from sqlalchemy import Column, Text, ForeignKey, DateTime, Date, Enum as SAEnum, JSON
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -25,6 +25,7 @@ class BookingRequest(Base):
         server_default="pending",
     )
     admin_notes = Column(Text, nullable=True)
+    session_slots = Column(JSON, nullable=False, server_default="'[]'::jsonb")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

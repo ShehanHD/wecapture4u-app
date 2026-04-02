@@ -18,6 +18,7 @@ from schemas.auth import CurrentUser
 from schemas.client_portal import (
     ClientBookingRequestCreate,
     ClientBookingRequestOut,
+    ClientBookingRequestSlot,
     ClientJobDetailOut,
     ClientJobOut,
     ClientJobStageOut,
@@ -148,7 +149,10 @@ async def get_my_job(job_id: uuid.UUID, db: DB, current_user: ClientUser) -> Cli
 @router.get("/session-types", response_model=list[SessionTypeOut])
 async def list_session_types(db: DB, current_user: ClientUser) -> list[SessionTypeOut]:
     result = await db.execute(select(SessionType).order_by(SessionType.name))
-    return [SessionTypeOut(id=st.id, name=st.name) for st in result.scalars().all()]
+    return [
+        SessionTypeOut(id=st.id, name=st.name, available_days=st.available_days or [])
+        for st in result.scalars().all()
+    ]
 
 
 # ─── Booking requests ─────────────────────────────────────────────────────────
@@ -157,24 +161,48 @@ async def list_session_types(db: DB, current_user: ClientUser) -> list[SessionTy
 async def list_my_booking_requests(db: DB, current_user: ClientUser) -> list[ClientBookingRequestOut]:
     client = await _get_client(db, current_user.id)
     result = await db.execute(
-        select(BookingRequest, SessionType)
-        .outerjoin(SessionType, BookingRequest.session_type_id == SessionType.id)
+        select(BookingRequest)
         .where(BookingRequest.client_id == client.id)
         .order_by(BookingRequest.created_at.desc())
     )
-    return [
-        ClientBookingRequestOut(
+    requests = result.scalars().all()
+
+    # Resolve session type names for all slots in one query
+    all_st_ids = {
+        uuid.UUID(str(s["session_type_id"]))
+        for req in requests
+        for s in (req.session_slots or [])
+    }
+    st_map: dict[uuid.UUID, str] = {}
+    if all_st_ids:
+        st_result = await db.execute(
+            select(SessionType).where(SessionType.id.in_(all_st_ids))
+        )
+        st_map = {st.id: st.name for st in st_result.scalars().all()}
+
+    out = []
+    for req in requests:
+        slots = [
+            ClientBookingRequestSlot(
+                session_type_id=uuid.UUID(str(s["session_type_id"])),
+                session_type_name=st_map.get(uuid.UUID(str(s["session_type_id"]))),
+                date=s["date"],
+                time_slot=s["time_slot"],
+            )
+            for s in (req.session_slots or [])
+        ]
+        out.append(ClientBookingRequestOut(
             id=req.id,
             preferred_date=req.preferred_date,
+            session_slots=slots,
             time_slot=req.time_slot,
-            session_type_name=st.name if st else None,
+            session_type_name=None,
             message=req.message,
             status=req.status,
             admin_notes=req.admin_notes,
             created_at=req.created_at,
-        )
-        for req, st in result.all()
-    ]
+        ))
+    return out
 
 
 @router.post("/booking-requests", response_model=ClientBookingRequestOut, status_code=201)
@@ -182,30 +210,53 @@ async def create_booking_request(
     body: ClientBookingRequestCreate, db: DB, current_user: ClientUser
 ) -> ClientBookingRequestOut:
     client = await _get_client(db, current_user.id)
+
+    slots_dicts = [
+        {
+            "session_type_id": str(slot.session_type_id),
+            "date": str(slot.date),
+            "time_slot": slot.time_slot,
+        }
+        for slot in body.session_slots
+    ]
+    # preferred_date = earliest slot date (legacy column, kept for scheduler)
+    preferred_date = min(slot.date for slot in body.session_slots)
+    # time_slot = first slot's time_slot (legacy column)
+    first_time_slot = body.session_slots[0].time_slot if body.session_slots else "morning"
+
     req = BookingRequest(
         client_id=client.id,
-        preferred_date=body.preferred_date,
-        time_slot=body.time_slot,
-        session_type_id=body.session_type_id,
+        preferred_date=preferred_date,
+        time_slot=first_time_slot,
+        session_type_id=None,
+        session_slots=slots_dicts,
         message=body.message,
     )
     db.add(req)
     await db.flush()
     await db.refresh(req)
 
-    session_type_name: str | None = None
-    if body.session_type_id:
-        st_result = await db.execute(
-            select(SessionType).where(SessionType.id == body.session_type_id)
+    # Resolve session type names
+    st_ids = {uuid.UUID(str(s["session_type_id"])) for s in slots_dicts}
+    st_result = await db.execute(select(SessionType).where(SessionType.id.in_(st_ids)))
+    st_map = {st.id: st.name for st in st_result.scalars().all()}
+
+    slots_out = [
+        ClientBookingRequestSlot(
+            session_type_id=uuid.UUID(str(s["session_type_id"])),
+            session_type_name=st_map.get(uuid.UUID(str(s["session_type_id"]))),
+            date=s["date"],
+            time_slot=s["time_slot"],
         )
-        st = st_result.scalar_one_or_none()
-        session_type_name = st.name if st else None
+        for s in slots_dicts
+    ]
 
     return ClientBookingRequestOut(
         id=req.id,
         preferred_date=req.preferred_date,
+        session_slots=slots_out,
         time_slot=req.time_slot,
-        session_type_name=session_type_name,
+        session_type_name=None,
         message=req.message,
         status=req.status,
         admin_notes=req.admin_notes,

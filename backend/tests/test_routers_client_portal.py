@@ -267,9 +267,14 @@ async def test_create_booking_request(
     client_record: Client,
     client_auth_headers: dict,
 ):
+    st = SessionType(name=f"Portrait_{uuid.uuid4().hex[:6]}", available_days=[])
+    db_session.add(st)
+    await db_session.flush()
+
     payload = {
-        "preferred_date": "2026-08-15",
-        "time_slot": "morning",
+        "session_slots": [
+            {"session_type_id": str(st.id), "date": "2026-08-15", "time_slot": "morning"}
+        ],
         "message": "Looking forward to it!",
     }
     resp = await test_client.post("/api/client/booking-requests", json=payload, headers=client_auth_headers)
@@ -302,3 +307,77 @@ async def test_list_booking_requests(
     assert resp.status_code == 200
     ids = [r["id"] for r in resp.json()]
     assert str(req.id) in ids
+
+
+# ─── New session_slots tests ──────────────────────────────────────────────────
+
+async def _make_client_user_for_slots(db_session: AsyncSession):
+    from models.user import UserRole
+    from services.auth import hash_password, create_access_token
+    pw = hash_password("pass123")
+    user = User(
+        email=f"client_{uuid.uuid4().hex[:8]}@test.com",
+        hashed_password=pw,
+        role=UserRole.client,
+        full_name="Portal User",
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.flush()
+    client = Client(name="Portal User", email=user.email, user_id=user.id, tags=[])
+    db_session.add(client)
+    await db_session.flush()
+    token = create_access_token({"sub": str(user.id)})
+    return user, client, token
+
+
+@pytest.mark.asyncio
+async def test_create_booking_request_with_slots(
+    test_client: AsyncClient,
+    db_session: AsyncSession,
+):
+    user, _, token = await _make_client_user_for_slots(db_session)
+    st = SessionType(name=f"Wedding_{uuid.uuid4().hex[:6]}", available_days=[5, 6])
+    db_session.add(st)
+    await db_session.flush()
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = await test_client.post(
+        "/api/client/booking-requests",
+        json={
+            "session_slots": [
+                {"session_type_id": str(st.id), "date": "2026-08-15", "time_slot": "morning"}
+            ],
+            "message": "Looking forward to it",
+        },
+        headers=headers,
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert len(data["session_slots"]) == 1
+    assert data["session_slots"][0]["session_type_name"] == st.name
+    assert data["session_slots"][0]["date"] == "2026-08-15"
+    # preferred_date computed from slot
+    assert str(data["preferred_date"]) == "2026-08-15"
+
+
+@pytest.mark.asyncio
+async def test_session_types_include_available_days(
+    test_client: AsyncClient,
+    db_session: AsyncSession,
+    client_auth_headers: dict,
+):
+    st = SessionType(name=f"AvailTest_{uuid.uuid4().hex[:6]}", available_days=[1, 3])
+    db_session.add(st)
+    await db_session.flush()
+
+    resp = await test_client.get(
+        "/api/client/session-types",
+        headers=client_auth_headers,
+    )
+    assert resp.status_code == 200
+    match = next((t for t in resp.json() if t["id"] == str(st.id)), None)
+    assert match is not None
+    assert 1 in match["available_days"]
+    assert 3 in match["available_days"]

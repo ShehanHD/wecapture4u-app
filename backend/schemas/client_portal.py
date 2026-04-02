@@ -45,12 +45,22 @@ class ClientJobDetailOut(BaseModel):
 class SessionTypeOut(BaseModel):
     id: uuid.UUID
     name: str
+    available_days: list[int]
+
+
+class ClientBookingRequestSlot(BaseModel):
+    session_type_id: uuid.UUID
+    session_type_name: Optional[str]
+    date: date
+    time_slot: Literal["morning", "afternoon", "evening", "all_day"]
 
 
 class ClientBookingRequestOut(BaseModel):
     id: uuid.UUID
     preferred_date: date
-    time_slot: Literal["morning", "afternoon", "evening", "all_day"]
+    session_slots: list[ClientBookingRequestSlot]
+    # Legacy fields — kept for backwards compat, not written by new code
+    time_slot: Optional[Literal["morning", "afternoon", "evening", "all_day"]]
     session_type_name: Optional[str]
     message: Optional[str]
     status: Literal["pending", "confirmed", "rejected"]
@@ -58,8 +68,12 @@ class ClientBookingRequestOut(BaseModel):
     created_at: datetime
 
 
-class ClientBookingRequestCreate(BaseModel):
-    preferred_date: date
+class ClientBookingRequestSlotCreate(BaseModel):
+    session_type_id: uuid.UUID
+    date: date
     time_slot: Literal["morning", "afternoon", "evening", "all_day"]
-    session_type_id: Optional[uuid.UUID] = None
+
+
+class ClientBookingRequestCreate(BaseModel):
+    session_slots: list[ClientBookingRequestSlotCreate]
     message: Optional[str] = None
