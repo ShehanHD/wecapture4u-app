@@ -100,3 +100,44 @@ async def test_delete_appointment_blocked_with_job(test_client, admin_auth_heade
         f"/api/appointments/{appt.id}", headers=admin_auth_headers
     )
     assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_update_appointment_recomputes_slots(test_client, admin_auth_headers, db_session):
+    client = await _make_client(db_session, "Patch")
+    st1 = await _make_session_type(db_session, "PatchA")
+    st2 = await _make_session_type(db_session, "PatchB")
+
+    # Create with one slot
+    resp = await test_client.post(
+        "/api/appointments",
+        json={
+            "client_id": str(client.id),
+            "title": "Patchable",
+            "session_slots": [
+                {"session_type_id": str(st1.id), "date": "2026-09-10", "time_slot": "morning"}
+            ],
+        },
+        headers=admin_auth_headers,
+    )
+    assert resp.status_code == 201
+    appt_id = resp.json()["id"]
+
+    # PATCH with new slots (two slots, earliest is Sept 3)
+    resp2 = await test_client.patch(
+        f"/api/appointments/{appt_id}",
+        json={
+            "session_slots": [
+                {"session_type_id": str(st1.id), "date": "2026-09-10", "time_slot": "afternoon"},
+                {"session_type_id": str(st2.id), "date": "2026-09-03", "time_slot": "morning"},
+            ]
+        },
+        headers=admin_auth_headers,
+    )
+    assert resp2.status_code == 200
+    data = resp2.json()
+    assert len(data["session_slots"]) == 2
+    # starts_at recomputed to earliest date (Sept 3)
+    assert data["starts_at"].startswith("2026-09-03")
+    # session_type_ids derived (no duplicates)
+    assert len(data["session_type_ids"]) == 2

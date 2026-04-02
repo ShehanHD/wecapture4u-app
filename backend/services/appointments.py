@@ -23,7 +23,9 @@ def _compute_starts_at(slots: list[dict]) -> datetime:
 
 
 def _compute_session_type_ids(slots: list[dict]) -> list[uuid.UUID]:
-    return [uuid.UUID(str(slot["session_type_id"])) for slot in slots]
+    # Use dict.fromkeys to deduplicate while preserving insertion order
+    seen = dict.fromkeys(uuid.UUID(str(slot["session_type_id"])) for slot in slots)
+    return list(seen.keys())
 
 
 def _slots_to_dicts(slots: list) -> list[dict]:
@@ -200,9 +202,12 @@ async def update_appointment(
 
     if "session_slots" in data and data["session_slots"] is not None:
         slots_dicts = _slots_to_dicts(data["session_slots"])
-        data["session_slots"] = slots_dicts
-        data["starts_at"] = _compute_starts_at(slots_dicts)
-        data["session_type_ids"] = _compute_session_type_ids(slots_dicts)
+        appt.session_slots = slots_dicts
+        appt.starts_at = _compute_starts_at(slots_dicts)
+        appt.session_type_ids = _compute_session_type_ids(slots_dicts)
+        data.pop("session_slots")
+        data.pop("starts_at", None)
+        data.pop("session_type_ids", None)
 
     for key, value in data.items():
         if value is not None:
