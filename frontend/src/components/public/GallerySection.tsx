@@ -54,7 +54,7 @@ export function GallerySection() {
     const el = viewportRef.current
     if (!el) return
     const handler = () => {
-      const page = Math.round(el.scrollLeft / (el.scrollWidth / pageCount))
+      const page = Math.round(el.scrollLeft / el.clientWidth)
       setActivePage(page)
     }
     el.addEventListener('scroll', handler, { passive: true })
@@ -94,6 +94,7 @@ export function GallerySection() {
       <div className="md:hidden">
         <div
           ref={viewportRef}
+          className="swipe-viewport"
           style={{
             overflowX: 'auto',
             scrollSnapType: 'x mandatory',
