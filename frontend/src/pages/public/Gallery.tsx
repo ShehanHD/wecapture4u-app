@@ -13,7 +13,16 @@ export default function Gallery() {
     return (
       <>
         <PublicNav />
-        <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center text-gray-400">
+        <div
+          style={{
+            minHeight: '100vh',
+            background: '#0a0e2e',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'rgba(255,255,255,0.4)',
+          }}
+        >
           Loading…
         </div>
       </>
@@ -25,13 +34,35 @@ export default function Gallery() {
   return (
     <>
       <PublicNav />
-      <div className="min-h-screen bg-[#0c0c0c] pt-20 px-4 pb-12">
-        <div className="max-w-5xl mx-auto">
-          <a href="/" className="text-xs text-gray-400 hover:text-white mb-4 inline-block">
+      <div
+        style={{
+          minHeight: '100vh',
+          background: '#0a0e2e',
+          paddingTop: 80,
+          paddingLeft: 16,
+          paddingRight: 16,
+          paddingBottom: 48,
+        }}
+      >
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <a
+            href="/"
+            style={{
+              fontSize: 13,
+              color: 'rgba(170,192,255,0.7)',
+              textDecoration: 'none',
+              display: 'inline-block',
+              marginBottom: 16,
+            }}
+          >
             ← Portfolio
           </a>
-          <h1 className="text-3xl font-bold text-white mb-1">{category.name}</h1>
-          <p className="text-sm text-gray-400 mb-8">{category.photos.length} photos</p>
+          <h1 style={{ fontSize: 32, fontWeight: 800, color: '#fff', marginBottom: 4 }}>
+            {category.name}
+          </h1>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 32 }}>
+            {category.photos.length} photos
+          </p>
 
           {/* CSS columns masonry grid */}
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
