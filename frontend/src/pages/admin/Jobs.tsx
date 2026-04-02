@@ -235,17 +235,13 @@ export function Jobs() {
         <h1 className="text-2xl font-semibold text-foreground">Jobs</h1>
       </div>
 
-      {jobsByYear.length === 0 ? (
-        <KanbanBoard stages={stages} jobs={[]} />
-      ) : (
-        <div className="space-y-2">
-          {jobsByYear.map(({ year, jobs: yearJobs }) => (
-            <YearSection key={year} year={year} defaultOpen={year === currentYear} count={yearJobs.length}>
-              <KanbanBoard stages={stages} jobs={yearJobs} />
-            </YearSection>
-          ))}
-        </div>
-      )}
+      <div className="space-y-2">
+        {(jobsByYear.length > 0 ? jobsByYear : [{ year: currentYear, jobs: [] }]).map(({ year, jobs: yearJobs }) => (
+          <YearSection key={year} year={year} defaultOpen={year === currentYear} count={yearJobs.length}>
+            <KanbanBoard stages={stages} jobs={yearJobs} />
+          </YearSection>
+        ))}
+      </div>
     </div>
   )
 }
