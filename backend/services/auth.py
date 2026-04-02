@@ -54,20 +54,18 @@ def refresh_token_expiry(role: str) -> datetime:
 
 
 async def send_password_reset_email(to_email: str, reset_url: str) -> None:
-    """Send password reset email via Resend. Failures are logged, not raised."""
-    import resend
-    resend.api_key = settings.RESEND_API_KEY
+    """Send password reset email. Failures are logged, not raised."""
+    from services.email import send_email
     try:
-        resend.Emails.send({
-            "from": settings.RESEND_FROM_EMAIL,
-            "to": to_email,
-            "subject": "Reset your password",
-            "html": f"""
+        await send_email(
+            to=to_email,
+            subject="Reset your password",
+            html=f"""
                 <p>Click the link below to reset your password. This link expires in 1 hour.</p>
                 <p><a href="{reset_url}">Reset password</a></p>
                 <p>If you didn't request this, ignore this email.</p>
             """,
-        })
+        )
     except Exception as exc:
         import logging
         logging.getLogger(__name__).error("Failed to send password reset email: %s", exc)

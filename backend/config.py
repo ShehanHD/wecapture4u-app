@@ -9,8 +9,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     ADMIN_REFRESH_TOKEN_EXPIRE_HOURS: int = 8
     CLIENT_REFRESH_TOKEN_EXPIRE_HOURS: int = 24
-    RESEND_API_KEY: str
-    RESEND_FROM_EMAIL: str
+    SMTP_HOST: str = "smtp.hostinger.com"
+    SMTP_PORT: int = 465
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "noreply@wecapture4u.com"
     SUPABASE_URL: str
     SUPABASE_SERVICE_KEY: str
     ALLOWED_ORIGINS: str = ""
