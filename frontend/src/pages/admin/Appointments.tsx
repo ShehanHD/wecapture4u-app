@@ -389,7 +389,12 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
                       onValueChange={(v) => setValue(`session_slots.${index}.session_type_id`, v as string, { shouldValidate: true })}
                     >
                       <SelectTrigger className="bg-input border text-foreground h-9 text-sm">
-                        <SelectValue placeholder="Select session type" />
+                        <SelectValue>
+                          {(value: string | null) => {
+                            if (!value) return <span className="text-muted-foreground">Select session type</span>
+                            return sessionTypes.find((st) => st.id === value)?.name ?? value
+                          }}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="bg-popover border text-popover-foreground">
                         {sessionTypes.map(st => (
