@@ -298,7 +298,7 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
               {/* Status */}
               <div>
                 <Label>Status</Label>
-                <Select value={watch('status') ?? 'pending'} onValueChange={(v) => setValue('status', v as AppointmentFormValues['status'])}>
+                <Select value={watch('status') ?? 'pending'} onValueChange={(v) => setValue('status', v as AppointmentFormValues['status'], { shouldValidate: true })}>
                   <SelectTrigger className="bg-input border text-foreground mt-1">
                     <SelectValue />
                   </SelectTrigger>
