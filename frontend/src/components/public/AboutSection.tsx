@@ -14,6 +14,8 @@ export function AboutSection({
   instagramUrl,
   facebookUrl,
 }: Props) {
+  if (!adminName && !bio) return null
+
   return (
     <section
       id="about"
