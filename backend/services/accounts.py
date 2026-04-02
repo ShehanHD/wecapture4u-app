@@ -193,6 +193,7 @@ async def get_account_ledger(
             "date": entry.date,
             "description": entry.description,
             "line_description": line.description,
+            "reference_type": entry.reference_type,
             "debit": d,
             "credit": c,
             "running_balance": running,

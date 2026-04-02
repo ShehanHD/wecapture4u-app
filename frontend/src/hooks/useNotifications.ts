@@ -10,7 +10,7 @@ export function useNotifications(params?: { unread?: boolean; type?: string; lim
   return useQuery({
     queryKey: ['notifications', params],
     queryFn: () => fetchNotifications(params),
-    refetchInterval: 10 * 60 * 1000,
+    refetchInterval: 30_000,
   })
 }
 

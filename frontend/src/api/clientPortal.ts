@@ -46,14 +46,10 @@ export async function fetchMyBookingRequests(): Promise<ClientBookingRequest[]> 
   return ClientBookingRequestListSchema.parse(data)
 }
 
-export interface BookingRequestSlotPayload {
-  session_type_id: string
-  date: string
-  time_slot: 'morning' | 'afternoon' | 'evening' | 'all_day'
-}
-
 export interface BookingRequestCreatePayload {
-  session_slots: BookingRequestSlotPayload[]
+  preferred_date: string
+  time_slot: 'morning' | 'afternoon' | 'evening' | 'all_day'
+  session_type_id?: string | null
   message?: string | null
 }
 

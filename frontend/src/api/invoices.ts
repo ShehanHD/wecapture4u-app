@@ -1,6 +1,6 @@
 import { api } from '@/lib/axios'
 import {
-  InvoiceListSchema, InvoiceSchema, PaymentSchema,
+  InvoiceListSchema, InvoiceSchema, PaymentListSchema, PaymentSchema,
   type Invoice, type Payment,
 } from '@/schemas/invoices'
 
@@ -20,8 +20,8 @@ export async function fetchInvoice(id: string): Promise<Invoice> {
 
 export interface PaymentCreatePayload {
   amount: string
-  payment_date: string  // YYYY-MM-DD
-  account_id: string
+  paid_at: string  // YYYY-MM-DD
+  method?: string | null
   notes?: string | null
 }
 

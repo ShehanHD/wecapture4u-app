@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useInvoices } from '@/hooks/useInvoices'
 import { useClients } from '@/hooks/useClients'
 import { useAccounts } from '@/hooks/useAccounting'
+import { SkeletonRow } from '@/components/ui/skeleton'
 
 export function AccountingPayments() {
   const { data: invoices = [], isLoading, isError } = useInvoices()
@@ -38,7 +39,11 @@ export function AccountingPayments() {
       </p>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <div className="rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody>{Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={6} />)}</tbody>
+          </table>
+        </div>
       ) : payments.length === 0 ? (
         <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
       ) : (

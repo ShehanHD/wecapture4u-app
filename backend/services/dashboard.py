@@ -36,6 +36,26 @@ async def _asset_balance_by_name(db: AsyncSession, name_fragment: str) -> float:
     return float(result.scalar_one() or 0)
 
 
+async def _total_liability_balance(db: AsyncSession) -> float:
+    """
+    Sum of all liability account balances from posted journal lines.
+    Liability accounts are credit-normal: balance = total_credit - total_debit.
+    """
+    posted_entry_ids = select(JournalEntry.id).where(JournalEntry.status == "posted")
+    result = await db.execute(
+        select(
+            func.coalesce(func.sum(JournalLine.credit), Decimal("0"))
+            - func.coalesce(func.sum(JournalLine.debit), Decimal("0"))
+        )
+        .select_from(Account)
+        .join(JournalLine, JournalLine.account_id == Account.id)
+        .where(Account.type == "liability")
+        .where(Account.archived == False)  # noqa: E712
+        .where(JournalLine.entry_id.in_(posted_entry_ids))
+    )
+    return float(result.scalar_one() or 0)
+
+
 async def get_dashboard_stats(db: AsyncSession) -> dict:
     now = datetime.now(timezone.utc)
     today = date.today()
@@ -45,18 +65,16 @@ async def get_dashboard_stats(db: AsyncSession) -> dict:
     total_cash = await _asset_balance_by_name(db, "cash")
     total_bank = await _asset_balance_by_name(db, "bank")
 
-    # ── Total Debits & Credits (all posted journal lines, all time) ────────────
-    posted_entry_ids = select(JournalEntry.id).where(JournalEntry.status == "posted")
-    totals_row = await db.execute(
-        select(
-            func.coalesce(func.sum(JournalLine.debit), Decimal("0")).label("total_debits"),
-            func.coalesce(func.sum(JournalLine.credit), Decimal("0")).label("total_credits"),
-        )
-        .where(JournalLine.entry_id.in_(posted_entry_ids))
+    # ── Total Liabilities (what I owe) ─────────────────────────────────────────
+    total_liabilities = await _total_liability_balance(db)
+
+    # ── Total Receivables (what clients owe me) ────────────────────────────────
+    total_receivables = float(
+        await db.scalar(
+            select(func.coalesce(func.sum(Invoice.balance_due), Decimal("0")))
+            .where(Invoice.balance_due > 0)
+        ) or 0
     )
-    totals = totals_row.one()
-    total_debits = float(totals.total_debits)
-    total_credits = float(totals.total_credits)
 
     # ── This month revenue (invoice payments received this month) ──────────────
     this_month_revenue = await db.scalar(
@@ -144,8 +162,8 @@ async def get_dashboard_stats(db: AsyncSession) -> dict:
     return {
         "total_cash": total_cash,
         "total_bank": total_bank,
-        "total_debits": total_debits,
-        "total_credits": total_credits,
+        "total_liabilities": total_liabilities,
+        "total_receivables": total_receivables,
         "this_month_revenue": float(this_month_revenue or 0),
         "overdue_balance": float(overdue_balance or 0),
         "upcoming_balance": float(upcoming_balance or 0),

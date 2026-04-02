@@ -1,9 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Calendar, dateFnsLocalizer, type View } from 'react-big-calendar'
+import { Calendar, dateFnsLocalizer, type View, type ToolbarProps } from 'react-big-calendar'
 import { format, parse, startOfWeek, getDay, parseISO, addHours, formatDistanceToNow } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import { Plus, CheckCircle2, XCircle, CalendarDays, X } from 'lucide-react'
+import { Plus, CheckCircle2, XCircle, CalendarDays, X, CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -125,9 +125,10 @@ interface AppointmentModalProps {
   appointment?: Appointment | null
   prefill?: Partial<AppointmentFormValues>
   onCreated?: () => void
+  onDelete?: (a: Appointment) => void
 }
 
-function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: AppointmentModalProps) {
+function AppointmentModal({ open, onClose, appointment, prefill, onCreated, onDelete }: AppointmentModalProps) {
   const { data: sessionTypes = [] } = useSessionTypes()
   const { data: existingClient } = useClient(appointment?.client_id ?? prefill?.client_id ?? '')
   const { data: allAppointments = [] } = useAppointments()
@@ -252,14 +253,18 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
       price: values.price || '0',
       notes: values.notes ?? null,
     }
-    if (appointment) {
-      await updateMutation.mutateAsync({ id: appointment.id, payload })
-    } else {
-      await createMutation.mutateAsync(payload)
-      onCreated?.()
+    try {
+      if (appointment) {
+        await updateMutation.mutateAsync({ id: appointment.id, payload })
+      } else {
+        await createMutation.mutateAsync(payload)
+        onCreated?.()
+      }
+      reset()
+      onClose()
+    } catch {
+      // error is already surfaced via the mutation's onError toast
     }
-    reset()
-    onClose()
   }
 
   return (
@@ -446,44 +451,63 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
                       )}
                     </div>
 
-                    {/* Precise time (optional) */}
-                    <div className="w-[120px]">
-                      <Input
-                        type="time"
-                        value={slotTime}
+                    {/* All day checkbox */}
+                    <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer whitespace-nowrap select-none self-center">
+                      <input
+                        type="checkbox"
+                        checked={slotTimeSlot === 'all_day'}
                         onChange={(e) => {
-                          const t = e.target.value
-                          setValue(`session_slots.${index}.time`, t || undefined)
-                          if (t) {
-                            setValue(`session_slots.${index}.time_slot`, deriveTimeSlot(t))
+                          if (e.target.checked) {
+                            setValue(`session_slots.${index}.time`, undefined)
+                            setValue(`session_slots.${index}.time_slot`, 'all_day')
+                          } else {
+                            setValue(`session_slots.${index}.time_slot`, 'morning')
                           }
                         }}
-                        className="bg-input border text-foreground h-9 text-sm"
+                        className="h-3.5 w-3.5 rounded accent-brand"
                       />
-                    </div>
+                      All day
+                    </label>
 
-                    {/* Time of day */}
-                    {!slotTime ? (
-                      <div className="w-[130px]">
-                        <Select
-                          value={slotTimeSlot}
-                          onValueChange={(v) => setValue(`session_slots.${index}.time_slot`, v as 'morning' | 'afternoon' | 'evening' | 'all_day')}
-                        >
-                          <SelectTrigger className="bg-input border text-foreground h-9 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border text-popover-foreground">
-                            <SelectItem value="morning">Morning</SelectItem>
-                            <SelectItem value="afternoon">Afternoon</SelectItem>
-                            <SelectItem value="evening">Evening</SelectItem>
-                            <SelectItem value="all_day">All Day</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    {/* Precise time — hidden when all_day */}
+                    {slotTimeSlot !== 'all_day' && (
+                      <div className="w-[120px]">
+                        <Input
+                          type="time"
+                          value={slotTime}
+                          onChange={(e) => {
+                            const t = e.target.value
+                            setValue(`session_slots.${index}.time`, t || undefined)
+                            setValue(`session_slots.${index}.time_slot`, t ? deriveTimeSlot(t) : 'morning')
+                          }}
+                          className="bg-input border text-foreground h-9 text-sm"
+                        />
                       </div>
-                    ) : (
-                      <div className="w-[130px] h-9 flex items-center px-2 rounded-md border border-border bg-muted/30 text-sm text-muted-foreground capitalize">
-                        {deriveTimeSlot(slotTime)}
-                      </div>
+                    )}
+
+                    {/* Time of day — dropdown when no precise time, label when time is set */}
+                    {slotTimeSlot !== 'all_day' && (
+                      !slotTime ? (
+                        <div className="w-[130px]">
+                          <Select
+                            value={slotTimeSlot}
+                            onValueChange={(v) => setValue(`session_slots.${index}.time_slot`, v as 'morning' | 'afternoon' | 'evening')}
+                          >
+                            <SelectTrigger className="bg-input border text-foreground h-9 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border text-popover-foreground">
+                              <SelectItem value="morning">Morning</SelectItem>
+                              <SelectItem value="afternoon">Afternoon</SelectItem>
+                              <SelectItem value="evening">Evening</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ) : (
+                        <div className="w-[130px] h-9 flex items-center px-2 rounded-md border border-border bg-muted/30 text-sm text-muted-foreground capitalize">
+                          {deriveTimeSlot(slotTime)}
+                        </div>
+                      )
                     )}
 
                     {/* Remove button */}
@@ -533,16 +557,130 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated }: Ap
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose} className="text-muted-foreground">Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {appointment ? 'Save changes' : 'Create appointment'}
-            </Button>
+          <div className="flex items-center justify-between pt-2">
+            {appointment && onDelete ? (
+              <button
+                type="button"
+                onClick={() => { onClose(); onDelete(appointment) }}
+                className="text-sm text-transparent bg-gradient-to-r from-rose-400 to-pink-500 bg-clip-text hover:opacity-80"
+              >
+                Delete appointment
+              </button>
+            ) : <span />}
+            <div className="flex gap-2">
+              <Button type="button" variant="ghost" onClick={onClose} className="text-muted-foreground">Cancel</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {appointment ? 'Save changes' : 'Create appointment'}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
     </Dialog>
   )
+}
+
+type CalendarEvent = { id: string; title: string; start: Date; end: Date; resource: Appointment }
+
+function CalendarToolbar({ label, onNavigate, onView, view }: ToolbarProps<CalendarEvent>) {
+  const views: View[] = ['month', 'week', 'day', 'agenda']
+  return (
+    <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => onNavigate('PREV')}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => onNavigate('TODAY')}
+          className="px-3 h-8 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+        >
+          Today
+        </button>
+        <button
+          onClick={() => onNavigate('NEXT')}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      <span className="text-base font-semibold text-foreground tracking-tight">{label}</span>
+
+      <div className="flex rounded-lg overflow-hidden border border-border">
+        {views.map(v => (
+          <button
+            key={v}
+            onClick={() => onView(v)}
+            className={`px-3 h-8 text-xs font-medium capitalize transition-colors ${
+              view === v
+                ? 'bg-accent text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+            }`}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const EVENT_COLORS: Record<string, { bg: string; color: string }> = {
+  confirmed: { bg: 'var(--brand-from)', color: '#ffffff' },
+  pending:   { bg: '#f59e0b',           color: '#ffffff' },
+  cancelled: { bg: 'var(--muted-foreground)', color: 'var(--card)' },
+}
+
+function eventPropGetter(event: CalendarEvent) {
+  const c = EVENT_COLORS[event.resource?.status] ?? EVENT_COLORS.pending
+  return { style: { backgroundColor: c.bg, color: c.color } }
+}
+
+function generateICS(a: Appointment): string {
+  const now = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z'
+  const isAllDay = a.session_slots.length > 0 && a.session_slots.every(s => s.time_slot === 'all_day')
+
+  let dtStart: string
+  let dtEnd: string
+
+  if (isAllDay) {
+    const date = a.starts_at.slice(0, 10).replace(/-/g, '')
+    const nextDay = new Date(a.starts_at)
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1)
+    dtStart = `DTSTART;VALUE=DATE:${date}`
+    dtEnd = `DTEND;VALUE=DATE:${nextDay.toISOString().slice(0, 10).replace(/-/g, '')}`
+  } else {
+    const start = new Date(a.starts_at)
+    const end = a.ends_at ? new Date(a.ends_at) : new Date(start.getTime() + 60 * 60 * 1000)
+    dtStart = `DTSTART:${start.toISOString().replace(/[-:.]/g, '').slice(0, 15)}Z`
+    dtEnd = `DTEND:${end.toISOString().replace(/[-:.]/g, '').slice(0, 15)}Z`
+  }
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//weCapture4U//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${a.id}@wecapture4u`,
+    `DTSTAMP:${now}`,
+    dtStart,
+    dtEnd,
+    `SUMMARY:${a.title}`,
+  ]
+  if (a.location) lines.push(`LOCATION:${a.location}`)
+  if (a.notes) lines.push(`DESCRIPTION:${a.notes.replace(/\n/g, '\\n')}`)
+  lines.push('END:VEVENT', 'END:VCALENDAR')
+  return lines.join('\r\n')
+}
+
+function openInCalendar(a: Appointment) {
+  const url = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(generateICS(a))
+  window.open(url, '_blank')
 }
 
 const TIME_SLOT_LABELS: Record<string, string> = {
@@ -699,8 +837,9 @@ function RequestsTab({ onConfirm }: { onConfirm: (r: BookingRequest) => void }) 
 }
 
 export function Appointments() {
-  const [view, setView] = useState<'calendar' | 'list'>('list')
+  const [view, setView] = useState<'calendar' | 'list'>('calendar')
   const [calendarView, setCalendarView] = useState<View>('month')
+  const [calendarDate, setCalendarDate] = useState(new Date())
   const [modalOpen, setModalOpen] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Appointment | null>(null)
@@ -712,7 +851,7 @@ export function Appointments() {
   const { data: appointments = [], isLoading } = useAppointments()
   const deleteMutation = useDeleteAppointment()
 
-  const events = appointments.map(a => ({
+  const events: CalendarEvent[] = appointments.map(a => ({
     id: a.id,
     title: a.title,
     start: parseISO(a.starts_at),
@@ -822,14 +961,18 @@ export function Appointments() {
       {activeTab === 'appointments' ? (
       <>
       {view === 'calendar' ? (
-        <div className="rounded-xl bg-card border p-4" style={{ height: 600 }}>
-          <Calendar
+        <div className="rounded-2xl bg-card border border-border p-5" style={{ height: 660 }}>
+          <Calendar<CalendarEvent>
             localizer={localizer}
             events={events}
             view={calendarView}
             onView={setCalendarView}
+            date={calendarDate}
+            onNavigate={setCalendarDate}
             onSelectEvent={(event) => openEdit(event.resource)}
-            style={{ background: 'transparent' }}
+            eventPropGetter={eventPropGetter}
+            components={{ toolbar: CalendarToolbar }}
+            style={{ height: '100%' }}
           />
         </div>
       ) : (
@@ -897,12 +1040,23 @@ export function Appointments() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(a) }}
-                        className="text-xs text-transparent bg-gradient-to-r from-rose-400 to-pink-500 bg-clip-text hover:opacity-80"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex items-center justify-end gap-6">
+                        {a.status === 'confirmed' && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openInCalendar(a) }}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            title="Add to Calendar"
+                          >
+                            <CalendarPlus className="h-4 w-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(a) }}
+                          className="text-xs text-transparent bg-gradient-to-r from-rose-400 to-pink-500 bg-clip-text hover:opacity-80"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -922,6 +1076,7 @@ export function Appointments() {
         appointment={editingAppointment}
         prefill={requestPrefill}
         onCreated={confirmingRequest ? handleAppointmentCreated : undefined}
+        onDelete={(a) => setDeleteTarget(a)}
       />
 
       <ConfirmDialog

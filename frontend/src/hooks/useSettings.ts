@@ -46,8 +46,7 @@ export function useCreateSessionType() {
 export function useUpdateSessionType() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...payload }: { id: string; name?: string; available_days?: number[] }) =>
-      updateSessionType(id, payload),
+    mutationFn: ({ id, name }: { id: string; name: string }) => updateSessionType(id, name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['session-types'] })
       toast.success('Session type updated')

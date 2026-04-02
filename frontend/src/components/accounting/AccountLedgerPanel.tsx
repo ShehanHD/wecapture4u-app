@@ -1,19 +1,19 @@
 // frontend/src/components/accounting/AccountLedgerPanel.tsx
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { fetchAccountLedger } from '@/api/accounting'
-import type { AccountLedgerOut, AccountOut } from '@/schemas/accounting'
+import type { AccountLedgerOut, AccountOut, AccountType } from '@/schemas/accounting'
 
 interface Props {
   account: AccountOut | null
   onClose: () => void
 }
 
-const TYPE_COLORS: Record<string, string> = {
+const TYPE_COLORS: Record<AccountType, string> = {
   asset: 'bg-blue-500/20 text-blue-400',
   liability: 'bg-red-500/20 text-red-400',
   equity: 'bg-purple-500/20 text-purple-400',
@@ -36,19 +36,26 @@ export function AccountLedgerPanel({ account, onClose }: Props) {
   const [data, setData] = useState<AccountLedgerOut | null>(null)
   const [loading, setLoading] = useState(false)
 
-  if (!account) return null
-
-  async function handleLoad() {
+  const handleLoad = useCallback(async () => {
+    if (!account) return
     setLoading(true)
     try {
-      const result = await fetchAccountLedger(account!.id, { start_date: startDate, end_date: endDate })
+      const result = await fetchAccountLedger(account.id, { start_date: startDate, end_date: endDate })
       setData(result)
     } catch {
       toast.error('Failed to load ledger')
     } finally {
       setLoading(false)
     }
-  }
+  }, [account, startDate, endDate])
+
+  // Auto-load only when the panel opens with a new account; date changes require clicking Load
+  useEffect(() => {
+    if (account) void handleLoad()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account?.id])
+
+  if (!account) return null
 
   return (
     <>
@@ -106,7 +113,7 @@ export function AccountLedgerPanel({ account, onClose }: Props) {
                   data.lines.map((line, i) => (
                     <tr key={i} className="hover:bg-muted/20">
                       <td className="px-4 py-2 text-xs tabular-nums">{line.date}</td>
-                      <td className="px-4 py-2 text-xs max-w-[160px] truncate">{line.description}</td>
+                      <td className="px-4 py-2 text-xs max-w-[160px] truncate">{line.line_description ?? line.description}</td>
                       <td className="px-4 py-2 text-xs text-muted-foreground">{line.reference_type ?? '—'}</td>
                       <td className="px-4 py-2 text-xs text-right tabular-nums">
                         {parseFloat(line.debit) !== 0 ? `$${line.debit}` : '—'}

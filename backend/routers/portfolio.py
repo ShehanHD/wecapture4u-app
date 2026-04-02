@@ -3,8 +3,8 @@ import os
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
-from sqlalchemy import select
+from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, UploadFile
+from sqlalchemy import delete as sqldel, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
@@ -84,7 +84,7 @@ async def public_settings(db: DbDep):
 
 @router.post("/contact", status_code=201)
 async def submit_contact(db: DbDep, data: ContactSubmissionCreate):
-    sub = ContactSubmission(name=data.name, email=data.email, message=data.message)
+    sub = ContactSubmission(name=data.name, email=data.email, phone=data.phone, message=data.message)
     db.add(sub)
     await db.flush()
     await db.commit()
@@ -230,6 +230,7 @@ async def list_contact_submissions(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
+    import asyncio
     from sqlalchemy import func
     q = (
         select(ContactSubmission)
@@ -237,16 +238,19 @@ async def list_contact_submissions(
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
-    items = (await db.execute(q)).scalars().all()
-    total = (
-        await db.execute(select(func.count()).select_from(ContactSubmission))
-    ).scalar_one()
+    items_result, total_result = await asyncio.gather(
+        db.execute(q),
+        db.execute(select(func.count()).select_from(ContactSubmission)),
+    )
+    items = items_result.scalars().all()
+    total = total_result.scalar_one()
     return {
         "items": [
             {
                 "id": str(s.id),
                 "name": s.name,
                 "email": s.email,
+                "phone": s.phone,
                 "message": s.message,
                 "created_at": s.created_at.isoformat(),
             }
@@ -256,3 +260,24 @@ async def list_contact_submissions(
         "page": page,
         "page_size": page_size,
     }
+
+
+@router.delete("/contact/submissions/{submission_id}", status_code=204)
+async def delete_contact_submission(db: DbDep, admin: AdminDep, submission_id: UUID):
+    exists = (await db.execute(select(ContactSubmission.id).where(ContactSubmission.id == submission_id))).scalar_one_or_none()
+    if exists is None:
+        raise HTTPException(404, "Submission not found")
+    await db.execute(sqldel(ContactSubmission).where(ContactSubmission.id == submission_id))
+    await db.commit()
+
+
+@router.delete("/contact/submissions", status_code=204)
+async def batch_delete_contact_submissions(
+    db: DbDep,
+    admin: AdminDep,
+    ids: list[UUID] = Body(...),
+):
+    if not ids:
+        return
+    await db.execute(sqldel(ContactSubmission).where(ContactSubmission.id.in_(ids)))
+    await db.commit()

@@ -1,5 +1,6 @@
 // frontend/src/schemas/accounting.ts
 import { z } from 'zod'
+import { numericString } from '@/lib/zod'
 
 // ─── Accounts ─────────────────────────────────────────────────────────────────
 
@@ -19,19 +20,23 @@ export const AccountOutSchema = z.object({
 export type AccountOut = z.infer<typeof AccountOutSchema>
 
 export const AccountLedgerLineSchema = z.object({
+  journal_entry_id: z.string().uuid(),
   date: z.string(),
   description: z.string(),
+  line_description: z.string().nullable(),
   reference_type: z.string().nullable(),
-  debit: z.string(),
-  credit: z.string(),
-  running_balance: z.string(),
+  debit: numericString,
+  credit: numericString,
+  running_balance: numericString,
 })
 
 export const AccountLedgerOutSchema = z.object({
-  account: AccountOutSchema,
-  opening_balance: z.string(),
+  account_id: z.string().uuid(),
+  account_name: z.string(),
+  normal_balance: z.string(),
+  opening_balance: numericString,
+  closing_balance: numericString,
   lines: z.array(AccountLedgerLineSchema),
-  closing_balance: z.string(),
 })
 export type AccountLedgerOut = z.infer<typeof AccountLedgerOutSchema>
 

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { AccountLedgerPanel } from '@/components/accounting/AccountLedgerPanel'
 import { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } from '@/hooks/useAccounting'
+import { SkeletonRow } from '@/components/ui/skeleton'
 import type { AccountOut } from '@/schemas/accounting'
 
 const TYPE_COLORS: Record<string, string> = {
@@ -151,7 +152,11 @@ export function AccountingAccounts() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <div className="rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody>{Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} cols={5} />)}</tbody>
+          </table>
+        </div>
       ) : (
         <div className="rounded-lg border border-border overflow-hidden">
           <table className="w-full text-sm">

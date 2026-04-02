@@ -114,7 +114,7 @@ function SidebarContent({
   onNavClick?: () => void
   showToggle?: boolean
 }) {
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
   const navigate = useNavigate()
   const { theme, toggle: toggleTheme } = useTheme()
 
@@ -123,9 +123,7 @@ function SidebarContent({
     navigate('/login')
   }
 
-  const initials = user?.full_name
-    ? user.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-    : 'A'
+  const initials = 'A'
 
   return (
     <div className="flex flex-col h-full">
@@ -202,18 +200,18 @@ function SidebarContent({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              title={collapsed ? (user?.full_name ?? 'Admin') : undefined}
+              title={collapsed ? 'Admin' : undefined}
               className={cn(
                 'flex items-center gap-2 rounded-lg w-full hover:bg-muted/50 transition-colors',
                 collapsed ? 'justify-center py-2' : 'px-2 py-2 text-left'
               )}
             >
               <Avatar className="h-6 w-6 flex-shrink-0">
-                {user?.avatar_url && <AvatarImage src={user.avatar_url} alt={user.full_name} />}
+
                 <AvatarFallback className="bg-muted text-[10px] text-foreground">{initials}</AvatarFallback>
               </Avatar>
               {!collapsed && (
-                <span className="text-[13px] text-foreground/70 truncate flex-1">{user?.full_name ?? 'Admin'}</span>
+                <span className="text-[13px] text-foreground/70 truncate flex-1">Admin</span>
               )}
             </button>
           </DropdownMenuTrigger>

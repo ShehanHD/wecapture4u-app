@@ -1,3 +1,4 @@
+// frontend/src/schemas/clientPortal.ts
 import { z } from 'zod'
 
 export const ClientProfileSchema = z.object({
@@ -41,24 +42,14 @@ export type ClientJobDetail = z.infer<typeof ClientJobDetailSchema>
 export const SessionTypeSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  available_days: z.array(z.number().int().min(0).max(6)),
 })
 export type SessionType = z.infer<typeof SessionTypeSchema>
 export const SessionTypeListSchema = z.array(SessionTypeSchema)
 
-export const ClientBookingRequestSlotSchema = z.object({
-  session_type_id: z.string().uuid(),
-  session_type_name: z.string().nullable(),
-  date: z.string(),
-  time_slot: z.enum(['morning', 'afternoon', 'evening', 'all_day']),
-})
-export type ClientBookingRequestSlot = z.infer<typeof ClientBookingRequestSlotSchema>
-
 export const ClientBookingRequestSchema = z.object({
   id: z.string().uuid(),
   preferred_date: z.string(),
-  session_slots: z.array(ClientBookingRequestSlotSchema),
-  time_slot: z.enum(['morning', 'afternoon', 'evening', 'all_day']).nullable(),
+  time_slot: z.enum(['morning', 'afternoon', 'evening', 'all_day']),
   session_type_name: z.string().nullable(),
   message: z.string().nullable(),
   status: z.enum(['pending', 'confirmed', 'rejected']),

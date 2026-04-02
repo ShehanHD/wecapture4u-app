@@ -116,13 +116,15 @@ async def test_create_draft_entry_success(test_client, admin_auth_headers, db_se
 
 
 @pytest.mark.asyncio
-async def test_create_entry_empty_lines_returns_422(test_client, admin_auth_headers):
+async def test_create_entry_empty_lines_creates_draft(test_client, admin_auth_headers):
     resp = await test_client.post(
         "/api/journal-entries",
         json={"date": "2026-03-10", "description": "No lines", "lines": []},
         headers=admin_auth_headers,
     )
-    assert resp.status_code == 422
+    assert resp.status_code == 201
+    assert resp.json()["status"] == "draft"
+    assert resp.json()["lines"] == []
 
 
 @pytest.mark.asyncio

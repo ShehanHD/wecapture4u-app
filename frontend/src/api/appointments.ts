@@ -6,11 +6,10 @@ export type { Appointment }
 export interface AppointmentCreatePayload {
   client_id: string
   title: string
-  session_slots: Array<{
-    session_type_id: string
-    date: string
-    time_slot: 'morning' | 'afternoon' | 'evening' | 'all_day'
-  }>
+  starts_at: string
+  session_type_ids?: string[]
+  session_time?: 'morning' | 'afternoon' | 'evening' | null
+  ends_at?: string | null
   location?: string | null
   status?: 'pending' | 'confirmed' | 'cancelled'
   addons?: string[]

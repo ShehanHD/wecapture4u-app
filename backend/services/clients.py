@@ -53,23 +53,24 @@ async def get_client_total_spent(db: AsyncSession, *, client_id: uuid.UUID) -> D
     """Sum of all posted journal line credits on revenue accounts for this client.
     Returns 0 until Plan 8 (Accounting) adds journal line querying."""
     try:
-        result = await db.execute(
-            text(
-                """
-                SELECT COALESCE(SUM(jl.amount), 0)
-                FROM journal_lines jl
-                JOIN journal_entries je ON jl.entry_id = je.id
-                JOIN invoices i ON je.invoice_id = i.id
-                JOIN accounts a ON jl.account_id = a.id
-                WHERE i.client_id = :client_id
-                  AND je.status = 'posted'
-                  AND a.type = 'revenue'
-                  AND jl.credit > 0
-                """
-            ),
-            {"client_id": str(client_id)},
-        )
-        return Decimal(str(result.scalar()))
+        async with db.begin_nested():
+            result = await db.execute(
+                text(
+                    """
+                    SELECT COALESCE(SUM(jl.amount), 0)
+                    FROM journal_lines jl
+                    JOIN journal_entries je ON jl.entry_id = je.id
+                    JOIN invoices i ON je.invoice_id = i.id
+                    JOIN accounts a ON jl.account_id = a.id
+                    WHERE i.client_id = :client_id
+                      AND je.status = 'posted'
+                      AND a.type = 'revenue'
+                      AND jl.credit > 0
+                    """
+                ),
+                {"client_id": str(client_id)},
+            )
+            return Decimal(str(result.scalar()))
     except Exception:
         return Decimal("0")
 

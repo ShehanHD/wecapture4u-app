@@ -33,11 +33,8 @@ export async function createSessionType(name: string): Promise<SessionType> {
   return SessionTypeSchema.parse(data)
 }
 
-export async function updateSessionType(
-  id: string,
-  payload: { name?: string; available_days?: number[] },
-): Promise<SessionType> {
-  const { data } = await api.patch(`/api/session-types/${id}`, payload)
+export async function updateSessionType(id: string, name: string): Promise<SessionType> {
+  const { data } = await api.patch(`/api/session-types/${id}`, { name })
   return SessionTypeSchema.parse(data)
 }
 

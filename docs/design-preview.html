@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>weCapture4U — Design Preview</title>
+<style>
+  /* ── Tokens ── */
+  :root {
+    --bg:        #F5F5F7;
+    --surface:   #FFFFFF;
+    --border:    #D2D2D7;
+    --divider:   #ECECF0;
+    --text:      #1D1D1F;
+    --muted:     #6E6E73;
+    --subtle:    #86868B;
+    --accent:    #0071E3;
+    --accent-h:  #0077ED;
+    --green:     #3E935C;
+    --red:       #D93025;
+    --amber:     #B45309;
+    --r-sm:      8px;
+    --r-md:      12px;
+    --r-lg:      16px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .shell { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--divider);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 12px;
+    gap: 4px;
+    position: fixed;
+    inset: 0 auto 0 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    margin-bottom: 20px;
+  }
+
+  .logo-mark {
+    width: 28px; height: 28px;
+    background: var(--text);
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+  }
+
+  .logo-mark svg { color: white; }
+
+  .logo-name {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--text);
+  }
+
+  .nav-section {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    padding: 12px 8px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: var(--r-sm);
+    font-size: 13.5px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background .12s, color .12s;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+
+  .nav-item.active {
+    background: var(--bg);
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .nav-dot {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    background: var(--divider);
+    flex-shrink: 0;
+  }
+
+  .nav-dot.blue   { background: #DBEAFE; }
+  .nav-dot.green  { background: #D1FAE5; }
+  .nav-dot.amber  { background: #FEF3C7; }
+  .nav-dot.purple { background: #EDE9FE; }
+  .nav-dot.coral  { background: #FEE2E2; }
+
+  /* ── Main ── */
+  .main { margin-left: 220px; padding: 40px 40px 60px; max-width: 1200px; }
+
+  /* ── Page header ── */
+  .page-header { margin-bottom: 32px; }
+  .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .page-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 12px;
+  }
+
+  /* ── Cards grid ── */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+
+  /* ── Stat card ── */
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .stat-card .label {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.01em;
+    margin-bottom: 8px;
+  }
+
+  .stat-card .value {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .stat-card .sub {
+    font-size: 11px;
+    color: var(--subtle);
+    margin-top: 4px;
+  }
+
+  /* Hero stat card (first row — accent fill) */
+  .stat-card.hero {
+    background: var(--text);
+    border-color: transparent;
+  }
+  .stat-card.hero .label { color: rgba(255,255,255,.55); }
+  .stat-card.hero .value { color: #fff; }
+  .stat-card.hero .sub   { color: rgba(255,255,255,.4); }
+
+  .stat-card.hero.blue  { background: var(--accent); }
+  .stat-card.hero.green { background: #1a7a47; }
+
+  /* Small album cards */
+  .stat-card.sm { padding: 14px 18px; }
+  .stat-card.sm .value { font-size: 22px; }
+
+  /* ── Chart + Appointments grid ── */
+  .grid-chart { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .card-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* Placeholder chart */
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    height: 140px;
+    padding-top: 12px;
+  }
+
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+  .bar {
+    width: 100%;
+    background: var(--divider);
+    border-radius: 5px 5px 0 0;
+    transition: background .15s;
+  }
+
+  .bar:hover { background: var(--accent); opacity: .8; }
+
+  .bar-label { font-size: 10px; color: var(--subtle); }
+
+  /* Upcoming appointments */
+  .appt-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .appt-item { display: flex; align-items: flex-start; gap: 10px; }
+
+  .appt-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .appt-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .appt-date { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+
+  .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-top: 4px;
+  }
+
+  .badge.confirmed { background: #D1FAE5; color: #065F46; }
+  .badge.pending   { background: #FEF3C7; color: #92400E; }
+
+  /* ── Table ── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .table-header h3 { font-size: 13px; font-weight: 600; color: var(--text); }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    text-align: left;
+    padding: 9px 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    background: var(--bg);
+    border-bottom: 1px solid var(--divider);
+  }
+
+  tbody td {
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    border-bottom: 1px solid var(--divider);
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr:hover td { background: #FAFAFA; }
+
+  td.mono { font-variant-numeric: tabular-nums; font-size: 12.5px; color: var(--muted); }
+
+  td.amount { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+  .status-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .status-pill.paid     { background: #D1FAE5; color: #065F46; }
+  .status-pill.draft    { background: var(--divider); color: var(--muted); }
+  .status-pill.sent     { background: #DBEAFE; color: #1E40AF; }
+  .status-pill.overdue  { background: #FEE2E2; color: #991B1B; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: opacity .12s, background .12s;
+  }
+
+  .btn-primary   { background: var(--text); color: #fff; }
+  .btn-primary:hover { opacity: .85; }
+
+  .btn-secondary { background: var(--divider); color: var(--text); }
+  .btn-secondary:hover { background: #D2D2D7; }
+
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--divider); }
+  .btn-ghost:hover { color: var(--text); border-color: #86868B; }
+
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── Icon action btn ── */
+  .icon-btn {
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    border-radius: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    transition: background .1s, color .1s;
+  }
+  .icon-btn:hover { background: var(--bg); color: var(--text); }
+  .icon-btn.danger:hover { color: var(--red); }
+
+  /* ── Filter tabs ── */
+  .filter-tabs { display: flex; gap: 2px; background: var(--divider); border-radius: 9px; padding: 3px; }
+  .filter-tab {
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--muted);
+    border: none;
+    background: none;
+    transition: background .1s, color .1s;
+  }
+  .filter-tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+      <span class="logo-name">weCapture4U</span>
+    </div>
+
+    <span class="nav-section">Workspace</span>
+    <a class="nav-item active" href="#">
+      <div class="nav-dot blue"></div> Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot amber"></div> Appointments
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot green"></div> Jobs
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot purple"></div> Clients
+    </a>
+
+    <span class="nav-section">Finance</span>
+    <a class="nav-item" href="#">
+      <div class="nav-dot blue"></div> Accounting
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot coral"></div> Invoices
+    </a>
+
+    <span class="nav-section">Studio</span>
+    <a class="nav-item" href="#">
+      <div class="nav-dot"></div> Portfolio
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot"></div> Settings
+    </a>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <div class="page-header">
+      <h1>Dashboard</h1>
+      <p>Good morning — here's what's happening today.</p>
+    </div>
+
+    <!-- Row 1: Cash, Bank, Debits, Credits -->
+    <p class="section-label">Financials</p>
+    <div class="grid-4">
+      <div class="stat-card hero">
+        <div class="label">Total Cash</div>
+        <div class="value">€4,200</div>
+        <div class="sub">Cash on hand</div>
+      </div>
+      <div class="stat-card hero blue">
+        <div class="label">Total Bank</div>
+        <div class="value">€18,540</div>
+        <div class="sub">Bank account balance</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Total Debits</div>
+        <div class="value">€32,100</div>
+        <div class="sub">All posted journal debits</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Total Credits</div>
+        <div class="value">€32,100</div>
+        <div class="sub">All posted journal credits</div>
+      </div>
+    </div>
+
+    <!-- Chart + Appointments -->
+    <div class="grid-chart">
+      <div class="card">
+        <div class="card-title">Monthly Revenue</div>
+        <div class="card-sub">Will populate once accounting is set up</div>
+        <div class="chart-bars">
+          <div class="bar-wrap"><div class="bar" style="height:30%"></div><span class="bar-label">Oct</span></div>
+          <div class="bar-wrap"><div class="bar" style="height:45%"></div><span class="bar-label">Nov</span></div>
+          <div class="bar-wrap"><div class="bar" style="height:60%"></div><span class="bar-label">Dec</span></div>
+          <div class="bar-wrap"><div class="bar" style="height:40%"></div><span class="bar-label">Jan</span></div>
+          <div class="bar-wrap"><div class="bar" style="height:75%"></div><span class="bar-label">Feb</span></div>
+          <div class="bar-wrap"><div class="bar" style="height:55%"></div><span class="bar-label">Mar</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Upcoming Appointments</div>
+        <div class="card-sub" style="margin-bottom:16px">Next 5 scheduled</div>
+        <div class="appt-list">
+          <div class="appt-item">
+            <div class="appt-dot"></div>
+            <div>
+              <div class="appt-name">Wedding — Murphy</div>
+              <div class="appt-date">Apr 12, 2026</div>
+              <span class="badge confirmed">Confirmed</span>
+            </div>
+          </div>
+          <div class="appt-item">
+            <div class="appt-dot"></div>
+            <div>
+              <div class="appt-name">Portrait Session</div>
+              <div class="appt-date">Apr 18, 2026</div>
+              <span class="badge pending">Pending</span>
+            </div>
+          </div>
+          <div class="appt-item">
+            <div class="appt-dot"></div>
+            <div>
+              <div class="appt-name">Corporate Event</div>
+              <div class="appt-date">Apr 24, 2026</div>
+              <span class="badge confirmed">Confirmed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Revenue, Overdue, Upcoming, Active Jobs -->
+    <p class="section-label">Performance</p>
+    <div class="grid-4" style="margin-bottom:24px">
+      <div class="stat-card">
+        <div class="label">This Month Revenue</div>
+        <div class="value">€3,500</div>
+        <div class="sub">Payments received</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Overdue Invoices</div>
+        <div class="value" style="color:var(--red)">€1,200</div>
+        <div class="sub">Shoot date passed</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Upcoming Payments</div>
+        <div class="value">€800</div>
+        <div class="sub">Future shoots</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Active Jobs</div>
+        <div class="value">7</div>
+        <div class="sub">In progress</div>
+      </div>
+    </div>
+
+    <!-- Row 3: Jobs + Clients -->
+    <div class="grid-4" style="margin-bottom:24px">
+      <div class="stat-card">
+        <div class="label">Total Jobs</div>
+        <div class="value">42</div>
+        <div class="sub">All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">This Month Jobs</div>
+        <div class="value">4</div>
+        <div class="sub">Created this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Future Jobs</div>
+        <div class="value">11</div>
+        <div class="sub">Upcoming shoots</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Total Clients</div>
+        <div class="value">28</div>
+        <div class="sub">All time</div>
+      </div>
+    </div>
+
+    <!-- Albums -->
+    <p class="section-label">Albums</p>
+    <div class="grid-3" style="margin-bottom:32px">
+      <div class="stat-card sm">
+        <div class="label">Upcoming Albums</div>
+        <div class="value">3</div>
+        <div class="sub">Shoot not yet done</div>
+      </div>
+      <div class="stat-card sm">
+        <div class="label">Ongoing Albums</div>
+        <div class="value">5</div>
+        <div class="sub">In production</div>
+      </div>
+      <div class="stat-card sm">
+        <div class="label">Total Albums</div>
+        <div class="value">18</div>
+        <div class="sub">All time</div>
+      </div>
+    </div>
+
+    <!-- Table example: Expenses -->
+    <p class="section-label">Sample Table — Expenses</p>
+    <div class="table-card">
+      <div class="table-header">
+        <h3>Expenses</h3>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="filter-tabs">
+            <button class="filter-tab active">All</button>
+            <button class="filter-tab">Payable</button>
+            <button class="filter-tab">Paid</button>
+          </div>
+          <button class="btn btn-primary btn-sm">+ Add</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Account</th>
+            <th style="text-align:right">Amount</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">2026-03-12</td>
+            <td>Camera equipment rental</td>
+            <td class="mono">5100 — Equipment</td>
+            <td class="amount">€420.00</td>
+            <td><span class="status-pill paid">paid</span></td>
+            <td style="text-align:right;padding-right:12px">
+              <button class="icon-btn danger">✕</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="mono">2026-03-18</td>
+            <td>Studio monthly rent</td>
+            <td class="mono">5200 — Rent</td>
+            <td class="amount">€900.00</td>
+            <td><span class="status-pill sent">payable</span></td>
+            <td style="text-align:right;padding-right:12px;display:flex;gap:4px;justify-content:flex-end;align-items:center;padding-top:12px">
+              <button class="btn btn-ghost btn-sm">Mark Paid</button>
+              <button class="icon-btn danger">✕</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="mono">2026-03-25</td>
+            <td>Lightroom subscription</td>
+            <td class="mono">5300 — Software</td>
+            <td class="amount">€54.99</td>
+            <td><span class="status-pill draft">payable</span></td>
+            <td style="text-align:right;padding-right:12px">
+              <button class="icon-btn danger">✕</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="mono">2026-03-28</td>
+            <td>Overdue vendor payment</td>
+            <td class="mono">5400 — Vendors</td>
+            <td class="amount">€280.00</td>
+            <td><span class="status-pill overdue">overdue</span></td>
+            <td style="text-align:right;padding-right:12px">
+              <button class="icon-btn danger">✕</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Buttons reference -->
+    <p class="section-label">Buttons &amp; Controls</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary">Save changes</button>
+      <button class="btn btn-secondary">Cancel</button>
+      <button class="btn btn-ghost">View details</button>
+      <button class="btn btn-primary btn-sm">+ Add</button>
+      <button class="btn btn-ghost btn-sm">Export CSV</button>
+      <div class="filter-tabs">
+        <button class="filter-tab active">All</button>
+        <button class="filter-tab">Active</button>
+        <button class="filter-tab">Archived</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

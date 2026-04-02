@@ -3,6 +3,8 @@ import logging
 from decimal import Decimal
 from typing import Optional
 
+REFERENCE_TYPE_INVOICE_PAYMENT = "invoice_payment"
+
 from fastapi import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -10,8 +12,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from datetime import date, datetime, timezone
 from models.invoice import Invoice, InvoiceItem, InvoicePayment
+from models.account import Account
+from models.journal import JournalEntry, JournalLine
 
 logger = logging.getLogger(__name__)
+
+
+async def _get_default_revenue_account_id(db: AsyncSession) -> uuid.UUID:
+    """Returns the default Session Fees revenue account id (code 4000, always seeded)."""
+    acct_id = await db.scalar(select(Account.id).where(Account.code == "4000"))
+    if acct_id is None:
+        raise HTTPException(status_code=500, detail="Default revenue account (4000) not found.")
+    return acct_id
+
+
+async def _resolve_revenue_account_id(db: AsyncSession, invoice: Invoice) -> uuid.UUID:
+    """
+    Returns the revenue account to credit when a payment is received.
+    Uses the revenue_account_id from the first invoice item that has one,
+    falling back to the default Session Fees account (4000).
+    """
+    await db.refresh(invoice, ["items"])
+    for item in invoice.items:
+        if item.revenue_account_id is not None:
+            return item.revenue_account_id
+    return await _get_default_revenue_account_id(db)
 
 
 def compute_item_amount(quantity: Decimal, unit_price: Decimal) -> Decimal:
@@ -260,6 +285,23 @@ async def add_payment(
     db.add(payment)
     await db.flush()
     await _update_payment_status(db, invoice)
+
+    # Auto-create a posted journal entry (cash-basis): DR cash/bank account, CR revenue account
+    revenue_account_id = await _resolve_revenue_account_id(db, invoice)
+    entry = JournalEntry(
+        date=payment_date,
+        description=notes or f"Payment received on invoice {str(invoice_id)[:8]}",
+        status="posted",
+        created_by="system",
+        reference_type=REFERENCE_TYPE_INVOICE_PAYMENT,
+        reference_id=payment.id,
+    )
+    db.add(entry)
+    await db.flush()
+    db.add(JournalLine(entry_id=entry.id, account_id=account_id, debit=payment.amount, credit=Decimal("0")))
+    db.add(JournalLine(entry_id=entry.id, account_id=revenue_account_id, debit=Decimal("0"), credit=payment.amount))
+    await db.flush()
+
     return payment
 
 
@@ -275,6 +317,19 @@ async def delete_payment(
     payment = result.scalar_one_or_none()
     if payment is None:
         raise HTTPException(status_code=404, detail="Payment not found")
+
+    # Void the associated journal entry (if any)
+    entry_result = await db.execute(
+        select(JournalEntry).where(
+            JournalEntry.reference_type == REFERENCE_TYPE_INVOICE_PAYMENT,
+            JournalEntry.reference_id == payment_id,
+            JournalEntry.status != "voided",
+        )
+    )
+    for entry in entry_result.scalars().all():
+        entry.status = "voided"
+    await db.flush()
+
     await db.delete(payment)
     await db.flush()
     invoice = await get_invoice(db, id=invoice_id)

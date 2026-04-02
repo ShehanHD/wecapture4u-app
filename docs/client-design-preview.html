@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>weCapture4U — Client Design Preview</title>
+<style>
+
+/* ── Reset & tokens ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #FFFFFF;
+  --bg-soft:   #F5F5F7;
+  --border:    #E8E8ED;
+  --text:      #1D1D1F;
+  --muted:     #6E6E73;
+  --subtle:    #AEAEB2;
+  --accent:    #1D1D1F;   /* CTA — near-black, like Apple's dark pill */
+  --focus:     #0071E3;
+  --r:         12px;
+  --shadow:    0 2px 20px rgba(0,0,0,.07);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,.12);
+}
+
+body {
+  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+a { text-decoration: none; color: inherit; }
+img { display: block; max-width: 100%; }
+
+/* ── Section layout ─────────────────────────────────────────────────────────── */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+/* ── Preview label ──────────────────────────────────────────────────────────── */
+.preview-label {
+  background: #1D1D1F;
+  color: #F5F5F7;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.nav {
+  position: sticky;
+  top: 0;
+  background: rgba(255,255,255,.88);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.nav-brand {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.nav-links a {
+  font-size: 13.5px;
+  color: var(--muted);
+  transition: color .15s;
+}
+.nav-links a:hover { color: var(--text); }
+
+.btn-book {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 980px;
+  background: var(--text);
+  color: #fff;
+  transition: opacity .15s;
+}
+.btn-book:hover { opacity: .82; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.hero {
+  position: relative;
+  height: 92vh;
+  min-height: 600px;
+  background: #1a1a1a;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Simulated photo using gradient */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(160deg, #2c2c2e 0%, #1a1a1a 60%, #0a0a0a 100%);
+}
+
+/* Subtle grain texture overlay */
+.hero-grain {
+  position: absolute;
+  inset: 0;
+  opacity: .04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 0 24px 72px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.hero-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  margin-bottom: 12px;
+}
+
+.hero-title {
+  font-size: clamp(38px, 6vw, 72px);
+  font-weight: 300;
+  letter-spacing: -1.5px;
+  color: #ffffff;
+  line-height: 1.08;
+  margin-bottom: 32px;
+  max-width: 700px;
+}
+
+.hero-title em { font-style: normal; font-weight: 600; }
+
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 13px 28px;
+  border-radius: 980px;
+  background: #fff;
+  color: #1D1D1F;
+  transition: opacity .15s;
+}
+.hero-cta:hover { opacity: .88; }
+
+/* Scroll indicator */
+.hero-scroll {
+  position: absolute;
+  bottom: 28px;
+  right: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: .35;
+}
+.hero-scroll-line {
+  width: 1px;
+  height: 40px;
+  background: white;
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse {
+  0%, 100% { transform: scaleY(1); opacity: .4; }
+  50%       { transform: scaleY(.4); opacity: .1; }
+}
+
+/* Dot indicators */
+.hero-dots {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+.hero-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.3);
+}
+.hero-dot.active { background: white; width: 18px; border-radius: 3px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   PORTFOLIO GRID
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.section { padding: 96px 0; }
+.section.soft { background: var(--bg-soft); }
+
+.section-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 600;
+  letter-spacing: -1px;
+  color: var(--text);
+  margin-bottom: 48px;
+  line-height: 1.1;
+}
+
+/* Masonry-style portfolio grid */
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto;
+  gap: 12px;
+}
+
+.portfolio-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r);
+  background: var(--bg-soft);
+  cursor: pointer;
+}
+
+.portfolio-card:nth-child(1) { grid-column: span 7; grid-row: span 2; aspect-ratio: 4/3; }
+.portfolio-card:nth-child(2) { grid-column: span 5; aspect-ratio: 3/2; }
+.portfolio-card:nth-child(3) { grid-column: span 5; aspect-ratio: 3/2; }
+.portfolio-card:nth-child(4) { grid-column: span 4; aspect-ratio: 1; }
+.portfolio-card:nth-child(5) { grid-column: span 4; aspect-ratio: 1; }
+.portfolio-card:nth-child(6) { grid-column: span 4; aspect-ratio: 1; }
+
+/* Simulated photos */
+.portfolio-card .photo-bg {
+  position: absolute;
+  inset: 0;
+  transition: transform .5s ease;
+}
+.portfolio-card:hover .photo-bg { transform: scale(1.04); }
+
+.portfolio-card:nth-child(1) .photo-bg { background: linear-gradient(135deg, #2c2c2e, #48484a); }
+.portfolio-card:nth-child(2) .photo-bg { background: linear-gradient(135deg, #3a3a3c, #636366); }
+.portfolio-card:nth-child(3) .photo-bg { background: linear-gradient(135deg, #48484a, #2c2c2e); }
+.portfolio-card:nth-child(4) .photo-bg { background: linear-gradient(135deg, #1c1c1e, #3a3a3c); }
+.portfolio-card:nth-child(5) .photo-bg { background: linear-gradient(135deg, #636366, #3a3a3c); }
+.portfolio-card:nth-child(6) .photo-bg { background: linear-gradient(135deg, #48484a, #1c1c1e); }
+
+.portfolio-card-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0,0,0,.55) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.portfolio-card:hover .portfolio-card-label { opacity: 1; }
+
+.portfolio-card-label span {
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  letter-spacing: .01em;
+}
+
+/* Minimal card height */
+.portfolio-card { min-height: 160px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ABOUT
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.about-photo {
+  aspect-ratio: 4/5;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #3a3a3c, #1c1c1e);
+  overflow: hidden;
+}
+
+.about-text .section-tag { margin-bottom: 16px; }
+.about-text .section-title { margin-bottom: 20px; }
+
+.about-bio {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.social-links { display: flex; gap: 16px; }
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 2px;
+  transition: color .15s, border-color .15s;
+}
+.social-link:hover { color: var(--text); border-color: var(--text); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CONTACT FORM
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.contact-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.contact-intro .section-title { margin-bottom: 12px; }
+
+.contact-desc {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+
+.contact-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+.contact-detail-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--subtle); }
+.contact-detail-value { font-size: 15px; color: var(--text); }
+
+.form-group { margin-bottom: 18px; }
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: .01em;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+}
+.form-input:focus,
+.form-textarea:focus {
+  border-color: var(--text);
+  box-shadow: 0 0 0 3px rgba(29,29,31,.08);
+}
+.form-textarea { min-height: 120px; resize: vertical; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.btn-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 13px 24px;
+  border-radius: 980px;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: opacity .15s;
+}
+.btn-submit:hover { opacity: .82; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CLIENT LOGIN
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.login-page {
+  min-height: 100vh;
+  background: var(--bg-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 44px 40px;
+  box-shadow: var(--shadow-lg);
+}
+
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 36px;
+  gap: 10px;
+}
+
+.login-logo-mark {
+  width: 44px; height: 44px;
+  background: var(--text);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+}
+
+.login-logo-mark svg { color: white; }
+
+.login-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+
+.login-sub {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.btn-biometric {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .12s;
+  margin-bottom: 22px;
+}
+.btn-biometric:hover { background: #EBEBF0; }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.divider-line { flex: 1; height: 1px; background: var(--border); }
+.divider-text { font-size: 12px; color: var(--subtle); white-space: nowrap; }
+
+.forgot-link {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 18px;
+  transition: color .15s;
+}
+.forgot-link:hover { color: var(--text); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 0;
+  background: var(--bg-soft);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-brand { font-size: 13px; font-weight: 600; color: var(--text); }
+.footer-copy  { font-size: 12px; color: var(--subtle); }
+.footer-link  { font-size: 13px; color: var(--muted); transition: color .15s; }
+.footer-link:hover { color: var(--text); }
+
+</style>
+</head>
+<body>
+
+<!-- ── 1. NAV ─────────────────────────────────────────────────────────────── -->
+<div class="preview-label">↑ Navigation — sticky, glassy on scroll</div>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">weCapture4U</a>
+    <nav class="nav-links">
+      <a href="#">Portfolio</a>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+      <a href="#" style="color:var(--text)">Login</a>
+      <a href="#" class="btn-book">Book a Session</a>
+    </nav>
+  </div>
+</header>
+
+
+<!-- ── 2. HERO ────────────────────────────────────────────────────────────── -->
+<div class="preview-label">↑ Hero — full-screen photo (dark overlay preserved), minimal text</div>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grain"></div>
+
+  <div class="container hero-content">
+    <p class="hero-eyebrow">Photography</p>
+    <h1 class="hero-title">Light.<br><em>Moment.</em><br>Memory.</h1>
+    <a href="#contact" class="hero-cta">
+      Book a Session
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+
+  <div class="hero-dots">
+    <div class="hero-dot active"></div>
+    <div class="hero-dot"></div>
+    <div class="hero-dot"></div>
+  </div>
+
+  <div class="hero-scroll">
+    <div class="hero-scroll-line"></div>
+    <span style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35)">Scroll</span>
+  </div>
+</section>
+
+
+<!-- ── 3. PORTFOLIO GRID ──────────────────────────────────────────────────── -->
+<div class="preview-label">↑ Portfolio — asymmetric masonry grid, hover reveals category name</div>
+
+<section class="section">
+  <div class="container">
+    <p class="section-tag">Portfolio</p>
+    <h2 class="section-title">Captured moments,<br>timeless stories.</h2>
+
+    <div class="portfolio-grid">
+      <div class="portfolio-card"><div class="photo-bg"></div><div class="portfolio-card-label"><span>Weddings</span></div></div>
+      <div class="portfolio-card"><div class="photo-bg"></div><div class="portfolio-card-label"><span>Portraits</span></div></div>
+      <div class="portfolio-card"><div class="photo-bg"></div><div class="portfolio-card-label"><span>Events</span></div></div>
+      <div class="portfolio-card"><div class="photo-bg"></div><div class="portfolio-card-label"><span>Family</span></div></div>
+      <div class="portfolio-card"><div class="photo-bg"></div><div class="portfolio-card-label"><span>Commercial</span></div></div>
+      <div class="portfolio-card"><div class="photo-bg"></div><div class="portfolio-card-label"><span>Editorial</span></div></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── 4. ABOUT ───────────────────────────────────────────────────────────── -->
+<div class="preview-label">↑ About — two-column, photo + text</div>
+
+<section class="section soft">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-photo"></div>
+      <div class="about-text">
+        <p class="section-tag">About</p>
+        <h2 class="section-title">Behind the lens</h2>
+        <p class="about-bio">
+          Based in Dublin, I specialise in capturing the unscripted moments that tell your story.
+          With a decade of experience in weddings, portraits, and editorial work, I bring a quiet,
+          documentary eye to every session — never directing, always watching.
+        </p>
+        <div class="social-links">
+          <a href="#" class="social-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+            Instagram
+          </a>
+          <a href="#" class="social-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            Facebook
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── 5. CONTACT ─────────────────────────────────────────────────────────── -->
+<div class="preview-label">↑ Contact — two-column, intro left + form right</div>
+
+<section class="section">
+  <div class="container">
+    <div class="contact-wrap">
+      <div class="contact-intro">
+        <p class="section-tag">Contact</p>
+        <h2 class="section-title">Let's create<br>something together.</h2>
+        <p class="contact-desc">
+          Whether it's a wedding, portrait session, or commercial project,
+          I'd love to hear about your vision. Send me a message and I'll
+          get back to you within 24 hours.
+        </p>
+        <div class="contact-detail">
+          <span class="contact-detail-label">Email</span>
+          <span class="contact-detail-value">hello@wecapture4u.com</span>
+        </div>
+        <div class="contact-detail">
+          <span class="contact-detail-label">Location</span>
+          <span class="contact-detail-value">Dublin, Ireland</span>
+        </div>
+      </div>
+
+      <div class="contact-form-wrap">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">First name</label>
+            <input class="form-input" type="text" placeholder="Jane" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last name</label>
+            <input class="form-input" type="text" placeholder="Murphy" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" placeholder="jane@example.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Session type</label>
+          <select class="form-input form-select">
+            <option value="">Select a session…</option>
+            <option>Wedding</option>
+            <option>Portrait</option>
+            <option>Family</option>
+            <option>Commercial</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message</label>
+          <textarea class="form-textarea" placeholder="Tell me about your vision…"></textarea>
+        </div>
+        <button class="btn-submit">Send Message</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── 6. FOOTER ──────────────────────────────────────────────────────────── -->
+<div class="preview-label">↑ Footer — minimal, clean</div>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <span class="footer-brand">weCapture4U</span>
+    <span class="footer-copy">© 2026 All rights reserved.</span>
+    <a href="/client/login" class="footer-link">Client Login</a>
+  </div>
+</footer>
+
+
+<!-- ── 7. CLIENT LOGIN ────────────────────────────────────────────────────── -->
+<div class="preview-label">↑ Client Login — card on soft background</div>
+
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="login-title">Client Portal</div>
+        <div class="login-sub">Sign in to view your jobs & photos</div>
+      </div>
+    </div>
+
+    <button class="btn-biometric">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04.054-.09A13.916 13.916 0 0 0 8 11a4 4 0 1 1 8 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0 0 15.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 0 0 8 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/>
+      </svg>
+      Use Face ID / Fingerprint
+    </button>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-text">or continue with email</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" placeholder="jane@example.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" placeholder="••••••••" />
+    </div>
+
+    <button class="btn-submit" style="margin-top:4px">Sign In</button>
+
+    <a href="#" class="forgot-link">Forgot password?</a>
+  </div>
+</div>
+
+</body>
+</html>
