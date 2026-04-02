@@ -219,3 +219,48 @@ async def test_login_unverified_user_returns_403(test_client, db_session):
     })
     assert resp.status_code == 403
     assert "verify" in resp.json()["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_verify_email_used_token_returns_400(test_client, db_session):
+    user = User(
+        email=f"used_{uuid4().hex[:8]}@example.com",
+        hashed_password=hash_password("pass1234"),
+        role=UserRole.client,
+        full_name="Used Token",
+        is_active=True,  # already active (token was used)
+    )
+    db_session.add(user)
+    await db_session.flush()
+
+    raw = generate_opaque_token()
+    db_session.add(EmailVerificationToken(
+        user_id=user.id,
+        token_hash=hash_token(raw),
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+        used_at=datetime.now(timezone.utc),  # already used
+    ))
+    await db_session.flush()
+
+    resp = await test_client.get(f"/api/auth/verify-email?token={raw}")
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_login_deactivated_admin_returns_403(test_client, db_session):
+    user = User(
+        email=f"admin_{uuid4().hex[:8]}@example.com",
+        hashed_password=hash_password("adminpass1"),
+        role=UserRole.admin,
+        full_name="Deactivated Admin",
+        is_active=False,
+    )
+    db_session.add(user)
+    await db_session.flush()
+
+    resp = await test_client.post("/api/auth/login", json={
+        "email": user.email,
+        "password": "adminpass1",
+    })
+    assert resp.status_code == 403
+    assert "deactivated" in resp.json()["detail"].lower()
