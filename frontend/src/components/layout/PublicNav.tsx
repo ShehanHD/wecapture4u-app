@@ -37,8 +37,8 @@ export function PublicNav() {
 
         {/* Centre nav links — hidden on very small screens */}
         <div
-          className="hidden-xs"
-          style={{ display: 'flex', gap: 32, alignItems: 'center' }}
+          className="hidden min-[380px]:flex"
+          style={{ gap: 32, alignItems: 'center' }}
         >
           <button
             onClick={() => scrollTo('gallery')}
