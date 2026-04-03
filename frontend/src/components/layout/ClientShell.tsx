@@ -40,6 +40,7 @@ export function ClientShell() {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem('client-sidebar-collapsed') === 'true' } catch { return false }
   })
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const toggleCollapsed = () => {
     setCollapsed(prev => {
@@ -49,7 +50,7 @@ export function ClientShell() {
     })
   }
 
-  const handleLogout = () => logout()
+  const handleLogout = () => setShowLogoutConfirm(true)
 
   const initials = profile?.name ? getInitials(profile.name) : '?'
   const avatarUrl = profile?.avatar_url ?? null
@@ -273,6 +274,31 @@ export function ClientShell() {
           </button>
         </nav>
       </div>
+
+      {/* Logout confirmation */}
+      {showLogoutConfirm && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(10,14,46,0.3)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowLogoutConfirm(false) }}
+        >
+          <div style={{ background: '#ffffff', borderRadius: 14, padding: '24px 24px 20px', width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <p style={{ fontSize: 16, fontWeight: 800, color: '#0a0e2e' }}>Log out?</p>
+            <p style={{ fontSize: 13, color: '#778899', marginBottom: 8 }}>You'll need to sign in again to access your account.</p>
+            <button
+              onClick={() => logout()}
+              style={{ width: '100%', background: '#e05252', color: '#fff', fontWeight: 700, fontSize: 14, padding: '11px', borderRadius: 9, border: 'none', cursor: 'pointer' }}
+            >
+              Log out
+            </button>
+            <button
+              onClick={() => setShowLogoutConfirm(false)}
+              style={{ width: '100%', background: 'none', border: '1px solid #e0e8ff', color: '#778899', fontWeight: 600, fontSize: 14, padding: '11px', borderRadius: 9, cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
