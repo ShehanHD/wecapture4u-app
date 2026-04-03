@@ -1,15 +1,28 @@
+// frontend/src/pages/auth/ClientLogin.tsx
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
-import { useState } from 'react'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
   password: z.string().min(1, 'Password required'),
 })
 type FormData = z.infer<typeof schema>
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  border: '1.5px solid #e0e8ff',
+  borderRadius: 9,
+  background: '#f8f9ff',
+  padding: '11px 14px',
+  fontSize: 14,
+  color: '#0a0e2e',
+  outline: 'none',
+  boxSizing: 'border-box',
+}
 
 export default function ClientLogin() {
   const { login } = useAuth()
@@ -28,101 +41,56 @@ export default function ClientLogin() {
     }
   }
 
-  const inputStyle = {
-    width: '100%',
-    border: '1.5px solid #e0e8ff',
-    borderRadius: 10,
-    background: '#f8f9ff',
-    padding: '11px 14px',
-    fontSize: 14,
-    color: '#0a0e2e',
-    outline: 'none',
-    boxSizing: 'border-box' as const,
-  }
-
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0a0e2e',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 400,
-          background: '#fff',
-          borderRadius: 20,
-          padding: '40px 32px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-        }}
-      >
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <p style={{ fontSize: 22, fontWeight: 800, color: '#0a0e2e' }}>weCapture4U</p>
-          <p style={{ fontSize: 13, color: '#778899', marginTop: 4 }}>Client Portal</p>
+    <div style={{ minHeight: '100vh', background: '#f8f9ff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      {/* Logo above card */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #4d79ff, #7aa5ff)', borderRadius: 8, flexShrink: 0 }} />
+        <span style={{ fontSize: 18, fontWeight: 800, color: '#0a0e2e', letterSpacing: '-0.02em' }}>weCapture4U</span>
+      </div>
+
+      {/* Card */}
+      <div style={{ width: '100%', maxWidth: 380, background: '#ffffff', border: '1px solid #e0e8ff', borderRadius: 16, padding: '28px 28px 24px', boxShadow: '0 4px 20px rgba(77,121,255,0.07)' }}>
+        <div style={{ marginBottom: 20 }}>
+          <p style={{ fontSize: 18, fontWeight: 800, color: '#0a0e2e', marginBottom: 4 }}>Welcome back</p>
+          <p style={{ fontSize: 13, color: '#778899' }}>Sign in to your client area</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#0a0e2e', display: 'block', marginBottom: 6 }}>
-              Email
-            </label>
-            <input id="email" type="email" style={inputStyle} {...register('email')} />
-            {errors.email && <p style={{ color: '#e53e3e', fontSize: 12, marginTop: 4 }}>{errors.email.message}</p>}
+            <label style={{ fontSize: 11, fontWeight: 700, color: '#778899', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email</label>
+            <input type="email" style={inputStyle} placeholder="you@example.com" {...register('email')} />
+            {errors.email && <p style={{ color: '#e05252', fontSize: 12, marginTop: 4 }}>{errors.email.message}</p>}
           </div>
 
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#0a0e2e', display: 'block', marginBottom: 6 }}>
-              Password
-            </label>
-            <input id="password" type="password" style={inputStyle} {...register('password')} />
-            {errors.password && <p style={{ color: '#e53e3e', fontSize: 12, marginTop: 4 }}>{errors.password.message}</p>}
+            <label style={{ fontSize: 11, fontWeight: 700, color: '#778899', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Password</label>
+            <input type="password" style={inputStyle} placeholder="••••••••" {...register('password')} />
+            {errors.password && <p style={{ color: '#e05252', fontSize: 12, marginTop: 4 }}>{errors.password.message}</p>}
           </div>
 
-          {error && <p style={{ color: '#e53e3e', fontSize: 13, textAlign: 'center' }}>{error}</p>}
+          <div style={{ textAlign: 'right', marginTop: -4 }}>
+            <Link to="/client/forgot-password" style={{ fontSize: 12, color: '#4d79ff', fontWeight: 600 }}>Forgot password?</Link>
+          </div>
+
+          {error && <p style={{ color: '#e05252', fontSize: 13, textAlign: 'center' }}>{error}</p>}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            style={{
-              width: '100%',
-              background: '#4d79ff',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: 15,
-              padding: 14,
-              borderRadius: 10,
-              border: 'none',
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              opacity: isSubmitting ? 0.6 : 1,
-              marginTop: 4,
-            }}
+            style={{ width: '100%', background: '#4d79ff', color: '#fff', fontWeight: 700, fontSize: 14, padding: '12px', borderRadius: 9, border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, marginTop: 4 }}
           >
             {isSubmitting ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
-        <Link
-          to="/client/forgot-password"
-          style={{ display: 'block', textAlign: 'center', marginTop: 20, fontSize: 13, color: '#4d79ff' }}
-        >
-          Forgot password?
-        </Link>
-
         <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#778899' }}>
           Don't have an account?{' '}
-          <Link to="/client/register" style={{ color: '#4d79ff' }}>Register</Link>
+          <Link to="/client/register" style={{ color: '#4d79ff', fontWeight: 600 }}>Register</Link>
         </p>
-
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <a href="/" style={{ fontSize: 12, color: '#778899' }}>← Back to site</a>
-        </div>
       </div>
+
+      <a href="/" style={{ marginTop: 20, fontSize: 12, color: '#778899' }}>← Back to website</a>
     </div>
   )
 }
