@@ -5,6 +5,7 @@ export const ClientProfileSchema = z.object({
   name: z.string(),
   email: z.string(),
   phone: z.string().nullable(),
+  avatar_url: z.string().nullable().optional(),
 })
 export type ClientProfile = z.infer<typeof ClientProfileSchema>
 
@@ -42,15 +43,25 @@ export type ClientJobDetail = z.infer<typeof ClientJobDetailSchema>
 export const SessionTypeSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
+  available_days: z.array(z.number()).optional().default([]),
 })
 export type SessionType = z.infer<typeof SessionTypeSchema>
 export const SessionTypeListSchema = z.array(SessionTypeSchema)
 
+export const ClientBookingRequestSlotSchema = z.object({
+  session_type_id: z.string().uuid(),
+  session_type_name: z.string().nullable(),
+  date: z.string(),
+  time_slot: z.enum(['morning', 'afternoon', 'evening', 'all_day']),
+})
+export type ClientBookingRequestSlot = z.infer<typeof ClientBookingRequestSlotSchema>
+
 export const ClientBookingRequestSchema = z.object({
   id: z.string().uuid(),
   preferred_date: z.string(),
-  time_slot: z.enum(['morning', 'afternoon', 'evening', 'all_day']),
+  time_slot: z.enum(['morning', 'afternoon', 'evening', 'all_day']).nullable(),
   session_type_name: z.string().nullable(),
+  session_slots: z.array(ClientBookingRequestSlotSchema).default([]),
   message: z.string().nullable(),
   status: z.enum(['pending', 'confirmed', 'rejected']),
   admin_notes: z.string().nullable(),
