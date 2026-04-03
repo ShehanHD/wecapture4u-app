@@ -3,7 +3,7 @@ import json
 import uuid
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +11,7 @@ from database import get_db
 from dependencies.auth import require_admin
 from models.admin import AppSettings
 from schemas.portfolio import AboutSettingsOut, AboutSettingsUpdate, DEFAULT_STATS
+from services.storage import validate_image_file, process_image, upload_to_storage, delete_from_storage
 from schemas.settings import (
     AppSettingsOut, AppSettingsUpdate,
     SessionTypeCreate, SessionTypeUpdate, SessionTypeOut,
@@ -55,6 +56,40 @@ async def update_about_settings(db: DbDep, admin: AdminDep, data: AboutSettingsU
         else:
             setattr(settings, field, value)
     await db.flush()
+    return await get_about_settings(db, admin)
+
+
+# --- OG Image ---
+
+@router.post("/settings/og-image", response_model=AboutSettingsOut)
+async def upload_og_image(db: DbDep, admin: AdminDep, file: UploadFile = File(...)):
+    result = await db.execute(select(AppSettings))
+    settings = result.scalar_one_or_none()
+    if settings is None:
+        raise HTTPException(500, "App settings not initialized. Run migrations.")
+    # Delete old OG image if present
+    if settings.og_image_url:
+        delete_from_storage(settings.og_image_url)
+    content = await validate_image_file(file)
+    processed = process_image(content, max_long_side=1200)
+    import uuid as _uuid
+    key = f"og/{_uuid.uuid4()}.webp"
+    url = upload_to_storage(key, processed)
+    settings.og_image_url = url
+    await db.flush()
+    return await get_about_settings(db, admin)
+
+
+@router.delete("/settings/og-image", response_model=AboutSettingsOut)
+async def delete_og_image(db: DbDep, admin: AdminDep):
+    result = await db.execute(select(AppSettings))
+    settings = result.scalar_one_or_none()
+    if settings is None:
+        raise HTTPException(500, "App settings not initialized. Run migrations.")
+    if settings.og_image_url:
+        delete_from_storage(settings.og_image_url)
+        settings.og_image_url = None
+        await db.flush()
     return await get_about_settings(db, admin)
 
 
