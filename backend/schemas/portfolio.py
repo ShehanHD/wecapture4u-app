@@ -104,6 +104,9 @@ class PublicSettingsOut(BaseModel):
     contact_headline: Optional[str] = None
     admin_name: Optional[str] = None
     admin_avatar_url: Optional[str] = None
+    og_image_url: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     stats: list[StatItem] = []
 
 
