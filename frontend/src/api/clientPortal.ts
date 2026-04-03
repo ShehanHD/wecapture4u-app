@@ -1,5 +1,6 @@
 // frontend/src/api/clientPortal.ts
 import apiClient from '@/lib/axios'
+import { z } from 'zod'
 import {
   ClientProfileSchema,
   ClientJobListSchema,
@@ -16,6 +17,14 @@ import {
 import { NotificationSchema, NotificationListSchema, type Notification } from '@/schemas/notifications'
 
 export type { ClientProfile, ClientJob, ClientJobDetail, SessionType, ClientBookingRequest, Notification }
+
+// ── Internal response schema for /api/profile/avatar ────────────────────────
+const ProfileResponseSchema = z.object({
+  full_name: z.string(),
+  email: z.string(),
+  phone: z.string().nullable().optional(),
+  avatar_url: z.string().nullable().optional(),
+})
 
 // ── Profile ──────────────────────────────────────────────────────────────────
 
@@ -39,12 +48,13 @@ export async function uploadAvatar(file: File): Promise<ClientProfile> {
   const { data } = await apiClient.post('/api/profile/avatar', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
-  // /api/profile/avatar returns ProfileResponse shape; map to ClientProfile
+  // /api/profile/avatar returns ProfileResponse shape; validate raw data before mapping
+  const raw = ProfileResponseSchema.parse(data)
   return ClientProfileSchema.parse({
-    name: data.full_name,
-    email: data.email,
-    phone: data.phone ?? null,
-    avatar_url: data.avatar_url ?? null,
+    name: raw.full_name,
+    email: raw.email,
+    phone: raw.phone ?? null,
+    avatar_url: raw.avatar_url ?? null,
   })
 }
 

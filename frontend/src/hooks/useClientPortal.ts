@@ -1,6 +1,7 @@
 // frontend/src/hooks/useClientPortal.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import axios from 'axios'
 import {
   fetchMyProfile,
   updateMyProfile,
@@ -38,7 +39,7 @@ export function useChangePassword() {
     mutationFn: changePassword,
     onSuccess: () => toast.success('Password updated'),
     onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail : undefined
       toast.error(msg ?? 'Failed to update password')
     },
   })

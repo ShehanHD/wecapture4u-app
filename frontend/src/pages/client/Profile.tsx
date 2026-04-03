@@ -1,6 +1,6 @@
 // frontend/src/pages/client/Profile.tsx
 import { useEffect, useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type FieldError } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Camera } from 'lucide-react'
@@ -124,7 +124,7 @@ function ChangePasswordDialog({ open, onClose }: { open: boolean; onClose: () =>
           <div key={name}>
             <label style={{ fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5 }}>{label}</label>
             <input type="password" style={inputStyle} autoFocus={name === 'current_password'} {...register(name)} />
-            {errors[name] && <p style={{ color: '#e05252', fontSize: 12, marginTop: 4 }}>{(errors[name] as { message?: string })?.message}</p>}
+            {errors[name] && <p style={{ color: '#e05252', fontSize: 12, marginTop: 4 }}>{(errors[name] as FieldError | undefined)?.message}</p>}
           </div>
         ))}
         <button type="submit" disabled={isSubmitting} style={{ background: '#4d79ff', color: '#fff', fontWeight: 700, fontSize: 14, padding: '11px', borderRadius: 9, border: 'none', cursor: 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>

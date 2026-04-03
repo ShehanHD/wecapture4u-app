@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import axios from 'axios'
 import { useAuth } from '@/hooks/useAuth'
 
 const schema = z.object({
@@ -36,7 +37,7 @@ export default function ClientLogin() {
     try {
       await login(data.email, data.password)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail : undefined
       setError(msg ?? 'Login failed. Please try again.')
     }
   }
