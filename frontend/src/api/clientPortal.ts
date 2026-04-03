@@ -1,5 +1,5 @@
 // frontend/src/api/clientPortal.ts
-import { api } from '@/lib/axios'
+import apiClient from '@/lib/axios'
 import {
   ClientProfileSchema,
   ClientJobListSchema,
@@ -13,47 +13,95 @@ import {
   type SessionType,
   type ClientBookingRequest,
 } from '@/schemas/clientPortal'
+import { NotificationSchema, NotificationListSchema, type Notification } from '@/schemas/notifications'
 
-export type { ClientProfile, ClientJob, ClientJobDetail, SessionType, ClientBookingRequest }
+export type { ClientProfile, ClientJob, ClientJobDetail, SessionType, ClientBookingRequest, Notification }
+
+// ── Profile ──────────────────────────────────────────────────────────────────
 
 export async function fetchMyProfile(): Promise<ClientProfile> {
-  const { data } = await api.get('/api/client/me')
+  const { data } = await apiClient.get('/api/client/me')
   return ClientProfileSchema.parse(data)
 }
 
 export async function updateMyProfile(payload: { name?: string; phone?: string | null }): Promise<ClientProfile> {
-  const { data } = await api.patch('/api/client/me', payload)
+  const { data } = await apiClient.patch('/api/client/me', payload)
   return ClientProfileSchema.parse(data)
 }
 
+export async function changePassword(payload: { current_password: string; new_password: string }): Promise<void> {
+  await apiClient.post('/api/profile/change-password', payload)
+}
+
+export async function uploadAvatar(file: File): Promise<ClientProfile> {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await apiClient.post('/api/profile/avatar', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  // /api/profile/avatar returns ProfileResponse shape; map to ClientProfile
+  return ClientProfileSchema.parse({
+    name: data.full_name,
+    email: data.email,
+    phone: data.phone ?? null,
+    avatar_url: data.avatar_url ?? null,
+  })
+}
+
+// ── Jobs ─────────────────────────────────────────────────────────────────────
+
 export async function fetchMyJobs(): Promise<ClientJob[]> {
-  const { data } = await api.get('/api/client/jobs')
+  const { data } = await apiClient.get('/api/client/jobs')
   return ClientJobListSchema.parse(data)
 }
 
 export async function fetchMyJob(id: string): Promise<ClientJobDetail> {
-  const { data } = await api.get(`/api/client/jobs/${id}`)
+  const { data } = await apiClient.get(`/api/client/jobs/${id}`)
   return ClientJobDetailSchema.parse(data)
 }
 
+// ── Session types ─────────────────────────────────────────────────────────────
+
 export async function fetchSessionTypes(): Promise<SessionType[]> {
-  const { data } = await api.get('/api/client/session-types')
+  const { data } = await apiClient.get('/api/client/session-types')
   return SessionTypeListSchema.parse(data)
 }
 
+// ── Booking requests ──────────────────────────────────────────────────────────
+
 export async function fetchMyBookingRequests(): Promise<ClientBookingRequest[]> {
-  const { data } = await api.get('/api/client/booking-requests')
+  const { data } = await apiClient.get('/api/client/booking-requests')
   return ClientBookingRequestListSchema.parse(data)
 }
 
-export interface BookingRequestCreatePayload {
-  preferred_date: string
+export interface BookingSlotPayload {
+  session_type_id: string
+  date: string
   time_slot: 'morning' | 'afternoon' | 'evening' | 'all_day'
-  session_type_id?: string | null
+}
+
+export interface BookingRequestCreatePayload {
+  session_slots: BookingSlotPayload[]
   message?: string | null
 }
 
 export async function createBookingRequest(payload: BookingRequestCreatePayload): Promise<ClientBookingRequest> {
-  const { data } = await api.post('/api/client/booking-requests', payload)
+  const { data } = await apiClient.post('/api/client/booking-requests', payload)
   return ClientBookingRequestSchema.parse(data)
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+export async function fetchNotifications(): Promise<Notification[]> {
+  const { data } = await apiClient.get('/api/notifications')
+  return NotificationListSchema.parse(data)
+}
+
+export async function markNotificationRead(id: string): Promise<Notification> {
+  const { data } = await apiClient.patch(`/api/notifications/${id}/read`)
+  return NotificationSchema.parse(data)
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await apiClient.post('/api/notifications/read-all')
 }
