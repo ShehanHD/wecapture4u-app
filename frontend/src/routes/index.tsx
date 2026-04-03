@@ -14,10 +14,10 @@ import { AdminShell } from '@/components/layout/AdminShell'
 import { ClientShell } from '@/components/layout/ClientShell'
 
 // Client portal pages
-import { ClientDashboard } from '@/pages/client/Dashboard'
-import { ClientJobs } from '@/pages/client/Jobs'
+import { ClientHome } from '@/pages/client/Home'
+import { ClientBooking } from '@/pages/client/Booking'
+import { ClientNotifications } from '@/pages/client/Notifications'
 import { ClientJobDetail } from '@/pages/client/JobDetail'
-import { BookSession } from '@/pages/client/BookSession'
 import { ClientProfile } from '@/pages/client/Profile'
 
 // Admin pages
@@ -42,6 +42,7 @@ export const router = createBrowserRouter([
 
   // Admin auth routes
   { path: '/login', element: <AdminLogin /> },
+  { path: '/admin/login', element: <AdminLogin /> },
   { path: '/forgot-password', element: <ForgotPassword /> },
   { path: '/reset-password', element: <ResetPassword /> },
 
@@ -89,16 +90,17 @@ export const router = createBrowserRouter([
         path: '/client',
         element: <ClientShell />,
         children: [
-          { index: true, element: <ClientDashboard /> },
-          { path: 'jobs', element: <ClientJobs /> },
+          { index: true, element: <ClientHome /> },
           { path: 'jobs/:id', element: <ClientJobDetail /> },
-          { path: 'book', element: <BookSession /> },
+          { path: 'book', element: <ClientBooking /> },
+          { path: 'notifications', element: <ClientNotifications /> },
           { path: 'profile', element: <ClientProfile /> },
+          { path: 'biometric/setup', element: <BiometricSetup /> },
         ],
       },
     ],
   },
 
   // Fallback
-  { path: '*', element: <Navigate to="/login" replace /> },
+  { path: '*', element: <Navigate to="/admin/login" replace /> },
 ])
