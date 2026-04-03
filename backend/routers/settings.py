@@ -51,7 +51,7 @@ async def update_about_settings(db: DbDep, admin: AdminDep, data: AboutSettingsU
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         if field == 'stats':
-            settings.stats_json = json.dumps([s.model_dump() for s in value]) if value is not None else None
+            settings.stats_json = json.dumps(value) if value is not None else None
         else:
             setattr(settings, field, value)
     await db.flush()

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Images } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs'
@@ -226,19 +226,35 @@ function AboutSettingsTab() {
   const deleteOgImageMutation = useDeleteOgImage()
   const ogImageInputRef = useRef<HTMLInputElement>(null)
 
-  const { register, handleSubmit, control } = useForm<AboutFormValues>({
+  const { register, handleSubmit, control, reset } = useForm<AboutFormValues>({
     defaultValues: {
-      tagline: settings?.tagline ?? '',
-      bio: settings?.bio ?? '',
-      instagram_url: settings?.instagram_url ?? '',
-      facebook_url: settings?.facebook_url ?? '',
-      contact_headline: settings?.contact_headline ?? '',
-      contact_email: settings?.contact_email ?? '',
-      meta_title: settings?.meta_title ?? '',
-      meta_description: settings?.meta_description ?? '',
-      stats: settings?.stats ?? DEFAULT_STATS,
+      tagline: '',
+      bio: '',
+      instagram_url: '',
+      facebook_url: '',
+      contact_headline: '',
+      contact_email: '',
+      meta_title: '',
+      meta_description: '',
+      stats: DEFAULT_STATS,
     },
   })
+
+  useEffect(() => {
+    if (settings) {
+      reset({
+        tagline: settings.tagline ?? '',
+        bio: settings.bio ?? '',
+        instagram_url: settings.instagram_url ?? '',
+        facebook_url: settings.facebook_url ?? '',
+        contact_headline: settings.contact_headline ?? '',
+        contact_email: settings.contact_email ?? '',
+        meta_title: settings.meta_title ?? '',
+        meta_description: settings.meta_description ?? '',
+        stats: settings.stats && settings.stats.length > 0 ? settings.stats : DEFAULT_STATS,
+      })
+    }
+  }, [settings, reset])
 
   const { fields: statFields } = useFieldArray({ control, name: 'stats' })
 
