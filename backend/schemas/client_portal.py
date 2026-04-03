@@ -8,6 +8,7 @@ class ClientProfileOut(BaseModel):
     name: str
     email: str
     phone: Optional[str]
+    avatar_url: Optional[str] = None
 
 
 class ClientProfileUpdate(BaseModel):

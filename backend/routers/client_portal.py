@@ -50,7 +50,7 @@ async def get_my_profile(db: DB, current_user: ClientUser) -> ClientProfileOut:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     client = await _get_client(db, current_user.id)
-    return ClientProfileOut(name=user.full_name, email=user.email, phone=client.phone)
+    return ClientProfileOut(name=user.full_name, email=user.email, phone=client.phone, avatar_url=user.avatar_url)
 
 
 @router.patch("/me", response_model=ClientProfileOut)
@@ -70,7 +70,7 @@ async def update_my_profile(
         client.phone = body.phone  # None clears the field
 
     await db.flush()
-    return ClientProfileOut(name=user.full_name, email=user.email, phone=client.phone)
+    return ClientProfileOut(name=user.full_name, email=user.email, phone=client.phone, avatar_url=user.avatar_url)
 
 
 # ─── Jobs ─────────────────────────────────────────────────────────────────────
