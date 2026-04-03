@@ -103,10 +103,11 @@ const pwSchema = z.object({
 
 function ChangePasswordDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const changePassword = useChangePassword()
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({ resolver: zodResolver(pwSchema) })
+  type PwFields = { current_password: string; new_password: string; confirm: string }
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<PwFields>({ resolver: zodResolver(pwSchema) })
   useEffect(() => { if (open) reset() }, [open, reset])
 
-  const onSubmit = async (d: { current_password: string; new_password: string }) => {
+  const onSubmit = async (d: PwFields) => {
     await changePassword.mutateAsync({ current_password: d.current_password, new_password: d.new_password })
     onClose()
   }

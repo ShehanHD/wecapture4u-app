@@ -6,7 +6,7 @@ export function AdminRoute() {
   const role = auth.getRole()
 
   if (!token || role !== 'admin') {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/admin/login" replace />
   }
 
   return <Outlet />

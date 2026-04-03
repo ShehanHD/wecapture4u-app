@@ -23,6 +23,7 @@ export function useAuth() {
   }, [navigate])
 
   const logout = useCallback(async () => {
+    const role = auth.getRole()
     const refreshToken = auth.getRefreshToken()
     try {
       if (refreshToken) {
@@ -31,7 +32,7 @@ export function useAuth() {
     } finally {
       auth.clearTokens()
       queryClient.clear()
-      navigate('/login')
+      navigate(role === 'client' ? '/client/login' : '/admin/login')
     }
   }, [navigate])
 
