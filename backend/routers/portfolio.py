@@ -14,10 +14,13 @@ from dependencies.auth import require_admin
 from models.admin import AppSettings
 from models.portfolio import ContactSubmission, PortfolioCategory, PortfolioPhoto
 from models.user import User
+import json
+
 from schemas.portfolio import (
     CategoryOut,
     CategoryWithPhotosOut,
     ContactSubmissionCreate,
+    DEFAULT_STATS,
     HeroPhotoOut,
     PhotoOut,
     PositionItem,
@@ -80,6 +83,7 @@ async def public_settings(db: DbDep):
         contact_headline=settings.contact_headline if settings else None,
         admin_name=admin.full_name if admin else None,
         admin_avatar_url=admin.avatar_url if admin else None,
+        stats=json.loads(settings.stats_json) if (settings and settings.stats_json) else DEFAULT_STATS,
     )
 
 

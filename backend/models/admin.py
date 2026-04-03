@@ -25,3 +25,6 @@ class AppSettings(Base):
     meta_title: Mapped[str | None] = mapped_column(Text, nullable=True)
     meta_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     og_image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Stats column (added in migration 018)
+    stats_json: Mapped[str | None] = mapped_column(Text, nullable=True)

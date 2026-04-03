@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import uuid
 from typing import Annotated, Optional
 
@@ -9,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from dependencies.auth import require_admin
 from models.admin import AppSettings
-from schemas.portfolio import AboutSettingsOut, AboutSettingsUpdate
+from schemas.portfolio import AboutSettingsOut, AboutSettingsUpdate, DEFAULT_STATS
 from schemas.settings import (
     AppSettingsOut, AppSettingsUpdate,
     SessionTypeCreate, SessionTypeUpdate, SessionTypeOut,
@@ -37,6 +38,7 @@ async def get_about_settings(db: DbDep, admin: AdminDep):
         meta_title=settings.meta_title,
         meta_description=settings.meta_description,
         og_image_url=settings.og_image_url,
+        stats=json.loads(settings.stats_json) if settings.stats_json else DEFAULT_STATS,
     )
 
 
@@ -48,7 +50,10 @@ async def update_about_settings(db: DbDep, admin: AdminDep, data: AboutSettingsU
         raise HTTPException(500, "App settings not initialized. Run migrations.")
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
-        setattr(settings, field, value)
+        if field == 'stats':
+            settings.stats_json = json.dumps([s.model_dump() for s in value]) if value is not None else None
+        else:
+            setattr(settings, field, value)
     await db.flush()
     return await get_about_settings(db, admin)
 

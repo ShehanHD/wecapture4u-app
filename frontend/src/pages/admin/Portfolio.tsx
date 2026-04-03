@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { Images } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs'
 import { Button } from '../../components/ui/button'
@@ -16,7 +16,8 @@ import {
   useUploadOgImage,
   useDeleteOgImage,
 } from '../../hooks/usePortfolio'
-import type { Category } from '../../schemas/portfolio'
+import { DEFAULT_STATS } from '../../schemas/portfolio'
+import type { Category, StatItem } from '../../schemas/portfolio'
 
 // ─── Tab 1: Hero Carousel ─────────────────────────────────────────────────────
 
@@ -206,6 +207,18 @@ function CategoryPhotosTab({
 
 // ─── Tab 4: About & Settings ──────────────────────────────────────────────────
 
+type AboutFormValues = {
+  tagline: string
+  bio: string
+  instagram_url: string
+  facebook_url: string
+  contact_headline: string
+  contact_email: string
+  meta_title: string
+  meta_description: string
+  stats: StatItem[]
+}
+
 function AboutSettingsTab() {
   const { data: settings } = useAboutSettings()
   const updateMutation = useUpdateAboutSettings()
@@ -213,7 +226,7 @@ function AboutSettingsTab() {
   const deleteOgImageMutation = useDeleteOgImage()
   const ogImageInputRef = useRef<HTMLInputElement>(null)
 
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, control } = useForm<AboutFormValues>({
     defaultValues: {
       tagline: settings?.tagline ?? '',
       bio: settings?.bio ?? '',
@@ -223,16 +236,22 @@ function AboutSettingsTab() {
       contact_email: settings?.contact_email ?? '',
       meta_title: settings?.meta_title ?? '',
       meta_description: settings?.meta_description ?? '',
+      stats: settings?.stats ?? DEFAULT_STATS,
     },
   })
 
+  const { fields: statFields } = useFieldArray({ control, name: 'stats' })
+
   return (
     <form
-      onSubmit={handleSubmit((data) =>
-        updateMutation.mutate(
-          Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v || null])),
-        ),
-      )}
+      onSubmit={handleSubmit((data) => {
+        const formData = Object.fromEntries(
+          Object.entries(data)
+            .filter(([k]) => k !== 'stats')
+            .map(([k, v]) => [k, (v as string) || null])
+        )
+        updateMutation.mutate({ ...formData, stats: data.stats })
+      })}
       className="space-y-4 max-w-lg"
     >
       {(
@@ -315,6 +334,20 @@ function AboutSettingsTab() {
             }}
           />
         </div>
+      </div>
+
+      <div>
+        <label className="text-xs text-muted-foreground">Stats</label>
+        <div className="space-y-2 mt-1">
+          {statFields.map((field, i) => (
+            <div key={field.id} className="flex gap-2 items-center">
+              <input className="w-16 bg-input border rounded px-2 py-1 text-foreground text-sm" placeholder="500" {...register(`stats.${i}.value`)} />
+              <input className="w-12 bg-input border rounded px-2 py-1 text-foreground text-sm" placeholder="+" {...register(`stats.${i}.accent`)} />
+              <input className="flex-1 bg-input border rounded px-2 py-1 text-foreground text-sm" placeholder="Sessions completed" {...register(`stats.${i}.label`)} />
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">Each stat: value (e.g. 500), accent (e.g. +), label (e.g. Sessions completed)</p>
       </div>
 
       <Button

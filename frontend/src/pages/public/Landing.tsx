@@ -49,7 +49,7 @@ export default function Landing() {
         facebookUrl={settings?.facebook_url}
       />
       <WaveDivider fromColor="#0a0e2e" toColor="#f8f9ff" direction="down" />
-      <StatsSection />
+      <StatsSection stats={settings?.stats} />
       <WaveDivider fromColor="#f8f9ff" toColor="#0a0e2e" direction="up" />
       <InstagramStrip />
       <WaveDivider fromColor="#0a0e2e" toColor="#f8f9ff" direction="down" />

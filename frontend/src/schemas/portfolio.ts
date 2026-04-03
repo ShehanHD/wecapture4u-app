@@ -1,5 +1,19 @@
 import { z } from 'zod'
 
+export const StatItemSchema = z.object({
+  value: z.string(),
+  accent: z.string(),
+  label: z.string(),
+})
+export type StatItem = z.infer<typeof StatItemSchema>
+
+export const DEFAULT_STATS: StatItem[] = [
+  { value: '500', accent: '+', label: 'Sessions completed' },
+  { value: '10', accent: '+', label: 'Years of experience' },
+  { value: '5', accent: ' ★', label: 'Average client rating' },
+  { value: '48', accent: 'h', label: 'Photo delivery time' },
+]
+
 // Public
 export const HeroPhotoSchema = z.object({
   id: z.string().uuid(),
@@ -40,6 +54,7 @@ export const PublicSettingsSchema = z.object({
   meta_title: z.string().nullable().optional(),
   meta_description: z.string().nullable().optional(),
   og_image_url: z.string().nullable().optional(),
+  stats: z.array(StatItemSchema).optional().default([]),
 })
 export type PublicSettings = z.infer<typeof PublicSettingsSchema>
 
@@ -53,6 +68,7 @@ export const AboutSettingsSchema = z.object({
   meta_title: z.string().nullable().optional(),
   meta_description: z.string().nullable().optional(),
   og_image_url: z.string().nullable().optional(),
+  stats: z.array(StatItemSchema).optional().default([]),
 })
 export type AboutSettings = z.infer<typeof AboutSettingsSchema>
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
@@ -81,6 +82,20 @@ class ContactSubmissionOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+DEFAULT_STATS = [
+    {"value": "500", "accent": "+", "label": "Sessions completed"},
+    {"value": "10", "accent": "+", "label": "Years of experience"},
+    {"value": "5", "accent": " ★", "label": "Average client rating"},
+    {"value": "48", "accent": "h", "label": "Photo delivery time"},
+]
+
+
+class StatItem(BaseModel):
+    value: str
+    accent: str
+    label: str
+
+
 class PublicSettingsOut(BaseModel):
     tagline: Optional[str] = None
     bio: Optional[str] = None
@@ -89,6 +104,7 @@ class PublicSettingsOut(BaseModel):
     contact_headline: Optional[str] = None
     admin_name: Optional[str] = None
     admin_avatar_url: Optional[str] = None
+    stats: list[StatItem] = []
 
 
 class AboutSettingsOut(BaseModel):
@@ -101,6 +117,7 @@ class AboutSettingsOut(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     og_image_url: Optional[str] = None
+    stats: list[StatItem] = []
 
 
 class AboutSettingsUpdate(BaseModel):
@@ -112,6 +129,7 @@ class AboutSettingsUpdate(BaseModel):
     contact_email: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    stats: Optional[list[StatItem]] = None
 
     @field_validator("contact_email")
     @classmethod
