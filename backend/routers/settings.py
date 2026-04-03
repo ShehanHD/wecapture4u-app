@@ -62,7 +62,7 @@ async def update_about_settings(db: DbDep, admin: AdminDep, data: AboutSettingsU
 # --- OG Image ---
 
 @router.post("/settings/og-image", response_model=AboutSettingsOut)
-async def upload_og_image(db: DbDep, admin: AdminDep, file: UploadFile = File(...)):
+async def upload_og_image(db: DbDep, admin: AdminDep, image: UploadFile = File(...)):
     result = await db.execute(select(AppSettings))
     settings = result.scalar_one_or_none()
     if settings is None:
@@ -70,7 +70,7 @@ async def upload_og_image(db: DbDep, admin: AdminDep, file: UploadFile = File(..
     # Delete old OG image if present
     if settings.og_image_url:
         delete_from_storage(settings.og_image_url)
-    content = await validate_image_file(file)
+    content = await validate_image_file(image)
     processed = process_image(content, max_long_side=1200)
     import uuid as _uuid
     key = f"og/{_uuid.uuid4()}.webp"
