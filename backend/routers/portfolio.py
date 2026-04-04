@@ -28,6 +28,7 @@ from schemas.portfolio import (
 )
 import services.portfolio as portfolio_svc
 from services.email import send_email
+from services.google_places import fetch_google_info
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
 DbDep = Annotated[AsyncSession, Depends(get_db)]
@@ -75,6 +76,7 @@ async def public_settings(db: DbDep):
         select(User).where(User.role == "admin").order_by(User.created_at.asc()).limit(1)
     )
     admin = admin_result.scalar_one_or_none()
+    google = await fetch_google_info()
     return PublicSettingsOut(
         tagline=settings.tagline if settings else None,
         bio=settings.bio if settings else None,
@@ -87,6 +89,13 @@ async def public_settings(db: DbDep):
         meta_title=settings.meta_title if settings else None,
         meta_description=settings.meta_description if settings else None,
         stats=json.loads(settings.stats_json) if (settings and settings.stats_json) else DEFAULT_STATS,
+        google_rating=google["rating"],
+        google_reviews_url=google["reviews_url"],
+        google_write_review_url=google["write_review_url"],
+        google_reviews=google["reviews"],
+        city=settings.city if settings else None,
+        country=settings.country if settings else None,
+        phone=settings.phone if settings else None,
     )
 
 

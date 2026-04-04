@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -54,11 +54,8 @@ function NotificationBell({ collapsed }: { collapsed: boolean }) {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-muted-foreground hover:text-foreground hover:bg-muted/50 h-8 w-8 flex-shrink-0"
+      <PopoverTrigger
+          className="relative inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 h-8 w-8 flex-shrink-0"
           aria-label="Notifications"
           title={collapsed ? 'Notifications' : undefined}
         >
@@ -68,7 +65,6 @@ function NotificationBell({ collapsed }: { collapsed: boolean }) {
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
-        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 bg-popover border p-0" side="right" align="end">
         <div className="flex items-center justify-between px-4 py-3 border-b border">
@@ -199,8 +195,7 @@ function SidebarContent({
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
+          <DropdownMenuTrigger
               title={collapsed ? 'Admin' : undefined}
               className={cn(
                 'flex items-center gap-2 rounded-lg w-full hover:bg-muted/50 transition-colors',
@@ -214,18 +209,18 @@ function SidebarContent({
               {!collapsed && (
                 <span className="text-[13px] text-foreground/70 truncate flex-1">Admin</span>
               )}
-            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             side={collapsed ? 'right' : 'top'}
             align="start"
             className="w-48 bg-popover border text-popover-foreground z-[100]"
           >
-            <DropdownMenuItem asChild className="cursor-pointer text-[13px] hover:bg-muted/50 focus:bg-muted/50">
-              <Link to="/admin/profile">
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </Link>
+            <DropdownMenuItem
+              className="cursor-pointer text-[13px] hover:bg-muted/50 focus:bg-muted/50"
+              onClick={() => navigate('/admin/profile')}
+            >
+              <User className="mr-2 h-4 w-4" />
+              Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem

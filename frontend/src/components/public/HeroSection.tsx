@@ -1,4 +1,5 @@
 // frontend/src/components/public/HeroSection.tsx
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useHeroPhotos } from '../../hooks/usePortfolio'
 
@@ -6,17 +7,19 @@ interface Props {
   tagline?: string | null
 }
 
+const INTERVAL_MS = 5000
+
 export function HeroSection({ tagline }: Props) {
   const { data: heroPhotos = [] } = useHeroPhotos()
-  const heroImage = heroPhotos[0]?.image_url
+  const [activeIndex, setActiveIndex] = useState(0)
 
-  const bgStyle = heroImage
-    ? {
-        background: `linear-gradient(to bottom right, rgba(10,14,46,0.88) 40%, rgba(10,14,46,0.5) 100%), url(${heroImage}) center/cover no-repeat`,
-      }
-    : {
-        background: 'linear-gradient(135deg, #0a0e2e 0%, #1a3468 100%)',
-      }
+  useEffect(() => {
+    if (heroPhotos.length < 2) return
+    const timer = setInterval(() => {
+      setActiveIndex((i) => (i + 1) % heroPhotos.length)
+    }, INTERVAL_MS)
+    return () => clearInterval(timer)
+  }, [heroPhotos.length])
 
   return (
     <section
@@ -28,11 +31,39 @@ export function HeroSection({ tagline }: Props) {
         justifyContent: 'center',
         padding: '80px 24px 60px',
         position: 'relative',
-        ...bgStyle,
+        overflow: 'hidden',
+        background: '#0a0e2e',
       }}
     >
+      {/* Carousel background slides */}
+      {heroPhotos.length > 0
+        ? heroPhotos.map((photo, i) => (
+            <div
+              key={photo.id}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: `url(${photo.image_url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: i === activeIndex ? 1 : 0,
+                transition: 'opacity 1s ease-in-out',
+              }}
+            />
+          ))
+        : null}
+
+      {/* Dark overlay */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to bottom right, rgba(10,14,46,0.88) 40%, rgba(10,14,46,0.5) 100%)',
+        }}
+      />
+
       {/* Content */}
-      <div style={{ maxWidth: 640, textAlign: 'center', zIndex: 1 }}>
+      <div style={{ maxWidth: 640, textAlign: 'center', zIndex: 1, position: 'relative' }}>
         {/* Eyebrow pill */}
         <div
           style={{
@@ -48,7 +79,7 @@ export function HeroSection({ tagline }: Props) {
             marginBottom: 24,
           }}
         >
-          ✦ Photography Studio · Ireland
+          ✦ Photography Studio · Milan
         </div>
 
         {/* Headline */}
@@ -104,7 +135,7 @@ export function HeroSection({ tagline }: Props) {
               cursor: 'pointer',
             }}
           >
-            View Portfolio
+            View Gallery
           </button>
 
           <Link
@@ -120,7 +151,7 @@ export function HeroSection({ tagline }: Props) {
               display: 'inline-block',
             }}
           >
-            🔒 Book a Session
+            Client Login
           </Link>
         </div>
 
@@ -154,6 +185,39 @@ export function HeroSection({ tagline }: Props) {
         </p>
       </div>
 
+      {/* Dot indicators */}
+      {heroPhotos.length > 1 && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 52,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: 6,
+            zIndex: 1,
+          }}
+        >
+          {heroPhotos.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIndex(i)}
+              style={{
+                width: i === activeIndex ? 20 : 6,
+                height: 6,
+                borderRadius: 999,
+                background: i === activeIndex ? '#7aa5ff' : 'rgba(255,255,255,0.35)',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'width 0.3s ease, background 0.3s ease',
+              }}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Scroll hint */}
       <div
         style={{
@@ -164,6 +228,7 @@ export function HeroSection({ tagline }: Props) {
           color: 'rgba(255,255,255,0.35)',
           fontSize: 11,
           letterSpacing: '0.12em',
+          zIndex: 1,
         }}
       >
         scroll ↓

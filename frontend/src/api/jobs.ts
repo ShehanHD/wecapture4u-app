@@ -16,6 +16,7 @@ export interface JobCreatePayload {
 export interface JobUpdatePayload {
   stage_id?: string
   delivery_url?: string | null
+  album_stage_id?: string | null
 }
 
 export interface StagePositionItem { id: string; position: number }

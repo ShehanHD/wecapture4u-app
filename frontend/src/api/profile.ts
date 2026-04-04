@@ -31,9 +31,7 @@ export async function changePassword(payload: {
 export async function uploadAvatar(file: File): Promise<Profile> {
   const form = new FormData()
   form.append('file', file)
-  const { data } = await api.post('/api/profile/avatar', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  const { data } = await api.post('/api/profile/avatar', form, { headers: { 'Content-Type': null } })
   return ProfileSchema.parse(data)
 }
 

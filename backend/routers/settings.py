@@ -40,6 +40,9 @@ async def get_about_settings(db: DbDep, admin: AdminDep):
         meta_description=settings.meta_description,
         og_image_url=settings.og_image_url,
         stats=json.loads(settings.stats_json) if settings.stats_json else DEFAULT_STATS,
+        city=settings.city,
+        country=settings.country,
+        phone=settings.phone,
     )
 
 
@@ -135,3 +138,21 @@ async def update_session_type(id: uuid.UUID, body: SessionTypeUpdate, db: DbDep,
 @router.delete("/session-types/{id}", status_code=204)
 async def delete_session_type(id: uuid.UUID, db: DbDep, _: AdminDep):
     await settings_svc.delete_session_type(db, id=id)
+
+
+@router.post("/test-email", status_code=200)
+async def test_email(current_user: AdminDep):
+    """Send a test email to the admin's own address to verify SMTP is working."""
+    from services.email import send_email, build_email_html
+    try:
+        await send_email(
+            to=current_user.email,
+            subject="SMTP test — weCapture4U",
+            html=build_email_html(
+                title="SMTP test",
+                body_html="<p>This is a test email. If you received it, your SMTP configuration is working correctly.</p>",
+            ),
+        )
+        return {"message": f"Test email sent to {current_user.email}"}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"SMTP error: {exc}")

@@ -10,7 +10,6 @@ export type StatItem = z.infer<typeof StatItemSchema>
 export const DEFAULT_STATS: StatItem[] = [
   { value: '500', accent: '+', label: 'Sessions completed' },
   { value: '10', accent: '+', label: 'Years of experience' },
-  { value: '5', accent: ' ★', label: 'Average client rating' },
   { value: '48', accent: 'h', label: 'Photo delivery time' },
 ]
 
@@ -43,6 +42,16 @@ export const CategoryWithPhotosSchema = CategorySchema.extend({
 })
 export type CategoryWithPhotos = z.infer<typeof CategoryWithPhotosSchema>
 
+export const GoogleReviewSchema = z.object({
+  author_name: z.string(),
+  author_url: z.string().nullable().optional(),
+  profile_photo_url: z.string().nullable().optional(),
+  rating: z.number().int().min(1).max(5),
+  text: z.string(),
+  relative_time: z.string(),
+})
+export type GoogleReview = z.infer<typeof GoogleReviewSchema>
+
 export const PublicSettingsSchema = z.object({
   tagline: z.string().nullable().optional(),
   bio: z.string().nullable().optional(),
@@ -55,6 +64,14 @@ export const PublicSettingsSchema = z.object({
   meta_description: z.string().nullable().optional(),
   og_image_url: z.string().nullable().optional(),
   stats: z.array(StatItemSchema).optional().default([]),
+  google_rating: z.number().nullable().optional(),
+  google_reviews_url: z.string().nullable().optional(),
+  google_write_review_url: z.string().nullable().optional(),
+  google_reviews: z.array(GoogleReviewSchema).optional().default([]),
+  city: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  contact_email: z.string().nullable().optional(),
 })
 export type PublicSettings = z.infer<typeof PublicSettingsSchema>
 
@@ -69,6 +86,9 @@ export const AboutSettingsSchema = z.object({
   meta_description: z.string().nullable().optional(),
   og_image_url: z.string().nullable().optional(),
   stats: z.array(StatItemSchema).optional().default([]),
+  city: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
 })
 export type AboutSettings = z.infer<typeof AboutSettingsSchema>
 

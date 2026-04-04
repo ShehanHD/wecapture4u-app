@@ -164,6 +164,6 @@ async def send_email(
         port=settings.SMTP_PORT,
         username=settings.SMTP_USER,
         password=settings.SMTP_PASSWORD,
-        use_tls=True,  # SSL/TLS on port 465
+        use_tls=True,
     )
     logger.debug("Email sent to %s — subject: %s", to, subject)

@@ -137,6 +137,7 @@ export const useDeleteOgImage = () => {
     mutationFn: portfolioApi.deleteOgImage,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['about-settings'] })
+      qc.invalidateQueries({ queryKey: ['public-settings'] })
       toast.success('Social image removed')
     },
     onError: (err) => toast.error(getApiErrorMessage(err, 'Failed to remove image')),

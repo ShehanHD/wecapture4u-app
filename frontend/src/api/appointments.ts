@@ -3,10 +3,18 @@ import { AppointmentListSchema, AppointmentSchema, type Appointment } from '@/sc
 
 export type { Appointment }
 
+export interface SessionSlotPayload {
+  session_type_id: string
+  date: string
+  time_slot: 'morning' | 'afternoon' | 'evening' | 'all_day'
+  time?: string
+}
+
 export interface AppointmentCreatePayload {
   client_id: string
   title: string
-  starts_at: string
+  starts_at?: string
+  session_slots?: SessionSlotPayload[]
   session_type_ids?: string[]
   session_time?: 'morning' | 'afternoon' | 'evening' | null
   ends_at?: string | null

@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     WEBAUTHN_RP_ID: str
     WEBAUTHN_RP_NAME: str
     CRON_SECRET: str = ""
+    GOOGLE_PLACE_API_KEY: str = ""
 
     @property
     def webauthn_origin(self) -> str:

@@ -1,14 +1,27 @@
 // frontend/src/components/public/InstagramStrip.tsx
-const PHOTOS = [
-  '/instagram/photo-1.svg',
-  '/instagram/photo-2.svg',
-  '/instagram/photo-3.svg',
-  '/instagram/photo-4.svg',
-  '/instagram/photo-5.svg',
-  '/instagram/photo-6.svg',
-]
+import { useHeroPhotos } from '../../hooks/usePortfolio'
 
-export function InstagramStrip() {
+interface Props {
+  instagramUrl?: string | null
+  adminName?: string | null
+}
+
+function extractHandle(url: string | null | undefined, fallback: string | null | undefined): string {
+  if (url) {
+    const match = url.match(/instagram\.com\/([^/?#]+)/)
+    if (match) return `@${match[1]}`
+  }
+  return fallback ? `@${fallback}` : '@wecapture4u'
+}
+
+export function InstagramStrip({ instagramUrl, adminName }: Props) {
+  const { data: photos = [] } = useHeroPhotos()
+
+  const handle = extractHandle(instagramUrl, adminName)
+  const displayPhotos = photos.slice(0, 6)
+
+  if (displayPhotos.length === 0) return null
+
   return (
     <section
       style={{
@@ -31,7 +44,7 @@ export function InstagramStrip() {
           Follow Our Work
         </p>
         <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)' }}>
-          @weCapture4U
+          {handle}
         </p>
       </div>
 
@@ -39,17 +52,18 @@ export function InstagramStrip() {
       <div
         style={{
           display: 'flex',
+          justifyContent: 'center',
           overflowX: 'auto',
           gap: 8,
           padding: '0 24px',
           scrollbarWidth: 'none',
         }}
       >
-        {PHOTOS.map((src, i) => (
+        {displayPhotos.map((photo) => (
           <img
-            key={i}
-            src={src}
-            alt={`Instagram photo ${i + 1}`}
+            key={photo.id}
+            src={photo.image_url}
+            alt={handle}
             style={{
               width: 120,
               height: 120,

@@ -1,4 +1,3 @@
-import React from 'react'
 import { cn } from '@/lib/utils'
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {

@@ -85,7 +85,6 @@ class ContactSubmissionOut(BaseModel):
 DEFAULT_STATS = [
     {"value": "500", "accent": "+", "label": "Sessions completed"},
     {"value": "10", "accent": "+", "label": "Years of experience"},
-    {"value": "5", "accent": " ★", "label": "Average client rating"},
     {"value": "48", "accent": "h", "label": "Photo delivery time"},
 ]
 
@@ -94,6 +93,15 @@ class StatItem(BaseModel):
     value: str
     accent: str
     label: str
+
+
+class GoogleReviewOut(BaseModel):
+    author_name: str
+    author_url: Optional[str] = None
+    profile_photo_url: Optional[str] = None
+    rating: int
+    text: str
+    relative_time: str
 
 
 class PublicSettingsOut(BaseModel):
@@ -108,6 +116,13 @@ class PublicSettingsOut(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     stats: list[StatItem] = []
+    google_rating: Optional[float] = None
+    google_reviews_url: Optional[str] = None
+    google_write_review_url: Optional[str] = None
+    google_reviews: list[GoogleReviewOut] = []
+    city: Optional[str] = None
+    country: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class AboutSettingsOut(BaseModel):
@@ -121,6 +136,9 @@ class AboutSettingsOut(BaseModel):
     meta_description: Optional[str] = None
     og_image_url: Optional[str] = None
     stats: list[StatItem] = []
+    city: Optional[str] = None
+    country: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class AboutSettingsUpdate(BaseModel):
@@ -133,6 +151,9 @@ class AboutSettingsUpdate(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     stats: Optional[list[StatItem]] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
+    phone: Optional[str] = None
 
     @field_validator("contact_email")
     @classmethod

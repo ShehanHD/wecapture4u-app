@@ -185,7 +185,7 @@ function CategoryPhotosTab({
 
   return (
     <div className="space-y-4">
-      <Select value={selectedCatId || '__none__'} onValueChange={(v) => setSelectedCatId(v === '__none__' ? '' : v)}>
+      <Select value={selectedCatId || '__none__'} onValueChange={(v) => setSelectedCatId(v === '__none__' || v === null ? '' : v)}>
         <SelectTrigger className="w-full bg-input border text-foreground">
           <SelectValue placeholder="Select category…" />
         </SelectTrigger>
@@ -217,6 +217,9 @@ type AboutFormValues = {
   meta_title: string
   meta_description: string
   stats: StatItem[]
+  city: string
+  country: string
+  phone: string
 }
 
 function AboutSettingsTab() {
@@ -237,6 +240,9 @@ function AboutSettingsTab() {
       meta_title: '',
       meta_description: '',
       stats: DEFAULT_STATS,
+      city: '',
+      country: '',
+      phone: '',
     },
   })
 
@@ -252,6 +258,9 @@ function AboutSettingsTab() {
         meta_title: settings.meta_title ?? '',
         meta_description: settings.meta_description ?? '',
         stats: settings.stats && settings.stats.length > 0 ? settings.stats : DEFAULT_STATS,
+        city: settings.city ?? '',
+        country: settings.country ?? '',
+        phone: settings.phone ?? '',
       })
     }
   }, [settings, reset])
@@ -278,6 +287,9 @@ function AboutSettingsTab() {
           { name: 'contact_headline', label: 'Contact Headline' },
           { name: 'contact_email', label: 'Contact Email' },
           { name: 'meta_title', label: 'Page Title (SEO)' },
+          { name: 'city', label: 'City (Local SEO)' },
+          { name: 'country', label: 'Country (Local SEO, e.g. Italy)' },
+          { name: 'phone', label: 'Phone (Local SEO)' },
         ] as const
       ).map(({ name, label }) => (
         <div key={name}>

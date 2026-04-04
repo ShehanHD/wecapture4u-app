@@ -2,5 +2,7 @@
 # Without this, any URL refresh or direct navigation returns 404.
 Options -MultiViews
 RewriteEngine On
+RewriteBase /
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^ index.html [QR,L]
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [L]

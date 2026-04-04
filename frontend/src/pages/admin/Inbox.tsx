@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { Mail, ChevronLeft, ChevronRight, UserPlus, CalendarPlus, ExternalLink, Check, Trash2 } from 'lucide-react'
@@ -298,7 +298,7 @@ export function Inbox() {
         title={`Delete ${checkedIds.size} submission${checkedIds.size !== 1 ? 's' : ''}?`}
         description="This cannot be undone."
         confirmLabel="Delete"
-        variant="destructive"
+        destructive={true}
         onConfirm={() => batchDelete.mutate([...checkedIds])}
       />
     </div>

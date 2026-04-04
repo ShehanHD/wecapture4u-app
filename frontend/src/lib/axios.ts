@@ -28,6 +28,11 @@ apiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    // Don't intercept auth endpoints — let the caller handle those errors directly
+    if (original.url?.includes('/api/auth/')) {
+      return Promise.reject(error)
+    }
+
     const refreshToken = auth.getRefreshToken()
     if (!refreshToken) {
       auth.clearTokens()

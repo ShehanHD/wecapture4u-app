@@ -55,9 +55,7 @@ export const updateAboutSettings = async (data: Partial<AboutSettings>): Promise
 export const uploadHeroPhoto = async (file: File): Promise<HeroPhoto> => {
   const form = new FormData()
   form.append('photo', file)
-  const res = await api.post('/api/portfolio/hero', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  const res = await api.post('/api/portfolio/hero', form, { headers: { 'Content-Type': null } })
   return HeroPhotoSchema.parse(res.data)
 }
 
@@ -73,9 +71,7 @@ export const createCategory = async (name: string, coverFile: File): Promise<Cat
   const form = new FormData()
   form.append('name', name)
   form.append('cover', coverFile)
-  const res = await api.post('/api/portfolio/categories', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  const res = await api.post('/api/portfolio/categories', form, { headers: { 'Content-Type': null } })
   return CategorySchema.parse(res.data)
 }
 
@@ -86,9 +82,7 @@ export const updateCategory = async (
   const form = new FormData()
   if (data.name) form.append('name', data.name)
   if (data.coverFile) form.append('cover', data.coverFile)
-  const res = await api.patch(`/api/portfolio/categories/${id}`, form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  const res = await api.patch(`/api/portfolio/categories/${id}`, form, { headers: { 'Content-Type': null } })
   return CategorySchema.parse(res.data)
 }
 
@@ -103,9 +97,7 @@ export const reorderCategories = async (items: PositionItem[]): Promise<void> =>
 export const uploadPhotos = async (categoryId: string, files: File[]): Promise<void> => {
   const form = new FormData()
   files.forEach((f) => form.append('photos', f))
-  await api.post(`/api/portfolio/categories/${categoryId}/photos`, form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  await api.post(`/api/portfolio/categories/${categoryId}/photos`, form, { headers: { 'Content-Type': null } })
 }
 
 export const deletePhoto = async (photoId: string): Promise<void> => {
@@ -119,9 +111,7 @@ export const reorderPhotos = async (categoryId: string, items: PositionItem[]): 
 export const uploadOgImage = async (file: File): Promise<{ og_image_url: string }> => {
   const form = new FormData()
   form.append('image', file)
-  const res = await api.post('/api/settings/og-image', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  const res = await api.post('/api/settings/og-image', form, { headers: { 'Content-Type': null } })
   return res.data
 }
 

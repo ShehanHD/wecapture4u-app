@@ -28,3 +28,8 @@ class AppSettings(Base):
 
     # Stats column (added in migration 018)
     stats_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Local SEO columns
+    city: Mapped[str | None] = mapped_column(Text, nullable=True)
+    country: Mapped[str | None] = mapped_column(Text, nullable=True)
+    phone: Mapped[str | None] = mapped_column(Text, nullable=True)

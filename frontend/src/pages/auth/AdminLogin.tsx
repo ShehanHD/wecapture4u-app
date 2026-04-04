@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom'
 import { Camera, Fingerprint } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useState } from 'react'
-import apiClient from '@/lib/axios'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -16,48 +15,19 @@ type FormData = z.infer<typeof schema>
 export default function AdminLogin() {
   const { login, loginWithBiometric } = useAuth()
   const [error, setError] = useState<string | null>(null)
-  const [hasBiometric, setHasBiometric] = useState(false)
-  const [checkedEmail, setCheckedEmail] = useState('')
   const [biometricLoading, setBiometricLoading] = useState(false)
-  const [directBiometricLoading, setDirectBiometricLoading] = useState(false)
 
-  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
 
-  const checkBiometric = async () => {
-    const email = getValues('email')
-    if (!email || checkedEmail === email) return
-    setCheckedEmail(email)
-    try {
-      const { data } = await apiClient.get(`/api/auth/webauthn/device-check?email=${encodeURIComponent(email)}`)
-      setHasBiometric(data.has_credential)
-    } catch {
-      setHasBiometric(false)
-    }
-  }
-
-  const handleDirectBiometric = async () => {
+  const handleBiometric = async () => {
     setError(null)
-    setDirectBiometricLoading(true)
+    setBiometricLoading(true)
     try {
       await loginWithBiometric()
     } catch {
       setError('Biometric login failed. Please sign in with email and password.')
-    } finally {
-      setDirectBiometricLoading(false)
-    }
-  }
-
-  const handleBiometric = async () => {
-    const email = getValues('email')
-    if (!email) return
-    setError(null)
-    setBiometricLoading(true)
-    try {
-      await loginWithBiometric(email)
-    } catch {
-      setError('Biometric login failed. Please use your password.')
     } finally {
       setBiometricLoading(false)
     }
@@ -85,13 +55,6 @@ export default function AdminLogin() {
     boxSizing: 'border-box' as const,
   }
 
-  const dividerStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    margin: '4px 0',
-  }
-
   return (
     <div
       style={{
@@ -113,7 +76,6 @@ export default function AdminLogin() {
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
         }}
       >
-        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div
             style={{
@@ -134,11 +96,11 @@ export default function AdminLogin() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* Direct biometric */}
+          {/* Biometric */}
           <button
             type="button"
-            onClick={handleDirectBiometric}
-            disabled={directBiometricLoading}
+            onClick={handleBiometric}
+            disabled={biometricLoading}
             style={{
               width: '100%',
               border: '1.5px solid #e0e8ff',
@@ -148,7 +110,7 @@ export default function AdminLogin() {
               fontWeight: 600,
               fontSize: 14,
               padding: '11px 14px',
-              cursor: directBiometricLoading ? 'not-allowed' : 'pointer',
+              cursor: biometricLoading ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -156,66 +118,26 @@ export default function AdminLogin() {
             }}
           >
             <Fingerprint style={{ width: 16, height: 16 }} />
-            {directBiometricLoading ? 'Verifying…' : 'Use Face ID / Fingerprint'}
+            {biometricLoading ? 'Verifying…' : 'Use Face ID / Fingerprint'}
           </button>
 
           {/* Divider */}
-          <div style={dividerStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
             <div style={{ flex: 1, height: 1, background: '#e0e8ff' }} />
             <span style={{ fontSize: 12, color: '#778899' }}>or sign in with email</span>
             <div style={{ flex: 1, height: 1, background: '#e0e8ff' }} />
           </div>
 
-          {/* Email */}
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#0a0e2e', display: 'block', marginBottom: 6 }}>
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              style={inputStyle}
-              {...register('email')}
-              onBlur={checkBiometric}
-            />
-            {errors.email && <p style={{ color: '#e53e3e', fontSize: 12, marginTop: 4 }}>{errors.email.message}</p>}
-          </div>
+          {/* Email + password form */}
+          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#0a0e2e', display: 'block', marginBottom: 6 }}>
+                Email
+              </label>
+              <input id="email" type="email" style={inputStyle} {...register('email')} />
+              {errors.email && <p style={{ color: '#e53e3e', fontSize: 12, marginTop: 4 }}>{errors.email.message}</p>}
+            </div>
 
-          {hasBiometric && (
-            <>
-              <button
-                type="button"
-                onClick={handleBiometric}
-                disabled={biometricLoading}
-                style={{
-                  width: '100%',
-                  background: '#4d79ff',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  padding: '11px 14px',
-                  borderRadius: 10,
-                  border: 'none',
-                  cursor: biometricLoading ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                }}
-              >
-                <Fingerprint style={{ width: 16, height: 16 }} />
-                {biometricLoading ? 'Verifying…' : 'Use Face ID / Fingerprint'}
-              </button>
-
-              <div style={dividerStyle}>
-                <div style={{ flex: 1, height: 1, background: '#e0e8ff' }} />
-                <span style={{ fontSize: 12, color: '#778899' }}>or use password</span>
-                <div style={{ flex: 1, height: 1, background: '#e0e8ff' }} />
-              </div>
-            </>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#0a0e2e', display: 'block', marginBottom: 6 }}>
                 Password
@@ -224,7 +146,7 @@ export default function AdminLogin() {
               {errors.password && <p style={{ color: '#e53e3e', fontSize: 12, marginTop: 4 }}>{errors.password.message}</p>}
             </div>
 
-            {error && <p style={{ color: '#e53e3e', fontSize: 13, textAlign: 'center' }}>{error}</p>}
+            {error && <p style={{ color: '#e53e3e', fontSize: 13, textAlign: 'center', margin: 0 }}>{error}</p>}
 
             <button
               type="submit"

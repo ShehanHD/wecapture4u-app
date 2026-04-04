@@ -1,6 +1,6 @@
 import { api } from '@/lib/axios'
 import {
-  InvoiceListSchema, InvoiceSchema, PaymentListSchema, PaymentSchema,
+  InvoiceListSchema, InvoiceSchema, PaymentSchema,
   type Invoice, type Payment,
 } from '@/schemas/invoices'
 

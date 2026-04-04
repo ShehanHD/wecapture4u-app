@@ -4,8 +4,8 @@ import {
   fetchJobs, fetchJob, createJob, updateJob, deleteJob,
   fetchJobStages, createJobStage, updateJobStage, reorderJobStages, deleteJobStage,
   fetchAlbumStages, createAlbumStage, updateAlbumStage, reorderAlbumStages, deleteAlbumStage,
-  type Job, type JobCreatePayload, type JobUpdatePayload, type StagePositionItem,
-  type AlbumStageCreatePayload, type AlbumStageUpdatePayload, type AlbumStagePositionItem,
+  type Job, type JobUpdatePayload, type StagePositionItem,
+  type AlbumStageUpdatePayload, type AlbumStagePositionItem,
 } from '@/api/jobs'
 import { getApiErrorMessage } from '@/lib/apiError'
 
@@ -83,9 +83,9 @@ export function useUpdateJobStage() {
 
 export function useReorderJobStages() {
   const queryClient = useQueryClient()
-  return useMutation({
+  return useMutation<unknown, Error, StagePositionItem[]>({
     mutationFn: reorderJobStages,
-    onMutate: async (newStages: StagePositionItem[]) => {
+    onMutate: async (newStages) => {
       await queryClient.cancelQueries({ queryKey: ['job-stages'] })
       const prev = queryClient.getQueryData(['job-stages'])
       queryClient.setQueryData(['job-stages'], (old: unknown) => {

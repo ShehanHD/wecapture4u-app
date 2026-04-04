@@ -53,8 +53,8 @@ export function JobDetail() {
   const addPayment = useAddPayment(invoiceId)
   const deletePaymentMutation = useDeletePayment(invoiceId)
 
-  const handleStageChange = async (newStageId: string) => {
-    if (!id) return
+  const handleStageChange = async (newStageId: string | null) => {
+    if (!id || !newStageId) return
     await updateJob.mutateAsync({ id, payload: { stage_id: newStageId } })
   }
 

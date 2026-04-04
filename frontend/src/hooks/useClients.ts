@@ -28,9 +28,8 @@ export function useCreateClient() {
 
 export function useUpdateClient() {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<ClientCreatePayload> }) =>
-      updateClient(id, payload),
+  return useMutation<unknown, Error, { id: string; payload: Partial<ClientCreatePayload> }>({
+    mutationFn: ({ id, payload }) => updateClient(id, payload),
     onSuccess: (_data: unknown, { id }: { id: string }) => {
       queryClient.invalidateQueries({ queryKey: ['clients'] })
       queryClient.invalidateQueries({ queryKey: ['clients', id] })
@@ -53,9 +52,8 @@ export function useDeleteClient() {
 
 export function useTogglePortalAccess() {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
-      togglePortalAccess(id, is_active),
+  return useMutation<unknown, Error, { id: string; is_active: boolean }>({
+    mutationFn: ({ id, is_active }) => togglePortalAccess(id, is_active),
     onSuccess: (_data: unknown, { id }: { id: string }) => {
       queryClient.invalidateQueries({ queryKey: ['clients', id] })
       toast.success('Portal access updated')
@@ -66,9 +64,8 @@ export function useTogglePortalAccess() {
 
 export function useCreatePortalAccess() {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, temp_password }: { id: string; temp_password: string }) =>
-      createPortalAccess(id, temp_password),
+  return useMutation<unknown, Error, { id: string; temp_password: string }>({
+    mutationFn: ({ id, temp_password }) => createPortalAccess(id, temp_password),
     onSuccess: (_data: unknown, { id }: { id: string }) => {
       queryClient.invalidateQueries({ queryKey: ['clients', id] })
       toast.success('Portal account created — credentials sent by email')

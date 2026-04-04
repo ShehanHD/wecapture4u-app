@@ -112,8 +112,9 @@ def upload_to_storage(
         )
         return f"{settings.SUPABASE_URL}{prefix}{path}"
     except Exception as e:
-        logger.error("Storage upload failed for path %s: %s", path, e)
-        raise HTTPException(503, "Photo storage is unavailable. Please contact the administrator.")
+        logger.error("Storage upload failed for bucket=%s path=%s: %s", bucket, path, e, exc_info=True)
+        detail = f"Storage upload failed: {e}" if settings.ENVIRONMENT == "development" else "Photo storage is unavailable. Please contact the administrator."
+        raise HTTPException(503, detail)
 
 
 def delete_from_storage(url: str) -> None:

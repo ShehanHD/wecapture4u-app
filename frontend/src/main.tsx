@@ -7,6 +7,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { queryClient } from '@/lib/queryClient'
 import { router } from '@/routes'
 import { useTheme } from '@/hooks/useTheme'
+import { Toaster } from '@/components/ui/sonner'
 import './index.css'
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <RouterProvider router={router} />
+          <Toaster position="bottom-right" richColors />
           {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
         </ThemeProvider>
       </QueryClientProvider>

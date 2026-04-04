@@ -384,7 +384,7 @@ function AlbumStagesTab() {
   const createStage = useCreateAlbumStage()
   const deleteStage = useDeleteAlbumStage()
   const reorder = useReorderAlbumStages()
-  const sensors = useSensors(useSensor(PointerSensor))
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState('#6b7280')
@@ -436,21 +436,25 @@ function AlbumStagesTab() {
           </ul>
         </SortableContext>
       </DndContext>
-      <div className="flex gap-2 pt-2">
+      <div className="flex items-center gap-2 pt-2">
+        <Input
+          placeholder="Stage name"
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          className="h-8 flex-1 text-sm"
+        />
         <input
           type="color"
           value={newColor}
           onChange={e => setNewColor(e.target.value)}
-          className="h-9 w-9 rounded border border-input cursor-pointer"
+          className="w-8 h-8 rounded cursor-pointer border border-border"
+          title="Stage color"
         />
-        <Input
-          placeholder="Stage name…"
-          value={newName}
-          onChange={e => setNewName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAdd()}
-          className="flex-1"
-        />
-        <Button onClick={handleAdd} disabled={!newName.trim()} size="sm">Add</Button>
+        <Button size="sm" className="h-8" onClick={handleAdd} disabled={createStage.isPending}>
+          <Plus className="w-4 h-4 mr-1" />
+          Add
+        </Button>
       </div>
     </div>
   )
@@ -458,9 +462,7 @@ function AlbumStagesTab() {
 
 // ─── Session Types tab ───────────────────────────────────────────────────────
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-
-function SessionTypeRow({ id, name, available_days }: { id: string; name: string; available_days: number[] }) {
+function SessionTypeRow({ id, name }: { id: string; name: string }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(name)
   const update = useUpdateSessionType()
@@ -482,69 +484,34 @@ function SessionTypeRow({ id, name, available_days }: { id: string; name: string
     if (e.key === 'Escape') { setValue(name); setEditing(false) }
   }
 
-  const toggleDay = (day: number) => {
-    const next = available_days.includes(day)
-      ? available_days.filter((d) => d !== day)
-      : [...available_days, day].sort((a, b) => a - b)
-    update.mutate({ id, available_days: next })
-  }
-
   return (
-    <li className="py-3 border-b border-border last:border-0 space-y-2">
-      <div className="flex items-center gap-2">
-        {editing ? (
-          <input
-            ref={inputRef}
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            onBlur={save}
-            onKeyDown={handleKeyDown}
-            className="h-7 text-sm flex-1 rounded border border-input bg-input px-2"
-          />
-        ) : (
-          <button
-            type="button"
-            className="flex-1 text-left text-sm hover:underline bg-transparent"
-            onClick={() => setEditing(true)}
-          >
-            {name}
-          </button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-destructive hover:text-destructive"
-          onClick={() => del.mutate(id)}
+    <li className="flex items-center gap-2 py-2 border-b border-border last:border-0">
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onBlur={save}
+          onKeyDown={handleKeyDown}
+          className="h-7 text-sm flex-1 rounded border border-input bg-input px-2"
+        />
+      ) : (
+        <button
+          type="button"
+          className="flex-1 text-left text-sm hover:underline bg-transparent"
+          onClick={() => setEditing(true)}
         >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="flex gap-1 flex-wrap">
-        {DAY_LABELS.map((label, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => toggleDay(idx)}
-            className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-              available_days.length === 0 || available_days.includes(idx)
-                ? 'bg-brand-solid text-white border-transparent'
-                : 'bg-transparent text-muted-foreground border-border'
-            }`}
-            title={available_days.length === 0 ? 'All days (click to restrict)' : undefined}
-          >
-            {label}
-          </button>
-        ))}
-        {available_days.length > 0 && (
-          <button
-            type="button"
-            onClick={() => update.mutate({ id, available_days: [] })}
-            className="text-xs px-2 py-0.5 text-muted-foreground hover:text-foreground"
-          >
-            Clear
-          </button>
-        )}
-      </div>
+          {name}
+        </button>
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-destructive hover:text-destructive"
+        onClick={() => del.mutate(id)}
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
     </li>
   )
 }
@@ -563,7 +530,7 @@ function SessionTypesTab() {
     <div className="space-y-4">
       <ul>
         {types.map(t => (
-          <SessionTypeRow key={t.id} id={t.id} name={t.name} available_days={t.available_days} />
+          <SessionTypeRow key={t.id} id={t.id} name={t.name} />
         ))}
       </ul>
       <div className="flex gap-2 pt-2">
@@ -694,7 +661,7 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="album-stages" className="mt-4">
-          <div className="max-w-md">
+          <div className="bg-card border border-border rounded-2xl p-6">
             <h2 className="text-base font-semibold text-foreground mb-4">Album Stages</h2>
             <AlbumStagesTab />
           </div>

@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Fingerprint, Trash2, Camera, User } from 'lucide-react'
+import { Fingerprint, Trash2, Camera, User, Plus } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import {
   useProfile,
@@ -13,6 +13,8 @@ import {
   useCredentials,
   useDeleteCredential,
 } from '@/hooks/useProfile'
+import { useAuth } from '@/hooks/useAuth'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -208,13 +210,54 @@ function PasswordSection() {
 function DevicesSection() {
   const { data: credentials, isLoading } = useCredentials()
   const deleteCredential = useDeleteCredential()
+  const { registerBiometric } = useAuth()
+  const qc = useQueryClient()
+  const [registering, setRegistering] = useState(false)
+  const [registerError, setRegisterError] = useState<string | null>(null)
+  const [registerSuccess, setRegisterSuccess] = useState(false)
+
+  const handleRegister = async () => {
+    setRegistering(true)
+    setRegisterError(null)
+    setRegisterSuccess(false)
+    try {
+      await registerBiometric()
+      await qc.invalidateQueries({ queryKey: ['credentials'] })
+      setRegisterSuccess(true)
+      setTimeout(() => setRegisterSuccess(false), 3000)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail
+        ?? (err as { message?: string })?.message
+        ?? 'Unknown error'
+      setRegisterError(`Registration failed: ${msg}`)
+    } finally {
+      setRegistering(false)
+    }
+  }
 
   if (isLoading) return null
 
   return (
     <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-      <h2 className="text-base font-semibold text-foreground">Biometric Devices</h2>
-      <p className="text-sm text-muted-foreground">Devices registered for passwordless login.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Biometric Login</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Devices registered for Face ID / Fingerprint login.</p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="rounded-xl gap-1.5"
+          onClick={handleRegister}
+          disabled={registering}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          {registering ? 'Registering…' : 'Add device'}
+        </Button>
+      </div>
+
+      {registerError && <p className="text-destructive text-sm">{registerError}</p>}
+      {registerSuccess && <p className="text-green-500 text-sm">Device registered successfully.</p>}
 
       {!credentials?.length ? (
         <div className="flex items-center gap-3 py-4 text-muted-foreground">
@@ -222,12 +265,9 @@ function DevicesSection() {
           <span className="text-sm">No biometric devices registered.</span>
         </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-border">
           {credentials.map((cred) => (
-            <li
-              key={cred.credential_id}
-              className="flex items-center justify-between py-2 border-b border-border last:border-0"
-            >
+            <li key={cred.credential_id} className="flex items-center justify-between py-3">
               <div className="flex items-center gap-3">
                 <Fingerprint className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div>

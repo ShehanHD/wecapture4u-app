@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, X, Plus, UserRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -236,7 +236,7 @@ export function ClientDetail() {
                     <tr key={j.id} className="hover:bg-muted/50">
                       <td className="px-4 py-3">
                         <Link to={`/admin/jobs/${j.id}`} className="text-foreground hover:opacity-70">
-                          {j.title}
+                          {j.appointment?.title ?? 'Untitled'}
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">

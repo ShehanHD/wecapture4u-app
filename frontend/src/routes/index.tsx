@@ -1,5 +1,6 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import Landing from '@/pages/public/Landing'
+import NotFound from '@/pages/public/NotFound'
 import Gallery from '@/pages/public/Gallery'
 import AdminLogin from '@/pages/auth/AdminLogin'
 import ClientLogin from '@/pages/auth/ClientLogin'
@@ -102,5 +103,5 @@ export const router = createBrowserRouter([
   },
 
   // Fallback
-  { path: '*', element: <Navigate to="/admin/login" replace /> },
+  { path: '*', element: <NotFound /> },
 ])

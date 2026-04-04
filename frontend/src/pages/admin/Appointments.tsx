@@ -191,9 +191,8 @@ function AppointmentModal({ open, onClose, appointment, prefill, onCreated, onDe
     return 'evening'
   }
 
-  const getAvailableDays = (sessionTypeId: string): number[] => {
-    const st = sessionTypes.find(s => s.id === sessionTypeId)
-    return st?.available_days ?? []
+  const getAvailableDays = (_sessionTypeId: string): number[] => {
+    return []
   }
 
   useEffect(() => {
@@ -640,8 +639,12 @@ function eventPropGetter(event: CalendarEvent) {
   return { style: { backgroundColor: c.bg, color: c.color } }
 }
 
+function stripISOChars(s: string): string {
+  return s.replace(/-/g, '').replace(/:/g, '').replace(/\./g, '')
+}
+
 function generateICS(a: Appointment): string {
-  const now = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z'
+  const now = stripISOChars(new Date().toISOString()).slice(0, 15) + 'Z'
   const isAllDay = a.session_slots.length > 0 && a.session_slots.every(s => s.time_slot === 'all_day')
 
   let dtStart: string
@@ -656,8 +659,8 @@ function generateICS(a: Appointment): string {
   } else {
     const start = new Date(a.starts_at)
     const end = a.ends_at ? new Date(a.ends_at) : new Date(start.getTime() + 60 * 60 * 1000)
-    dtStart = `DTSTART:${start.toISOString().replace(/[-:.]/g, '').slice(0, 15)}Z`
-    dtEnd = `DTEND:${end.toISOString().replace(/[-:.]/g, '').slice(0, 15)}Z`
+    dtStart = `DTSTART:${stripISOChars(start.toISOString()).slice(0, 15)}Z`
+    dtEnd = `DTEND:${stripISOChars(end.toISOString()).slice(0, 15)}Z`
   }
 
   const lines = [

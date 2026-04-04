@@ -14,7 +14,7 @@
   }
   :root {
     /*
-     * Light — apple.com exact palette
+     * Light - apple.com exact palette
      * bg: pure white  |  surface: #f5f5f7  |  text: #1d1d1f  |  secondary: #6e6e73
      * separator: #d2d2d7  |  amber brand kept
      */
@@ -41,7 +41,7 @@
 
     --destructive: #ff3b30;        /* Apple's iOS red */
 
-    --border: #d2d2d7;             /* Apple's separator — solid, consistent */
+    --border: #d2d2d7;             /* Apple's separator - solid, consistent */
     --input: #ffffff;
     --ring: rgba(139, 92, 246, 0.4);
 
@@ -62,7 +62,7 @@
     --sidebar-border: #d2d2d7;
     --sidebar-ring: rgba(139, 92, 246, 0.4);
 
-    /* ── Public site palette ─────────────────────────── */
+    /* -- Public site palette --------------------------- */
     --pub-navy:      #0a0e2e;
     --pub-navy-deep: #060810;
     --pub-navy-mid:  #1a3468;
@@ -76,7 +76,7 @@
 
   .dark {
     /*
-     * Dark — Apple dark mode palette (macOS / apple.com dark)
+     * Dark - Apple dark mode palette (macOS / apple.com dark)
      * bg: #000  |  surface: #1c1c1e  |  elevated: #2c2c2e
      * text: #f5f5f7  |  secondary: #8e8e93  |  separator: rgba(84,84,88,0.6)
      */
@@ -137,7 +137,7 @@
     letter-spacing: -0.02em;
   }
 
-  /* ── Brand gradient vars ─────────────────────────────────────────── */
+  /* -- Brand gradient vars ------------------------------------------- */
   :root {
     --brand-from: #8b5cf6;   /* Violet 500 */
     --brand-to:   #6d28d9;   /* Violet 700 */
@@ -147,7 +147,7 @@
     --brand-to:   #a78bfa;   /* Violet 400 */
   }
 
-  /* ── Brand utility classes ───────────────────────────────────────── */
+  /* -- Brand utility classes ----------------------------------------- */
   .bg-brand {
     background: linear-gradient(to right, var(--brand-from), var(--brand-to));
   }
@@ -239,7 +239,7 @@
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 30%, transparent);
   }
 
-  /* Smooth theme transition — avoids jarring flash */
+  /* Smooth theme transition - avoids jarring flash */
   *, *::before, *::after {
     transition-property: background-color, border-color, color;
     transition-duration: 150ms;
@@ -252,14 +252,14 @@
   }
 }
 
-/* ─── react-big-calendar overrides ─────────────────────────────────────────── */
+/* --- react-big-calendar overrides --- */
 .rbc-calendar {
   font-family: inherit;
   background: transparent;
   color: var(--foreground);
 }
 
-/* Hide default toolbar — replaced by custom component */
+/* Hide default toolbar - replaced by custom component */
 .rbc-toolbar {
   display: none;
 }
